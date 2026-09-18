@@ -10,4 +10,21 @@ function next(){if(!A||P)return;if(I>=C.length){A=false;document.getElementById(
 function playSection(id){start(N[id],document.querySelector("#"+id+" h2").textContent)}function playAll(){start(FULL,"Full update")}
 function speed(r){R=r;document.querySelectorAll(".speed").forEach(b=>b.classList.toggle("active",+b.dataset.r===r));if(A&&!P){speechSynthesis.cancel();setTimeout(next,80)}}
 function pauseResume(){if(!A)return;if(P){P=false;document.getElementById("pause").textContent="PAUSE";setTimeout(next,80)}else{P=true;speechSynthesis.cancel();document.getElementById("pause").textContent="RESUME"}}
-function stop(){A=false;P=false;speechSynthesis.cancel();document.getElementById("player").classList.remove("show")}function prog(){document.getElementById("bar").style.width=(C.length?Math.min(100,I/C.length*100):0)+"%"}window.addEventListener("beforeunload",()=>speechSynthesis.cancel());</script></body></html>
+function stop(){A=false;P=false;speechSynthesis.cancel();document.getElementById("player").classList.remove("show")}function prog(){document.getElementById("bar").style.width=(C.length?Math.min(100,I/C.length*100):0)+"%"}window.addEventListener("beforeunload",()=>speechSynthesis.cancel());</script><script>
+window.addEventListener("load", () => {
+  const params = new URLSearchParams(location.search);
+  const play = params.get("play");
+  if (!play) return;
+  setTimeout(() => {
+    if (play === "all") {
+      playAll();
+      return;
+    }
+    const el = document.getElementById(play);
+    if (el) {
+      el.scrollIntoView({behavior:"smooth", block:"start"});
+      setTimeout(() => playSection(play), 350);
+    }
+  }, 350);
+});
+</script></body></html>
