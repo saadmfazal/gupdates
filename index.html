@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <meta name="theme-color" content="#0d0d10" />
+  <meta name="theme-color" content="#0b0c0b" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Morpheus" />
@@ -14,19 +14,13 @@
   <link rel="icon" href="./icons/morpheus.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="./icons/morpheus.svg" />
   <link rel="stylesheet" href="./styles.css" />
-  <style>
-    .pair-screen{position:fixed;inset:0;z-index:100;background:#0d0d10;color:#fff;display:grid;place-items:center;padding:20px}
-    .pair-card{width:min(440px,100%);background:#15151b;border:1px solid #2a2a33;border-radius:24px;padding:24px;box-shadow:0 25px 70px #0007}
-    .pair-card .orb{margin-bottom:18px}.pair-card h1{font-size:31px;line-height:1.04;margin:0 0 10px}.pair-card p{color:#c7c7cf;font-size:17px}
-    .pair-row{display:grid;grid-template-columns:1fr auto;gap:8px;margin-top:18px}.pair-row input{min-width:0;border:1px solid #34343d;border-radius:13px;background:#0f0f13;color:#fff;padding:14px;font-size:18px;letter-spacing:.04em;text-transform:uppercase}
-    .pair-error{color:#ffb0b6;font-size:14px;min-height:20px;margin-top:8px}.pair-note{font-size:13px!important;color:#858590!important}
-    .unpair{border:0;background:none;color:#8a8a95;font-size:12px;padding:8px}
-  </style>
 </head>
 <body>
   <section id="pairScreen" class="pair-screen">
     <div class="pair-card">
-      <span class="orb live" aria-hidden="true"><span></span></span>
+      <div class="pair-pet" aria-hidden="true">
+        <div class="morpheus-pet mini-pet"><div class="pet-body"><span class="eye left"></span><span class="eye right"></span><span class="pet-core">M</span></div></div>
+      </div>
       <p class="eyebrow">MORPHEUS</p>
       <h1>George, pair this device.</h1>
       <p>Enter the private pairing code once. Morpheus will remember this device.</p>
@@ -35,24 +29,72 @@
         <button id="pairButton" class="primary">Pair</button>
       </div>
       <div id="pairError" class="pair-error"></div>
-      <p class="pair-note">Your business briefing is not included in the public app shell. It is loaded only after this device is paired.</p>
+      <p class="pair-note">Your business briefing is loaded only after this device is paired.</p>
     </div>
   </section>
 
   <main id="app" class="app-shell hidden">
-    <section id="panel" class="panel">
-      <header class="panel-header">
-        <div class="brand">
-          <span class="orb live" aria-hidden="true"><span></span></span>
-          <div><div class="brand-name">MORPHEUS</div><div id="lastUpdated" class="muted">Updating…</div></div>
-        </div>
-        <div class="header-actions"><button id="installPwa" class="ghost small hidden">Install</button></div>
-      </header>
+    <header class="app-header">
+      <button id="homeBrand" class="brand-button" aria-label="Morpheus home">
+        <svg class="brand-mark" viewBox="0 0 32 36" aria-hidden="true"><path d="M3 32V5l13 13L29 5v27" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"/></svg>
+        <span>MORPHEUS<small>GEORGE</small></span>
+      </button>
+      <button id="installPwa" class="ghost small hidden">Install</button>
+    </header>
 
-      <section class="hero">
-        <p id="greeting" class="eyebrow">GOOD MORNING, GEORGE</p>
-        <h1 id="heroTitle">You're up to date.</h1>
-        <p id="heroSubtitle" class="hero-sub">Nothing important is waiting for you.</p>
+    <section id="homeView" class="screen home-screen">
+      <div class="home-copy">
+        <p id="greeting" class="eyebrow">GOOD EVENING, GEORGE</p>
+        <h1 id="homeGreeting">I'm here.</h1>
+        <p id="homeMessage">Everything is moving. Ask me whenever you want the picture.</p>
+      </div>
+
+      <div id="petStage" class="pet-stage" aria-label="Morpheus companion">
+        <div class="pet-status" id="petStatus">All moving normally.</div>
+        <div id="morpheusPet" class="morpheus-pet">
+          <div class="pet-shadow"></div>
+          <div class="pet-aura aura-one"></div>
+          <div class="pet-aura aura-two"></div>
+          <div class="pet-body">
+            <span class="eye left"></span>
+            <span class="eye right"></span>
+            <span class="pet-core">M</span>
+          </div>
+          <div class="pet-floor"></div>
+        </div>
+        <div id="petStateText" class="pet-state-text">Morpheus is awake</div>
+      </div>
+
+      <div class="home-actions">
+        <button id="talkFromHome" class="talk-primary">
+          <span class="talk-dot"></span>
+          <span><strong>Talk to me</strong><small>Ask Morpheus anything</small></span>
+        </button>
+        <button id="briefFromHome" class="brief-secondary">
+          <span class="play-icon">▶</span>
+          <span><strong>Brief me</strong><small id="briefTime">A few minutes</small></span>
+        </button>
+      </div>
+
+      <button id="openBriefing" class="awareness-strip">
+        <span><strong id="homeUpdateCount">0</strong> updates</span>
+        <span class="strip-dot"></span>
+        <span class="needs"><strong id="homeNeedsCount">0</strong> needs you</span>
+        <span class="arrow">→</span>
+      </button>
+    </section>
+
+    <section id="briefingView" class="screen hidden">
+      <div class="screen-heading">
+        <div><p class="eyebrow">YOUR BRIEFING</p><h1>What moved.</h1></div>
+        <span id="lastUpdated" class="muted">Updating…</span>
+      </div>
+
+      <section class="briefing-hero">
+        <div class="briefing-hero-copy">
+          <h2 id="heroTitle">You're up to date.</h2>
+          <p id="heroSubtitle">Nothing important is waiting for you.</p>
+        </div>
         <button id="playBriefing" class="primary big">▶ Play my update</button>
         <div class="hero-stats">
           <button class="stat" data-tab="updates"><strong id="heroUpdateCount">0</strong><span>updates</span></button>
@@ -61,31 +103,50 @@
         </div>
       </section>
 
-      <nav class="tabs" aria-label="Morpheus sections">
+      <nav class="tabs" aria-label="Briefing sections">
         <button class="tab active" data-tab="updates">What changed</button>
         <button class="tab" data-tab="needs">Needs you</button>
         <button class="tab" data-tab="next">What's next</button>
-        <button class="tab" data-tab="ask">Ask</button>
       </nav>
 
-      <section id="updatesView" class="view"></section>
-      <section id="needsView" class="view hidden"></section>
-      <section id="nextView" class="view hidden"></section>
-      <section id="askView" class="view hidden">
-        <div class="ask-card">
-          <p class="eyebrow">ASK MORPHEUS</p><h2>What do you want to know?</h2>
-          <button id="micButton" class="mic-button"><span class="mic-dot"></span><span id="micLabel">Tap to talk</span></button>
-          <div class="ask-row"><input id="askInput" type="text" autocomplete="off" placeholder="What happened with pucks?" /><button id="askSend" class="primary">Ask</button></div>
-          <div class="quick-asks"><button>What needs me?</button><button>What changed today?</button><button>Tell me about Outlaw</button><button>Tell me about pucks</button></div>
-          <div id="answerCard" class="answer-card hidden"><div class="answer-top"><span>MORPHEUS</span><button id="playAnswer" class="ghost small">▶ Listen</button></div><p id="answerText"></p></div>
-        </div>
-      </section>
-
-      <footer class="panel-footer"><button id="notificationsButton" class="ghost">Notifications</button><div><span id="syncState" class="muted">Connected</span> <button id="unpairButton" class="unpair">Unpair</button></div></footer>
+      <section id="updatesView" class="briefing-tab"></section>
+      <section id="needsView" class="briefing-tab hidden"></section>
+      <section id="nextView" class="briefing-tab hidden"></section>
     </section>
+
+    <section id="talkView" class="screen hidden">
+      <div class="screen-heading"><div><p class="eyebrow">TALK TO MORPHEUS</p><h1>Just ask.</h1></div></div>
+      <div class="talk-pet-wrap">
+        <div id="talkPet" class="morpheus-pet talk-pet"><div class="pet-aura aura-one"></div><div class="pet-body"><span class="eye left"></span><span class="eye right"></span><span class="pet-core">M</span></div></div>
+        <p id="talkState">I'm listening when you're ready.</p>
+      </div>
+      <button id="micButton" class="mic-button"><span class="mic-dot"></span><span id="micLabel">Tap to talk</span></button>
+      <div class="ask-row"><input id="askInput" type="text" autocomplete="off" placeholder="What happened with pucks?" /><button id="askSend" class="primary">Ask</button></div>
+      <p id="voiceFallback" class="voice-fallback hidden">Voice recognition is not available in this browser. You can type, or use the iPhone keyboard microphone.</p>
+      <div class="quick-asks"><button>What needs me?</button><button>What changed today?</button><button>Tell me about Outlaw</button><button>Tell me about pucks</button></div>
+      <div id="answerCard" class="answer-card hidden"><div class="answer-top"><span>MORPHEUS</span><button id="playAnswer" class="ghost small">▶ Listen</button></div><p id="answerText"></p></div>
+    </section>
+
+    <section id="historyView" class="screen hidden">
+      <div class="screen-heading"><div><p class="eyebrow">HISTORY</p><h1>What you've heard.</h1></div></div>
+      <div id="historyList" class="history-list"></div>
+    </section>
+
+    <footer class="utility-footer">
+      <span id="syncState" class="muted">Connected</span>
+      <button id="notificationsButton" class="text-button">Notifications</button>
+      <button id="unpairButton" class="text-button">Unpair</button>
+    </footer>
+
+    <nav class="bottom-nav" aria-label="Morpheus navigation">
+      <button class="nav-item active" data-screen="home"><span class="nav-symbol">●</span><span>Home</span></button>
+      <button class="nav-item" data-screen="briefing"><span class="nav-symbol">≡</span><span>Briefing</span><b id="navNeedsBadge" class="nav-badge hidden">0</b></button>
+      <button class="nav-item" data-screen="talk"><span class="nav-symbol">◉</span><span>Talk</span></button>
+      <button class="nav-item" data-screen="history"><span class="nav-symbol">↶</span><span>History</span></button>
+    </nav>
   </main>
 
-  <aside id="player" class="player hidden">
+  <aside id="player" class="player hidden" aria-live="polite">
     <div class="player-row"><div class="player-copy"><span class="eyebrow">MORPHEUS IS SPEAKING</span><strong id="playerTitle">Daily briefing</strong></div><button id="playerPause" class="ghost small">Pause</button><button id="playerStop" class="ghost small">Stop</button></div>
     <div class="speed-row"><span>Speed</span><button data-rate="1" class="speed active">1×</button><button data-rate="1.25" class="speed">1.25×</button><button data-rate="1.5" class="speed">1.5×</button><button data-rate="2" class="speed">2×</button></div>
     <div class="progress"><span id="progressBar"></span></div>
