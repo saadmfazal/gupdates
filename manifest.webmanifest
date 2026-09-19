@@ -1,12 +1,23 @@
 {
+  "id": "/",
   "name": "Morpheus — George",
   "short_name": "Morpheus",
-  "description": "A private business update companion for George.",
-  "start_url": "./?source=pwa",
-  "scope": "./",
+  "description": "Morpheus, George’s private companion.",
+  "start_url": "/?source=pwa",
+  "scope": "/",
   "display": "standalone",
+  "display_override": ["standalone"],
   "orientation": "portrait-primary",
-  "background_color": "#f2f1ed",
-  "theme_color": "#0d0d10",
-  "icons": [{"src":"./icons/morpheus.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}]
+  "background_color": "#07080b",
+  "theme_color": "#07080b",
+  "categories": ["business", "productivity"],
+  "icons": [
+    {"src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+    {"src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+    {"src": "/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ],
+  "shortcuts": [
+    {"name": "Talk to Morpheus", "short_name": "Talk", "url": "/?open=talk", "icons": [{"src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png"}]},
+    {"name": "Brief me", "short_name": "Briefing", "url": "/?open=briefing", "icons": [{"src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png"}]}
+  ]
 }
