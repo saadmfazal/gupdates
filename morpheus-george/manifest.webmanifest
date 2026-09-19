@@ -1,0 +1,12 @@
+{
+  "name": "Morpheus — George",
+  "short_name": "Morpheus",
+  "description": "A private business update companion for George.",
+  "start_url": "./?source=pwa",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#f2f1ed",
+  "theme_color": "#0d0d10",
+  "icons": [{"src":"./icons/morpheus.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}]
+}
