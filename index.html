@@ -1,310 +1,98 @@
-<!DOCTYPE html>
-<html>
+<!doctype html>
+<html lang="en">
 <head>
-  <title>Entry System</title>
-
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#0d0d10" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Morpheus" />
+  <meta name="referrer" content="no-referrer" />
+  <meta name="robots" content="noindex,nofollow" />
+  <title>Morpheus — George</title>
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="icon" href="./icons/morpheus.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="./icons/morpheus.svg" />
+  <link rel="stylesheet" href="./styles.css" />
   <style>
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-      background: #000;
-      color: #fff;
-      padding: 20px;
-      max-width: 900px;
-      margin: auto;
-    }
-
-    h2 { text-align:center; color:#d4af37; }
-
-    .card {
-      background:#111;
-      padding:20px;
-      border-radius:15px;
-      border:1px solid #222;
-      margin-bottom:20px;
-    }
-
-    label { margin-top:12px; display:block; color:#aaa; }
-
-    select,input,textarea {
-      width:100%;
-      padding:10px;
-      border-radius:8px;
-      border:1px solid #222;
-      background:#000;
-      color:#fff;
-    }
-
-    button {
-      margin-top:15px;
-      padding:12px;
-      width:100%;
-      border:none;
-      border-radius:10px;
-      background:red;
-      color:#fff;
-      font-weight:bold;
-      cursor:pointer;
-    }
-
-    table { width:100%; margin-top:15px; border-collapse:collapse; }
-    th,td { padding:8px; border-bottom:1px solid #222; }
-    th { color:#d4af37; }
-
-    #comingSoon { display:none; text-align:center; }
+    .pair-screen{position:fixed;inset:0;z-index:100;background:#0d0d10;color:#fff;display:grid;place-items:center;padding:20px}
+    .pair-card{width:min(440px,100%);background:#15151b;border:1px solid #2a2a33;border-radius:24px;padding:24px;box-shadow:0 25px 70px #0007}
+    .pair-card .orb{margin-bottom:18px}.pair-card h1{font-size:31px;line-height:1.04;margin:0 0 10px}.pair-card p{color:#c7c7cf;font-size:17px}
+    .pair-row{display:grid;grid-template-columns:1fr auto;gap:8px;margin-top:18px}.pair-row input{min-width:0;border:1px solid #34343d;border-radius:13px;background:#0f0f13;color:#fff;padding:14px;font-size:18px;letter-spacing:.04em;text-transform:uppercase}
+    .pair-error{color:#ffb0b6;font-size:14px;min-height:20px;margin-top:8px}.pair-note{font-size:13px!important;color:#858590!important}
+    .unpair{border:0;background:none;color:#8a8a95;font-size:12px;padding:8px}
   </style>
 </head>
-
 <body>
+  <section id="pairScreen" class="pair-screen">
+    <div class="pair-card">
+      <span class="orb live" aria-hidden="true"><span></span></span>
+      <p class="eyebrow">MORPHEUS</p>
+      <h1>George, pair this device.</h1>
+      <p>Enter the private pairing code once. Morpheus will remember this device.</p>
+      <div class="pair-row">
+        <input id="pairCode" autocomplete="one-time-code" autocapitalize="characters" spellcheck="false" placeholder="Pairing code" />
+        <button id="pairButton" class="primary">Pair</button>
+      </div>
+      <div id="pairError" class="pair-error"></div>
+      <p class="pair-note">Your business briefing is not included in the public app shell. It is loaded only after this device is paired.</p>
+    </div>
+  </section>
 
-<h2>Entry System</h2>
+  <main id="app" class="app-shell hidden">
+    <section id="panel" class="panel">
+      <header class="panel-header">
+        <div class="brand">
+          <span class="orb live" aria-hidden="true"><span></span></span>
+          <div><div class="brand-name">MORPHEUS</div><div id="lastUpdated" class="muted">Updating…</div></div>
+        </div>
+        <div class="header-actions"><button id="installPwa" class="ghost small hidden">Install</button></div>
+      </header>
 
-<div class="card">
+      <section class="hero">
+        <p id="greeting" class="eyebrow">GOOD MORNING, GEORGE</p>
+        <h1 id="heroTitle">You're up to date.</h1>
+        <p id="heroSubtitle" class="hero-sub">Nothing important is waiting for you.</p>
+        <button id="playBriefing" class="primary big">▶ Play my update</button>
+        <div class="hero-stats">
+          <button class="stat" data-tab="updates"><strong id="heroUpdateCount">0</strong><span>updates</span></button>
+          <button class="stat urgent" data-tab="needs"><strong id="heroNeedsCount">0</strong><span>needs you</span></button>
+          <button class="stat" data-tab="next"><strong id="heroNextCount">0</strong><span>next</span></button>
+        </div>
+      </section>
 
-<button onclick="refreshData()">🔄 Refresh Questions</button>
+      <nav class="tabs" aria-label="Morpheus sections">
+        <button class="tab active" data-tab="updates">What changed</button>
+        <button class="tab" data-tab="needs">Needs you</button>
+        <button class="tab" data-tab="next">What's next</button>
+        <button class="tab" data-tab="ask">Ask</button>
+      </nav>
 
-<label>Entry Type</label>
-<select id="entryType">
-  <option selected>Update</option>
-  <option>Finance</option>
-  <option>Shipment</option>
-  <option>Client</option>
-</select>
+      <section id="updatesView" class="view"></section>
+      <section id="needsView" class="view hidden"></section>
+      <section id="nextView" class="view hidden"></section>
+      <section id="askView" class="view hidden">
+        <div class="ask-card">
+          <p class="eyebrow">ASK MORPHEUS</p><h2>What do you want to know?</h2>
+          <button id="micButton" class="mic-button"><span class="mic-dot"></span><span id="micLabel">Tap to talk</span></button>
+          <div class="ask-row"><input id="askInput" type="text" autocomplete="off" placeholder="What happened with pucks?" /><button id="askSend" class="primary">Ask</button></div>
+          <div class="quick-asks"><button>What needs me?</button><button>What changed today?</button><button>Tell me about Outlaw</button><button>Tell me about pucks</button></div>
+          <div id="answerCard" class="answer-card hidden"><div class="answer-top"><span>MORPHEUS</span><button id="playAnswer" class="ghost small">▶ Listen</button></div><p id="answerText"></p></div>
+        </div>
+      </section>
 
-<div id="updateSection">
+      <footer class="panel-footer"><button id="notificationsButton" class="ghost">Notifications</button><div><span id="syncState" class="muted">Connected</span> <button id="unpairButton" class="unpair">Unpair</button></div></footer>
+    </section>
+  </main>
 
-<label>Project</label>
-<select id="project"></select>
+  <aside id="player" class="player hidden">
+    <div class="player-row"><div class="player-copy"><span class="eyebrow">MORPHEUS IS SPEAKING</span><strong id="playerTitle">Daily briefing</strong></div><button id="playerPause" class="ghost small">Pause</button><button id="playerStop" class="ghost small">Stop</button></div>
+    <div class="speed-row"><span>Speed</span><button data-rate="1" class="speed active">1×</button><button data-rate="1.25" class="speed">1.25×</button><button data-rate="1.5" class="speed">1.5×</button><button data-rate="2" class="speed">2×</button></div>
+    <div class="progress"><span id="progressBar"></span></div>
+  </aside>
 
-<label>Category</label>
-<select id="category"></select>
+  <div id="installHelp" class="modal hidden"><div class="modal-card"><p class="eyebrow">IPHONE</p><h2>Put Morpheus on your Home Screen</h2><ol><li>Open this page in Safari.</li><li>Tap the Share button.</li><li>Choose <strong>Add to Home Screen</strong>.</li><li>Open <strong>Morpheus</strong> from the new icon.</li></ol><button id="closeInstallHelp" class="primary">Got it</button></div></div>
 
-<label>Sub Category</label>
-<select id="sub"></select>
-
-<div id="formArea"></div>
-
-<button onclick="submitForm()">Submit</button>
-
-</div>
-
-<div id="comingSoon">
-  <h3 style="color:#d4af37;">🚀 Coming Soon</h3>
-</div>
-
-</div>
-
-<div class="card">
-<h3>Entries</h3>
-<table id="dataTable"></table>
-</div>
-
-<script>
-
-const API = "https://script.google.com/macros/s/AKfycbwc25k6tYol745kkedgx19ME4Wl9THf8_sGsWr2p5LqEQ8UAXSYKd1rNjWthRYLsNdv5g/exec";
-
-let rawData = [];
-let formStructure = [];
-let entries = [];
-
-// INIT
-window.onload = loadAll;
-
-function loadAll() {
-  loadQuestions();
-  loadEntries();
-}
-
-// 🔹 LOAD QUESTIONS
-function loadQuestions() {
-  fetch(API,{
-    method:"POST",
-    body:JSON.stringify({action:"getAllQuestions"})
-  })
-  .then(r=>r.json())
-  .then(data=>{
-    rawData = data;
-    loadProjects();
-  });
-}
-
-// 🔹 REFRESH
-function refreshData(){
-  loadQuestions();
-}
-
-// 🔹 PROJECT
-function loadProjects(){
-  let projects=[...new Set(rawData.map(r=>r.project))];
-  fill("project",projects);
-}
-
-// 🔹 CATEGORY
-document.getElementById("project").onchange=function(){
-  let project=this.value;
-
-  let cats=rawData.filter(r=>r.project===project).map(r=>r.category);
-  fill("category",[...new Set(cats)]);
-
-  filterTable();
-};
-
-// 🔹 SUB
-document.getElementById("category").onchange=function(){
-  let project=document.getElementById("project").value;
-  let category=this.value;
-
-  let subs=rawData.filter(r=>r.project===project && r.category===category).map(r=>r.sub);
-  fill("sub",[...new Set(subs)]);
-
-  filterTable();
-};
-
-// 🔹 FIXED PART (THIS WAS BROKEN)
-document.getElementById("sub").onchange=function(){
-
-  let project = document.getElementById("project").value;
-  let category = document.getElementById("category").value;
-  let sub = this.value;
-
-  let row = rawData.find(r =>
-    r.project === project &&
-    r.category === category &&
-    r.sub === sub
-  );
-
-  if(!row){
-    document.getElementById("formArea").innerHTML="";
-    return;
-  }
-
-  buildForm(row.fields);
-  filterTable();
-};
-
-// 🔹 FORM
-function buildForm(fields){
-  let html="";
-
-  fields.forEach((f,i)=>{
-    html+=`<label>${f.label}</label>`;
-
-    if(f.type==="textarea") html+=`<textarea id="f${i}"></textarea>`;
-    else if(f.type==="date") html+=`<input type="date" id="f${i}">`;
-    else if(f.type==="number") html+=`<input type="number" id="f${i}">`;
-    else html+=`<input type="text" id="f${i}">`;
-  });
-
-  document.getElementById("formArea").innerHTML=html;
-  formStructure=fields;
-}
-
-// 🔹 SUBMIT
-function submitForm(){
-
-  let data={
-    action:"saveUpdate",
-    project:document.getElementById("project").value,
-    category:document.getElementById("category").value,
-    subCategory:document.getElementById("sub").value
-  };
-
-  formStructure.forEach((f,i)=>{
-    data[f.key]=document.getElementById("f"+i).value;
-  });
-
-  let fd=new URLSearchParams();
-  fd.append("data",JSON.stringify(data));
-
-  fetch(API,{
-    method:"POST",
-    mode:"no-cors",
-    body:fd
-  }).then(()=>{
-    alert("Saved");
-    loadEntries();
-  });
-}
-
-// 🔹 LOAD ENTRIES
-function loadEntries(){
-  fetch(API,{
-    method:"POST",
-    body:JSON.stringify({action:"getEntries"})
-  })
-  .then(r=>r.json())
-  .then(data=>{
-    entries=data;
-    render(entries);
-  });
-}
-
-// 🔹 FILTER TABLE
-function filterTable(){
-
-  let p = document.getElementById("project").value;
-  let c = document.getElementById("category").value;
-  let s = document.getElementById("sub").value;
-
-  let filtered = entries.filter(e =>
-    (!p || e["Project"] === p) &&
-    (!c || e["Category"] === c) &&
-    (!s || e["Sub Category"] === s)
-  );
-
-  render(filtered);
-}
-
-// 🔹 RENDER TABLE
-function render(data){
-
-  if(data.length === 0){
-    document.getElementById("dataTable").innerHTML = "<tr><td>No entries</td></tr>";
-    return;
-  }
-
-  let headers = Object.keys(data[0]);
-
-  let html = "<tr>";
-
-  headers.forEach(h => {
-    html += `<th>${h}</th>`;
-  });
-
-  html += "</tr>";
-
-  data.forEach(row => {
-    html += "<tr>";
-
-    headers.forEach(h => {
-      let val = row[h] || "";
-      html += `<td>${val}</td>`;
-    });
-
-    html += "</tr>";
-  });
-
-  document.getElementById("dataTable").innerHTML = html;
-}
-
-// 🔹 ENTRY TYPE
-document.getElementById("entryType").onchange=function(){
-  if(this.value==="Update"){
-    updateSection.style.display="block";
-    comingSoon.style.display="none";
-  }else{
-    updateSection.style.display="none";
-    comingSoon.style.display="block";
-  }
-};
-
-// 🔹 UTIL
-function fill(id,list){
-  let html="<option value=''>Select</option>";
-  list.forEach(i=>html+=`<option>${i}</option>`);
-  document.getElementById(id).innerHTML=html;
-}
-
-</script>
-
+  <script src="./pwa.js" defer></script>
 </body>
 </html>
