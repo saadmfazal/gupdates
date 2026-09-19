@@ -1,9 +1,9 @@
-const VERSION = "morpheus-george-shell-7";
+const VERSION = "morpheus-george-shell-8";
 const SHELL = [
   "/",
   "/index.html",
   "/app-7.css",
-  "/app-7.js",
+  "/app-8.js",
   "/manifest.webmanifest",
   "/icons/icon-180.png",
   "/icons/icon-192.png",

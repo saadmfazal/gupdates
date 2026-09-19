@@ -14,7 +14,7 @@ function ensureDevice(){if(!state.device){state.device=uuid();localStorage.setIt
 async function pair(code){const data=await api("POST",{action:"pair",code,deviceId:ensureDevice()});state.session=data.token;localStorage.setItem("morpheus:session",data.token);localStorage.removeItem("morpheus:pair");await loadBriefing();showApp();toast("This device is paired")}
 async function migrateLegacyPair(){const old=localStorage.getItem("morpheus:pair");if(!old||state.session)return false;try{await pair(old);return true}catch{localStorage.removeItem("morpheus:pair");return false}}
 async function loadBriefing(){const data=await api();state.briefing=data;state.topicState=data.topicState||{};renderAll();return data}
-function showPair(message=""){stopSpeech();$("#app").classList.add("hidden");$("#pairScreen").classList.remove("hidden");$("#pairError").textContent=message;document.documentElement.classList.remove("compact-mode")}
+function showPair(message=""){stopSpeech();$("#app").classList.add("hidden");$("#pairScreen").classList.remove("hidden");$("#pairError").textContent=message;document.documentElement.classList.remove("compact-mode");if(state.isTauri)nativeInvoke("expand_companion")}
 function showApp(){$("#pairScreen").classList.add("hidden");$("#app").classList.remove("hidden");if(state.isTauri){document.documentElement.classList.add("compact-mode");nativeInvoke("collapse_companion")}else{const target=new URLSearchParams(location.search).get("open");if(["talk","briefing","history"].includes(target))switchView(target)}}
 function topicStatus(id){return state.topicState[id]?.status||"unread"}
 function updates(){return state.briefing?.updates||[]}
