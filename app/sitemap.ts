@@ -1,0 +1,2 @@
+import {ORIGIN,products} from '@/lib/apex';
+export default function sitemap(){return ['/','/shop','/custom-pucks','/team-orders','/manufacturing','/puckquest','/faq','/contact','/support/shipping','/support/returns','/support/privacy','/support/terms',...products.map(p=>`/products/${p.handle}`)].map(path=>({url:ORIGIN+(path==='/'?'':path),changeFrequency:'weekly' as const,priority:path==='/'?1:path.startsWith('/products')?.9:.7}))}

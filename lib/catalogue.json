@@ -1,0 +1,111 @@
+[
+  {
+    "id": 7442886066310,
+    "handle": "apex-puckquest-e1",
+    "title": "APEX PUCKQUEST - E1",
+    "images": [
+      "https://cdn.shopify.com/s/files/1/0549/7683/9814/files/image_5.png?v=1754478177",
+      "https://cdn.shopify.com/s/files/1/0549/7683/9814/files/image_6.png?v=1754478176",
+      "https://cdn.shopify.com/s/files/1/0549/7683/9814/files/ApexPro_Official_ce741315-739b-472f-8de8-5a9e757cf9c6.png?v=1708103362",
+      "https://cdn.shopify.com/s/files/1/0549/7683/9814/files/ApexPro_fbdc4dc8-c733-4ec7-87b3-a47a635d1b99.png?v=1708103464"
+    ],
+    "variants": [
+      {
+        "id": "42365760340102",
+        "title": "League Pack",
+        "price": 15.0,
+        "available": true
+      },
+      {
+        "id": "42365760372870",
+        "title": "Conference Pack - Eastern",
+        "price": 20.0,
+        "available": true
+      },
+      {
+        "id": "42365760405638",
+        "title": "Conference Pack - Western",
+        "price": 20.0,
+        "available": true
+      },
+      {
+        "id": "42365760438406",
+        "title": "Division Pack- Atlantic",
+        "price": 15.0,
+        "available": true
+      },
+      {
+        "id": "42365760471174",
+        "title": "Division Pack - Metro",
+        "price": 15.0,
+        "available": true
+      },
+      {
+        "id": "42365760503942",
+        "title": "Division Pack - Pacific",
+        "price": 15.0,
+        "available": true
+      },
+      {
+        "id": "42365760536710",
+        "title": "Division Pack - Central",
+        "price": 15.0,
+        "available": true
+      }
+    ]
+  },
+  {
+    "id": 7406619984006,
+    "handle": "apex-pro-markless-ice-hockey-pucks",
+    "title": "APEX PRO Markless Ice Hockey Pucks",
+    "images": [
+      "https://cdn.shopify.com/s/files/1/0549/7683/9814/files/ApexPro_4ae3cc21-1797-4408-9141-1a6b326d51ec.png?v=1708103693",
+      "https://cdn.shopify.com/s/files/1/0549/7683/9814/files/ApexPro_Official_f57a49b6-4ba3-40d0-ba71-19537d37fb36.png?v=1708103693",
+      "https://cdn.shopify.com/s/files/1/0549/7683/9814/files/ApexPro_Emblem_41e20ddd-b6a7-47ba-a7f0-afed358876fe.png?v=1708103693"
+    ],
+    "variants": [
+      {
+        "id": "42084570497158",
+        "title": "50",
+        "price": 65.0,
+        "available": false
+      },
+      {
+        "id": "42084570529926",
+        "title": "100",
+        "price": 125.0,
+        "available": false
+      }
+    ]
+  },
+  {
+    "id": 6988333711494,
+    "handle": "apex-practice-pucks",
+    "title": "APEX Ice Hockey Game Pucks",
+    "images": [
+      "https://cdn.shopify.com/s/files/1/0549/7683/9814/files/Apex.png?v=1708102187",
+      "https://cdn.shopify.com/s/files/1/0549/7683/9814/files/ApexPro_Official.png?v=1708102214",
+      "https://cdn.shopify.com/s/files/1/0549/7683/9814/files/ApexPro_Emblem.png?v=1708102226"
+    ],
+    "variants": [
+      {
+        "id": "40496445849734",
+        "title": "12",
+        "price": 20.0,
+        "available": true
+      },
+      {
+        "id": "40496445882502",
+        "title": "50",
+        "price": 48.0,
+        "available": true
+      },
+      {
+        "id": "40496445915270",
+        "title": "100",
+        "price": 93.0,
+        "available": true
+      }
+    ]
+  }
+]

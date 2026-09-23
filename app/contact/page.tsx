@@ -1,0 +1,6 @@
+import {QuoteForm} from '../components/ordering';
+import {EMAIL} from '@/lib/apex';
+import {Mail,MapPin,ArrowUpRight} from 'lucide-react';
+import Link from '@/app/components/link';
+export const metadata={title:'Contact Apex & Request a Quote',description:'Contact Apex Hockey Pucks in Deer Park, New York. Prepare a custom puck, bulk order, free sample or order support inquiry for the Apex team.',alternates:{canonical:'/contact'}};
+export default function Page(){return <main id="main" className="section contact-page"><div className="contact-copy"><p className="eyebrow">DIRECT TO APEX</p><h1>LET’S<br/><em>TALK PUCKS.</em></h1><p>One team. A whole league. Your next custom run.<br/>Tell us what you have in mind.</p><div className="contact-detail"><Mail size={19}/><div><span>EMAIL APEX</span><a href={`mailto:${EMAIL}`}>{EMAIL}</a></div></div><div className="contact-detail"><MapPin size={19}/><div><span>APEX HOCKEY PUCKS INC.</span><p>820 Grand Blvd.<br/>Deer Park, NY 11729, USA</p></div></div><div className="contact-help"><h3>Already placed an order?</h3><p>Include your order number and checkout email so Apex can find it.</p><Link href="/faq" className="text-link">Visit the help center <ArrowUpRight size={17}/></Link></div></div><QuoteForm/></main>}

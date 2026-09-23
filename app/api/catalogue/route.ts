@@ -1,0 +1,3 @@
+import {NextResponse} from 'next/server';
+import {parseCatalogue} from '@/lib/live';
+export async function GET(){try{const r=await fetch('https://apexhockeypucks.com/products.json',{signal:AbortSignal.timeout(5000),headers:{Accept:'application/json'}});if(!r.ok)throw Error('Catalogue unavailable');const d=parseCatalogue(await r.json());if(!d)throw Error('Invalid catalogue');return NextResponse.json(d,{headers:{'Cache-Control':'public, max-age=60, s-maxage=60'}});}catch{return NextResponse.json({error:'Live inventory is temporarily unavailable. Final availability is confirmed at Apex checkout.'},{status:503});}}
