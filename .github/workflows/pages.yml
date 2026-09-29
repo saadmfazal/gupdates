@@ -7,6 +7,7 @@ on:
       - "morpheus-george/**"
       - "apex/**"
       - "sales-os/**"
+      - "sales-os-v2/**"
       - ".github/workflows/pages.yml"
   workflow_dispatch:
 
