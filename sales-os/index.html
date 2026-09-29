@@ -40,6 +40,13 @@ table{width:100%;border-collapse:collapse;min-width:1080px}th{position:sticky;to
 .login{min-height:100vh;display:grid;place-items:center;padding:24px}.login-card{width:min(500px,100%);background:#101410;border:1px solid var(--line);border-radius:24px;padding:25px;box-shadow:var(--shadow)}.login-card h1{font-size:42px;letter-spacing:-.05em;margin:15px 0 9px}.login-card p{color:var(--muted);line-height:1.5}.error{color:#ff9d9d;font-size:12px;margin-top:9px}.notice{padding:10px;border:1px solid #5a4823;background:#1a160e;border-radius:12px;color:#f5d996;font-size:11px;line-height:1.5}
 .mobilecards{display:none}.empty{padding:55px 20px;text-align:center;color:var(--muted)}
 .toast{position:fixed;right:18px;bottom:18px;z-index:80;background:#f3f7ef;color:#101410;padding:11px 14px;border-radius:12px;font-size:12px;font-weight:800;box-shadow:var(--shadow)}
+.import-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(300px,.8fr);gap:14px}
+.promptbox{background:#0b0e0c;border:1px solid #2c342d;border-radius:14px;padding:12px}
+.promptbox h3{margin:0 0 7px;font-size:13px}.promptbox p{margin:0 0 9px;color:var(--muted);font-size:11px;line-height:1.45}
+.codehead{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10px;color:#a8b1a8;line-height:1.45;word-break:break-all;background:#101410;border:1px solid #252c26;border-radius:9px;padding:8px}
+.import-preview{max-height:330px;overflow:auto;border:1px solid var(--line);border-radius:12px;margin-top:10px}.import-preview table{min-width:900px}.import-preview th{top:0}
+.category-list{display:grid;gap:8px;margin-top:12px}.category-row{display:flex;justify-content:space-between;gap:10px;align-items:center;background:#121612;border:1px solid #252c26;border-radius:12px;padding:10px}.category-row b{display:block}.category-row small{color:var(--muted)}
+@media(max-width:780px){.import-layout{grid-template-columns:1fr}}
 @media(max-width:1100px){.stats{grid-template-columns:repeat(3,1fr)}.workspace{grid-template-columns:220px minmax(0,1fr)}}
 @media(max-width:780px){
  .shell{padding:12px}.topbar{top:0}.brand small{display:none}.hero{grid-template-columns:1fr}.sync{text-align:left}
@@ -70,6 +77,8 @@ table{width:100%;border-collapse:collapse;min-width:1080px}th{position:sticky;to
     <div class="actions">
       <button class="btn" id="refreshBtn">↻ Sync</button>
       <button class="btn" id="addProspectBtn">+ Prospect</button>
+      <button class="btn" id="manageCategoriesBtn">Categories</button>
+      <button class="btn primary" id="importCsvBtn">Import CSV</button>
       <button class="btn ghost" id="exportBtn">Export CSV</button>
       <button class="btn ghost" id="lockBtn">Lock</button>
     </div>
@@ -139,7 +148,8 @@ table{width:100%;border-collapse:collapse;min-width:1080px}th{position:sticky;to
   <div class="drawer-head"><div><div id="dEyebrow" class="eyebrow"></div><h2 id="dCompany"></h2><div id="dTags"></div></div><button id="closeDrawer" class="close">×</button></div>
   <div class="section"><h3>Account</h3><div id="dInfo" class="grid2"></div></div>
   <div class="section"><h3>Pipeline control</h3>
-    <div class="grid3">
+    <div class="grid2">
+      <div class="field"><label>Category</label><select id="dCategory" class="select"></select></div>
       <div class="field"><label>Stage</label><select id="dStage" class="select"></select></div>
       <div class="field"><label>Owner</label><input id="dOwner" class="input"></div>
       <div class="field"><label>Priority</label><input id="dPriority" class="input"></div>
@@ -184,7 +194,7 @@ table{width:100%;border-collapse:collapse;min-width:1080px}th{position:sticky;to
   <div class="modal-top"><h2>Add prospect</h2><button class="close" data-close="prospectModal">×</button></div>
   <div class="grid2">
     <div class="field"><label>Company</label><input id="pCompany" class="input"></div>
-    <div class="field"><label>Category</label><input id="pCategory" class="input" placeholder="Aquanix / Tin Tech / Website…"></div>
+    <div class="field"><label>Category</label><select id="pCategory" class="select"></select></div>
     <div class="field"><label>Segment</label><input id="pSegment" class="input"></div>
     <div class="field"><label>Location</label><input id="pLocation" class="input"></div>
     <div class="field"><label>Website</label><input id="pWebsite" class="input"></div>
@@ -206,13 +216,57 @@ table{width:100%;border-collapse:collapse;min-width:1080px}th{position:sticky;to
   <div class="field" style="margin-top:8px"><label>Notes</label><textarea id="aNotes" class="textarea" rows="3"></textarea></div>
   <button id="createAsset" class="btn primary" style="margin-top:12px">Add asset</button>
 </div></div>
+
+<div id="categoryModal" class="modal hidden"><div class="modal-card">
+  <div class="modal-top"><div><div class="eyebrow">Markets / categories</div><h2>Category Manager</h2></div><button class="close" data-close="categoryModal">×</button></div>
+  <p class="hint">Add categories whenever the sales direction expands — for example Fish Food · Retail, Fish Food · Distributor, Dog Food, Packaging, Website Reimagination or any new market you decide to pursue.</p>
+  <div class="grid2">
+    <div class="field"><label>Category name</label><input id="catName" class="input" placeholder="e.g. Dog Food · Independent Retail"></div>
+    <div class="field"><label>Description</label><input id="catDescription" class="input" placeholder="Optional internal description"></div>
+  </div>
+  <div class="compose-actions"><button id="createCategory" class="btn primary">Add category</button></div>
+  <div id="categoryList" class="category-list"></div>
+</div></div>
+
+<div id="importModal" class="modal hidden"><div class="modal-card" style="width:min(1180px,100%)">
+  <div class="modal-top"><div><div class="eyebrow">ChatGPT → CSV → Sales OS</div><h2>Import prospects</h2></div><button class="close" data-close="importModal">×</button></div>
+  <div class="import-layout">
+    <div>
+      <div class="grid2">
+        <div class="field"><label>Default category</label><select id="importCategory" class="select"></select></div>
+        <div class="field"><label>Default owner</label><input id="importOwner" class="input" value="Yazeed"></div>
+        <div class="field"><label>Import mode</label><select id="importMode" class="select"><option value="smart">Smart merge — recommended</option><option value="overwrite">Update existing with nonblank CSV values</option><option value="new_only">New companies only — skip duplicates</option></select></div>
+        <div class="field"><label>Default sender</label><input id="importSender" class="input" value="Robert Gibbons"></div>
+        <div class="field"><label>Default sender email</label><input id="importSenderEmail" class="input" value="robert@morpheuspd.io"></div>
+      </div>
+      <div class="field" style="margin-top:10px"><label>Upload CSV</label><input id="csvFile" class="input" type="file" accept=".csv,text/csv"></div>
+      <div class="field" style="margin-top:8px"><label>Or paste CSV text</label><textarea id="csvPaste" class="textarea" rows="7" placeholder="Paste CSV here if you do not want to upload a file."></textarea></div>
+      <div class="compose-actions">
+        <button id="previewCsv" class="btn">Preview CSV</button>
+        <button id="downloadCsvTemplate" class="btn">Download blank template</button>
+      </div>
+      <div id="importSummary" class="hint" style="margin-top:10px"></div>
+      <div id="importPreview" class="import-preview hidden"></div>
+      <button id="runCsvImport" class="btn primary hidden" style="margin-top:12px">Import into Sales OS</button>
+    </div>
+    <aside class="promptbox">
+      <h3>Prompt for any ChatGPT prospect-research chat</h3>
+      <p>Choose the category on the left, then copy this. It tells ChatGPT the exact database-friendly CSV format. It also works after a research chat is already finished: paste it and ask ChatGPT to convert every prospect already found.</p>
+      <textarea id="importPrompt" class="textarea" rows="22" readonly></textarea>
+      <div class="compose-actions"><button id="copyImportPrompt" class="btn primary">Copy ChatGPT prompt</button></div>
+      <p style="margin-top:12px">Exact supported CSV columns:</p>
+      <div id="csvHeaders" class="codehead"></div>
+    </aside>
+  </div>
+</div></div>
+
 <div id="toast" class="toast hidden"></div>
 
 <script>
 const API='https://viajmvbwpmkiqxjtgshv.supabase.co/rest/v1/rpc/';
 const APIKEY='sb_publishable_gGFZftPonWKNZCdvUSM3yQ_gZvyI6_H';
 const STAGES=['Research','Asset ready','Ready to contact','Contacted','Follow-up','Replied','Qualified','Meeting','Proposal','Negotiation','Won','Lost','Hold'];
-let token='', data={prospects:[],assets:[],activities:[],templates:[]}, selected=null, queue='all', view='list';
+let token='', data={prospects:[],assets:[],activities:[],templates:[],categories:[]}, selected=null, queue='all', view='list', importRows=[];
 
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 function esc(s=''){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
@@ -227,7 +281,7 @@ async function verify(code){return await rpc('sales_os_verify',{p_token:code})}
 async function load(){
   $('#syncText').textContent='Syncing…';
   data=await rpc('sales_os_snapshot',{p_token:token});
-  data.prospects=data.prospects||[];data.assets=data.assets||[];data.activities=data.activities||[];data.templates=data.templates||[];
+  data.prospects=data.prospects||[];data.assets=data.assets||[];data.activities=data.activities||[];data.templates=data.templates||[];data.categories=data.categories||[];
   $('#syncText').textContent='Synced '+new Date(data.synced_at||Date.now()).toLocaleString();
   fillFilters(); render(); if(selected){selected=data.prospects.find(p=>p.id===selected.id)||null;if(selected)openDrawer(selected.id)}
 }
@@ -237,13 +291,22 @@ function hasContacted(p,acts){return acts.some(a=>['Sent','Call','Meeting','Repl
 function isEngaged(p,acts){return acts.some(a=>a.activity_type==='Reply')||['Replied','Qualified','Meeting','Proposal','Negotiation','Won'].includes(p.stage)}
 function isHold(p){return /hold|do not|reserve|lost/i.test((p.stage||'')+' '+(p.status||''))}
 function due(p){return p.next_action_date&&p.next_action_date<=today()&&!['Won','Lost','Hold'].includes(p.stage)}
+function categoryNames(){
+ return [...new Set([...(data.categories||[]).filter(c=>c.active!==false).map(c=>c.name),...data.prospects.map(p=>p.category).filter(Boolean)])].sort((a,b)=>a.localeCompare(b));
+}
+function categoryOptions(includeBlank=false){
+ return (includeBlank?'<option value="">Use CSV category / General</option>':'')+categoryNames().map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join('');
+}
 function fillFilters(){
- const cats=[...new Set(data.prospects.map(p=>p.category).filter(Boolean))].sort(); const owners=[...new Set(data.prospects.map(p=>p.owner_assigned).filter(Boolean))].sort();
+ const cats=categoryNames(); const owners=[...new Set(data.prospects.map(p=>p.owner_assigned).filter(Boolean))].sort();
  const cat=$('#catFilter').value, owner=$('#ownerFilter').value, stage=$('#stageFilter').value;
- $('#catFilter').innerHTML='<option value="">All categories</option>'+cats.map(x=>`<option>${esc(x)}</option>`).join('');
+ $('#catFilter').innerHTML='<option value="">All categories</option>'+cats.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join('');
  $('#ownerFilter').innerHTML='<option value="">Everyone</option>'+owners.map(x=>`<option>${esc(x)}</option>`).join('');
  $('#stageFilter').innerHTML='<option value="">All stages</option>'+STAGES.map(x=>`<option>${x}</option>`).join('');
+ $('#pCategory').innerHTML=categoryOptions(false)||'<option>General</option>';
+ $('#importCategory').innerHTML=categoryOptions(true);
  $('#catFilter').value=cat;$('#ownerFilter').value=owner;$('#stageFilter').value=stage;
+ updateImportPrompt();
 }
 function filtered(){
  const q=$('#search').value.trim().toLowerCase(), cat=$('#catFilter').value, st=$('#stageFilter').value, ow=$('#ownerFilter').value, pr=$('#priorityFilter').value;
@@ -292,6 +355,7 @@ window.openDrawer=function(id){
  selected=data.prospects.find(p=>p.id===id);if(!selected)return;const p=selected, as=data.assets.filter(a=>a.prospect_id===id), acts=data.activities.filter(a=>a.prospect_id===id).sort((a,b)=>new Date(b.occurred_at)-new Date(a.occurred_at));
  $('#dEyebrow').textContent=p.category||'Prospect';$('#dCompany').textContent=p.company;$('#dTags').innerHTML=(p.tags||[]).map(x=>`<span class="pill">${esc(x)}</span>`).join('');
  $('#dInfo').innerHTML=info('Segment',p.segment)+info('Location',p.location)+info('Website',p.website,p.website)+info('Contact',p.contact_name)+info('Email',p.contact_email,p.contact_email?'mailto:'+p.contact_email:null)+info('Phone',p.phone)+info('Source',(p.source_groups||[]).join(', '))+info('Caution',p.caution);
+ $('#dCategory').innerHTML=categoryOptions(false)||'<option>General</option>';if(p.category&&!categoryNames().includes(p.category))$('#dCategory').insertAdjacentHTML('beforeend',`<option value="${esc(p.category)}">${esc(p.category)}</option>`);$('#dCategory').value=p.category||'General';
  $('#dStage').innerHTML=STAGES.map(x=>`<option>${x}</option>`).join('');$('#dStage').value=STAGES.includes(p.stage)?p.stage:'Research';$('#dOwner').value=p.owner_assigned||'';$('#dPriority').value=p.priority||'';$('#dNextAction').value=p.next_action||'';$('#dNextDate').value=p.next_action_date||'';
  $('#dAssets').innerHTML=as.length?as.map(a=>`<div class="asset"><div><b>${esc(a.title)}</b><div class="sub">${esc(a.asset_type)} · ${esc(a.status)}</div></div>${a.url?`<a href="${esc(a.url)}" target="_blank">Open ↗</a>`:''}</div>`).join(''):'<div class="hint">Nothing linked yet.</div>';
  $('#templateSelect').innerHTML='<option value="">Start blank</option>'+data.templates.map(t=>`<option value="${t.id}">${esc(t.name)}</option>`).join('');
@@ -308,7 +372,7 @@ function applyTemplate(){
  $('#cSender').value=t.sender_name||$('#cSender').value;$('#cSenderEmail').value=t.sender_email||$('#cSenderEmail').value;$('#cSubject').value=repl(t.subject_template);$('#cBody').value=repl(t.body_template);
 }
 async function savePipeline(){
- if(!selected)return;await rpc('sales_os_save_prospect',{p_token:token,p_payload:{id:selected.id,stage:$('#dStage').value,owner_assigned:$('#dOwner').value,priority:$('#dPriority').value,next_action:$('#dNextAction').value,next_action_date:$('#dNextDate').value}});toast('Pipeline updated');await load();
+ if(!selected)return;await rpc('sales_os_save_prospect',{p_token:token,p_payload:{id:selected.id,category:$('#dCategory').value,stage:$('#dStage').value,owner_assigned:$('#dOwner').value,priority:$('#dPriority').value,next_action:$('#dNextAction').value,next_action_date:$('#dNextDate').value}});toast('Pipeline updated');await load();
 }
 async function logCompose(type){
  if(!selected)return;const follow=$('#cFollowDate').value;const payload={prospect_id:selected.id,activity_type:type,channel:$('#cChannel').value,direction:'Outbound',subject:$('#cSubject').value,message:$('#cBody').value,actor_name:$('#cSender').value,actor_email:$('#cSenderEmail').value,recipient:$('#cRecipient').value,occurred_at:new Date().toISOString(),outcome:type==='Sent'?'Sent / awaiting reply':'Draft saved',follow_up_date:type==='Sent'?follow:null,source:'Morpheus Sales OS',set_stage:type==='Sent'?'Follow-up':selected.stage,set_status:type==='Sent'?'Contacted':'Draft',next_action:type==='Sent'?'Follow up if no reply':selected.next_action};
@@ -323,6 +387,109 @@ async function createProspect(){
 async function createAsset(){
  if(!selected)return;await rpc('sales_os_save_asset',{p_token:token,p_payload:{prospect_id:selected.id,asset_type:$('#aType').value,title:$('#aTitle').value||'Linked asset',url:$('#aUrl').value,status:$('#aStatus').value,notes:$('#aNotes').value}});$('#assetModal').classList.add('hidden');toast('Asset linked');await load();
 }
+
+const CSV_COLUMNS=['company','category','segment','location','website','contact_name','contact_role','contact_email','phone','priority','score','owner_assigned','sender_name','sender_email','stage','status','next_action','next_action_date','caution','notes','tags','source_groups','source_notes','asset_type','asset_title','asset_url','asset_status','outreach_subject','outreach_message'];
+const HEADER_ALIASES={
+ 'company name':'company','business':'company','business name':'company','prospect':'company',
+ 'market':'category','industry':'category','type':'segment','city':'location','state':'location',
+ 'url':'website','site':'website','contact':'contact_name','contact person':'contact_name','decision maker':'contact_name',
+ 'role':'contact_role','title':'contact_role','email':'contact_email','e-mail':'contact_email','telephone':'phone',
+ 'owner':'owner_assigned','assigned to':'owner_assigned','sender':'sender_name','from':'sender_name',
+ 'follow up':'next_action','follow-up':'next_action','follow up date':'next_action_date','follow-up date':'next_action_date',
+ 'source':'source_groups','sources':'source_notes','source urls':'source_notes','asset':'asset_title','asset link':'asset_url',
+ 'subject':'outreach_subject','message':'outreach_message','draft subject':'outreach_subject','draft message':'outreach_message'
+};
+function cleanHeader(x){return String(x||'').replace(/^\uFEFF/,'').trim().toLowerCase().replace(/[\/\-]+/g,' ').replace(/[^a-z0-9 ]+/g,' ').replace(/\s+/g,' ').trim()}
+function canonicalHeader(x){const n=cleanHeader(x);return HEADER_ALIASES[n]||n.replaceAll(' ','_')}
+function parseCSV(text){
+ text=String(text||'').replace(/^\uFEFF/,'');const rows=[];let row=[],cell='',quoted=false;
+ for(let i=0;i<text.length;i++){const ch=text[i];
+   if(quoted){if(ch==='"'&&text[i+1]==='"'){cell+='"';i++}else if(ch==='"'){quoted=false}else cell+=ch}
+   else if(ch==='"'){quoted=true}
+   else if(ch===','){row.push(cell);cell=''}
+   else if(ch==='\n'){row.push(cell);rows.push(row);row=[];cell=''}
+   else if(ch==='\r'){}
+   else cell+=ch
+ }
+ if(cell.length||row.length){row.push(cell);rows.push(row)}
+ if(!rows.length)return[];
+ const headers=rows.shift().map(canonicalHeader);
+ return rows.filter(r=>r.some(c=>String(c).trim())).map(r=>{const o={};headers.forEach((k,i)=>{if(k)o[k]=String(r[i]??'').trim()});return o});
+}
+function normalizeImportRow(r){
+ const o={};CSV_COLUMNS.forEach(k=>{if(r[k]!==undefined)o[k]=r[k]});
+ for(const k of ['tags','source_groups','source_notes'])o[k]=String(r[k]||'').split(/[|;]/).map(x=>x.trim()).filter(Boolean);
+ if(o.score&&isNaN(Number(o.score)))o.score='';
+ return o;
+}
+function updateImportPrompt(){
+ const category=$('#importCategory')?.value||'[CATEGORY NAME]';
+ const catText=category||'[CATEGORY NAME]';
+ const prompt=`I am building a prospect list for Morpheus Sales OS.
+
+Use EVERY relevant prospect/contact already identified in this chat, plus any new research I explicitly request, and convert the final list into a UTF-8 CSV file that I can download and import directly.
+
+DEFAULT CATEGORY: ${catText}
+
+Use EXACTLY this CSV header, in exactly this order:
+${CSV_COLUMNS.join(',')}
+
+RULES:
+1. One company per row. company is required. Deduplicate companies.
+2. Use category "${catText}" unless I explicitly ask for multiple categories. If a row does not fit, use the best accurate category rather than inventing one.
+3. Use only public business information. Never invent names, emails, phone numbers, roles, locations, URLs, scores or claims. If something is not verified, leave the cell blank.
+4. website and asset_url must be full https:// URLs when known.
+5. priority should only be A+, A, B or C. score should be numeric 0-100 if there is a defensible score; otherwise leave blank.
+6. owner_assigned should default to Yazeed unless I tell you otherwise.
+7. stage should default to Research. status should default to Not started.
+8. sender_name and sender_email may be left blank unless a sender is already decided.
+9. tags, source_groups and source_notes must use | between multiple values inside one CSV cell. Put source URLs in source_notes where useful.
+10. If we already built something for the company, optionally fill asset_type, asset_title, asset_url and asset_status. Do not invent an asset.
+11. outreach_subject and outreach_message are OPTIONAL draft fields only. Never mark or imply an email was sent unless the chat contains evidence that it was actually sent.
+12. Keep notes and caution concise and factual. Put important qualification risks in caution.
+13. next_action should be a concrete next step. next_action_date must be YYYY-MM-DD or blank.
+14. Do not output a markdown table or code fence. Create/download a .csv file using the exact headers above.
+15. Before finalizing, check that every row has a company name and that commas/newlines inside fields are correctly CSV-quoted.`;
+ if($('#importPrompt'))$('#importPrompt').value=prompt;
+ if($('#csvHeaders'))$('#csvHeaders').textContent=CSV_COLUMNS.join(',');
+}
+async function openImportModal(){
+ $('#importModal').classList.remove('hidden');importRows=[];$('#importPreview').classList.add('hidden');$('#runCsvImport').classList.add('hidden');$('#importSummary').textContent='';updateImportPrompt();
+}
+function renderImportPreview(){
+ const rows=importRows;const preview=rows.slice(0,10);const cols=['company','category','location','contact_name','contact_email','priority','asset_url'];
+ $('#importSummary').textContent=`${rows.length} valid prospect row${rows.length===1?'':'s'} ready. Previewing the first ${Math.min(10,rows.length)}.`;
+ $('#importPreview').innerHTML='<table><thead><tr>'+cols.map(c=>`<th>${esc(c)}</th>`).join('')+'</tr></thead><tbody>'+preview.map(r=>'<tr>'+cols.map(c=>`<td>${esc(Array.isArray(r[c])?r[c].join(' | '):(r[c]||''))}</td>`).join('')+'</tr>').join('')+'</tbody></table>';
+ $('#importPreview').classList.toggle('hidden',!rows.length);$('#runCsvImport').classList.toggle('hidden',!rows.length);$('#runCsvImport').textContent=rows.length?`Import ${rows.length} prospect${rows.length===1?'':'s'}`:'Import';
+}
+function previewCsvText(){
+ const raw=$('#csvPaste').value;if(!raw.trim()){toast('Upload or paste a CSV first');return}
+ const parsed=parseCSV(raw);const missing=parsed.filter(r=>!String(r.company||'').trim()).length;
+ importRows=parsed.filter(r=>String(r.company||'').trim()).map(normalizeImportRow);
+ renderImportPreview();if(missing)$('#importSummary').textContent+=` ${missing} row${missing===1?'':'s'} without company were skipped.`;
+}
+async function runCsvImport(){
+ if(!importRows.length)return;
+ const defaults={category:$('#importCategory').value,owner_assigned:$('#importOwner').value||'Yazeed',sender_name:$('#importSender').value,sender_email:$('#importSenderEmail').value,stage:'Research',status:'Not started'};
+ const result=await rpc('sales_os_bulk_import',{p_token:token,p_rows:importRows,p_mode:$('#importMode').value,p_defaults:defaults});
+ toast(`Imported: ${result.inserted||0} new · ${result.updated||0} merged · ${result.skipped||0} skipped`);
+ $('#importModal').classList.add('hidden');$('#csvPaste').value='';$('#csvFile').value='';importRows=[];await load();
+}
+function downloadCsvTemplate(){
+ const csv=CSV_COLUMNS.join(',')+'\n';const b=new Blob([csv],{type:'text/csv;charset=utf-8'}),u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download='morpheus-sales-os-import-template.csv';a.click();URL.revokeObjectURL(u);
+}
+async function copyImportPrompt(){updateImportPrompt();await navigator.clipboard.writeText($('#importPrompt').value);toast('ChatGPT import prompt copied')}
+function renderCategories(){
+ const counts={};data.prospects.forEach(p=>counts[p.category]=(counts[p.category]||0)+1);
+ $('#categoryList').innerHTML=(data.categories||[]).map(c=>`<div class="category-row"><div><b>${esc(c.name)}</b><small>${esc(c.description||'')}${counts[c.name]?' · '+counts[c.name]+' prospects':''}</small></div><button class="btn small copyCatPrompt" data-category="${esc(c.name)}">Copy research prompt</button></div>`).join('')||'<div class="hint">No categories yet.</div>';
+ $('.copyCatPrompt').forEach(b=>b.onclick=async()=>{$('#importCategory').value=b.dataset.category;updateImportPrompt();await navigator.clipboard.writeText($('#importPrompt').value);toast('Category-specific ChatGPT prompt copied')});
+}
+function openCategoryManager(){renderCategories();$('#categoryModal').classList.remove('hidden')}
+async function createCategory(){
+ const name=$('#catName').value.trim();if(!name)return toast('Category name is required');
+ await rpc('sales_os_save_category',{p_token:token,p_payload:{name,description:$('#catDescription').value.trim(),active:true}});
+ $('#catName').value='';$('#catDescription').value='';toast('Category added');await load();renderCategories();
+}
 function exportCSV(){
  const rows=[['Company','Category','Segment','Location','Website','Contact','Email','Priority','Stage','Owner','Next Action','Next Action Date','Status']];
  for(const p of filtered())rows.push([p.company,p.category,p.segment,p.location,p.website,p.contact_name,p.contact_email,p.priority,p.stage,p.owner_assigned,p.next_action,p.next_action_date,p.status]);
@@ -334,7 +501,10 @@ async function doLogin(){
 $('#loginBtn').onclick=doLogin;$('#accessCode').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin()});$('#refreshBtn').onclick=load;$('#closeDrawer').onclick=closeDrawer;$('#drawer').addEventListener('click',e=>{if(e.target.id==='drawer')closeDrawer()});
 $('#templateSelect').onchange=applyTemplate;$('#savePipeline').onclick=savePipeline;$('#saveDraft').onclick=()=>logCompose('Draft');$('#markSent').onclick=()=>logCompose('Sent');$('#addNote').onclick=addNote;
 $('#copyMessage').onclick=async()=>{await navigator.clipboard.writeText($('#cBody').value);toast('Message copied')};$('#openEmail').onclick=()=>{const to=$('#cRecipient').value,sub=encodeURIComponent($('#cSubject').value),body=encodeURIComponent($('#cBody').value);location.href=`mailto:${encodeURIComponent(to)}?subject=${sub}&body=${body}`};
-$('#addProspectBtn').onclick=()=>$('#prospectModal').classList.remove('hidden');$('#createProspect').onclick=createProspect;$('#addAssetBtn').onclick=()=>$('#assetModal').classList.remove('hidden');$('#createAsset').onclick=createAsset;$('#exportBtn').onclick=exportCSV;
+$('#addProspectBtn').onclick=()=>{$('#pCategory').innerHTML=categoryOptions(false)||'<option>General</option>';$('#prospectModal').classList.remove('hidden')};$('#createProspect').onclick=createProspect;$('#addAssetBtn').onclick=()=>$('#assetModal').classList.remove('hidden');$('#createAsset').onclick=createAsset;
+$('#manageCategoriesBtn').onclick=openCategoryManager;$('#createCategory').onclick=createCategory;$('#importCsvBtn').onclick=openImportModal;$('#previewCsv').onclick=previewCsvText;$('#runCsvImport').onclick=runCsvImport;$('#downloadCsvTemplate').onclick=downloadCsvTemplate;$('#copyImportPrompt').onclick=copyImportPrompt;$('#importCategory').onchange=updateImportPrompt;
+$('#csvFile').onchange=async e=>{const f=e.target.files?.[0];if(!f)return;$('#csvPaste').value=await f.text();previewCsvText()};
+$('#exportBtn').onclick=exportCSV;
 $$('[data-close]').forEach(b=>b.onclick=()=>$('#'+b.dataset.close).classList.add('hidden'));
 ['search','catFilter','stageFilter','ownerFilter','priorityFilter'].forEach(id=>$('#'+id).addEventListener(id==='search'?'input':'change',render));
 $$('.navbtn').forEach(b=>b.onclick=()=>{$$('.navbtn').forEach(x=>x.classList.remove('active'));b.classList.add('active');queue=b.dataset.queue;render()});
