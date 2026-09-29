@@ -94,9 +94,10 @@ function renderCounts(){
  const drafts=data.email_drafts.filter(d=>d.status==='draft').length,openR=data.reminders.filter(r=>r.status==='open').length,due=data.reminders.filter(dueReminder).length+data.prospects.filter(followupDue).length;
  const inboxActions=data.email_messages.filter(m=>m.requires_action).length;
  const aiActions=data.recommendations.filter(r=>r.status==='open').length;
+ const pendingApprovals=data.approvals.filter(a=>a.status==='pending').length;
  const activeValue=data.opportunities.filter(o=>!['Won','Lost'].includes(data.prospects.find(p=>p.id===o.prospect_id)?.stage)).reduce((sum,o)=>sum+Number(o.estimated_value||0),0);
  $('#navProspects').textContent=data.prospects.length;$('#navAssets').textContent=data.assets.length;$('#navDrafts').textContent=drafts;$('#navReminders').textContent=openR;
- if($('#navInbox'))$('#navInbox').textContent=inboxActions;if($('#navAI'))$('#navAI').textContent=aiActions;
+ if($('#navInbox'))$('#navInbox').textContent=inboxActions;if($('#navAI'))$('#navAI').textContent=aiActions;if($('#navApprovals'))$('#navApprovals').textContent=pendingApprovals;
  $('#statProspects').textContent=data.prospects.filter(p=>!['Won','Lost'].includes(p.stage)).length;$('#statDue').textContent=due;$('#statDrafts').textContent=drafts;
  if($('#statInbox'))$('#statInbox').textContent=inboxActions;if($('#statAI'))$('#statAI').textContent=aiActions;if($('#statValue'))$('#statValue').textContent='$'+activeValue.toLocaleString(undefined,{maximumFractionDigits:0});
  $('#notificationDot').classList.toggle('hidden',!data.notifications.some(n=>!n.read_at&&!n.dismissed_at));$('#todayDate').textContent=new Date().toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'});
@@ -185,11 +186,56 @@ function renderCategories(){
 function renderConnections(){
  $('#connectionsGrid').innerHTML=data.connections.map(c=>`<article class="connection"><div class="panelhead"><h3>${esc(c.label)}</h3><span class="pill ${c.status==='connected'?'green':'amber'}">${esc(c.status.replaceAll('_',' '))}</span></div><p>${c.key==='chatgpt'?'Connect Sales OS to ChatGPT as a private MCP app so ChatGPT can read and update CRM data conversationally.':'Connect Gmail for direct send, reply tracking and thread-aware follow-ups.'}</p><button class="btn ${c.status==='connected'?'':'primary'}" onclick="openConnection('${c.key}')">${c.status==='connected'?'Manage':'Set up'}</button></article>`).join('');
 }
+function renderIdentity(){
+ const a=actor||data.actor||{display_name:'Shared',role:'shared'};
+ const name=a.display_name||a.email||'Shared';
+ const role=a.role||'shared';
+ if($('#identityName'))$('#identityName').textContent=name;
+ if($('#identityRole'))$('#identityRole').textContent=role==='owner'?'Owner':role==='editor'?'Editor':'Shared access';
+ if($('#identityInitial'))$('#identityInitial').textContent=(name.trim().charAt(0)||'?').toUpperCase();
+ if($('#sideIdentity'))$('#sideIdentity').innerHTML=`<b>${esc(name)}</b><span>${esc(role==='owner'?'Owner · approvals enabled':role==='editor'?'Editor · protected sends require approval':'Shared fallback · cannot approve')}</span>`;
+}
+function approvalForDraft(draftId,status=null){
+ const rows=data.approvals.filter(a=>a.item_type==='email_send'&&a.source_id===draftId);
+ return rows.filter(a=>!status||a.status===status).sort((a,b)=>new Date(b.requested_at)-new Date(a.requested_at))[0]||null;
+}
+function approvalMatchesDraft(a,d){
+ if(!a||!d)return false;
+ const p=a.payload||{};
+ return String(p.recipient||'')===String(d.recipient||'')&&String(p.subject||'')===String(d.subject||'')&&String(p.body||'')===String(d.body||'');
+}
+function renderApprovals(){
+ if(!$('#approvalList'))return;
+ const pending=data.approvals.filter(a=>a.status==='pending').sort((a,b)=>new Date(b.requested_at)-new Date(a.requested_at));
+ const history=data.approvals.filter(a=>a.status!=='pending').sort((a,b)=>new Date(b.reviewed_at||b.updated_at)-new Date(a.reviewed_at||a.updated_at)).slice(0,20);
+ if($('#approvalSummary'))$('#approvalSummary').textContent=pending.length+' pending';
+ const owner=(actor?.role==='owner');
+ $('#approvalList').innerHTML=pending.length?pending.map(a=>`<div class="approval-card">
+   <div class="approval-main">
+    <div class="title">${esc(a.title)}</div>
+    <div class="meta">${esc(prospectName(a.prospect_id)||'General')} · requested by ${esc(a.requested_by_name||a.requested_by_email||'Shared access')} · ${new Date(a.requested_at).toLocaleString()}</div>
+    ${a.description?`<p>${esc(a.description)}</p>`:''}
+    ${a.item_type==='email_send'?`<div class="approval-email"><b>To:</b> ${esc(a.payload?.recipient||'')}<br><b>Subject:</b> ${esc(a.payload?.subject||'')}<div class="approval-body">${esc(a.payload?.body||'')}</div></div>`:''}
+   </div>
+   <div class="approval-actions">${owner?`<button class="btn green" onclick="reviewApproval('${a.id}','approved')">Approve</button><button class="btn" onclick="reviewApproval('${a.id}','changes_requested')">Changes</button><button class="btn danger" onclick="reviewApproval('${a.id}','rejected')">Reject</button>`:'<span class="pill amber">Waiting for owner</span>'}</div>
+  </div>`).join(''):'<div class="empty">No pending approvals.</div>';
+ $('#approvalHistory').innerHTML=history.length?history.map(a=>`<div class="activityrow"><div class="maincopy"><div class="title">${esc(a.title)}</div><div class="meta">${esc(a.status.replaceAll('_',' '))} · ${esc(a.reviewer_name||a.requested_by_name||'')} · ${new Date(a.reviewed_at||a.updated_at).toLocaleString()}</div>${a.review_note?`<div class="sub">${esc(a.review_note)}</div>`:''}</div></div>`).join(''):'<div class="empty">No approval history yet.</div>';
+ $('#auditList').innerHTML=data.audit_log.slice(0,50).map(x=>`<div class="activityrow"><div class="maincopy"><div class="title">${esc(x.summary||x.action)}</div><div class="meta">${esc(x.actor_name||'System')} · ${esc(x.actor_role||'system')} · ${new Date(x.created_at).toLocaleString()}</div></div></div>`).join('')||'<div class="empty">No audit entries yet.</div>';
+}
+window.reviewApproval=async(id,decision)=>{
+ if(actor?.role!=='owner'){toast('Owner sign-in required');return}
+ let note='';
+ if(decision!=='approved')note=prompt(decision==='rejected'?'Reason for rejection (optional)':'What needs changing?')||'';
+ try{
+  await rpc('sales_os_review_approval',{p_token:token||null,p_id:id,p_decision:decision,p_note:note});
+  toast(decision==='approved'?'Approved':'Decision saved');await load();
+ }catch(e){toast('Approval failed: '+String(e.message||e))}
+};
 function renderNotifications(){
  const ns=data.notifications.filter(n=>!n.dismissed_at);$('#noticeList').innerHTML=ns.length?ns.slice(0,20).map(n=>`<div class="noticeitem ${n.read_at?'':'unread'}"><b>${esc(n.title)}</b><p>${esc(n.body||'')}</p><button class="btn" onclick="markNotice('${n.id}','read')">Read</button> <button class="btn" onclick="markNotice('${n.id}','dismiss')">Dismiss</button></div>`).join(''):'<div class="empty">You’re all caught up.</div>';
 }
 
-function go(page){currentPage=page;document.querySelectorAll('[data-page-view]').forEach(s=>s.classList.toggle('hidden',s.dataset.pageView!==page));document.querySelectorAll('.navitem[data-page]').forEach(b=>b.classList.toggle('active',b.dataset.page===page));document.querySelectorAll('[data-mobile-page]').forEach(b=>b.classList.toggle('active',b.dataset.mobilePage===page));if($('#mobileMoreBtn'))$('#mobileMoreBtn').classList.toggle('active',['pipeline','email','reminders','assets','notes','categories','connections'].includes(page));$('#noticeMenu').classList.add('hidden');closeMobileMore();if(page==='prospects')renderProspects();if(page==='email')renderEmail();if(window.matchMedia('(max-width:760px)').matches)window.scrollTo({top:0,behavior:'auto'})}
+function go(page){currentPage=page;document.querySelectorAll('[data-page-view]').forEach(s=>s.classList.toggle('hidden',s.dataset.pageView!==page));document.querySelectorAll('.navitem[data-page]').forEach(b=>b.classList.toggle('active',b.dataset.page===page));document.querySelectorAll('[data-mobile-page]').forEach(b=>b.classList.toggle('active',b.dataset.mobilePage===page));if($('#mobileMoreBtn'))$('#mobileMoreBtn').classList.toggle('active',['pipeline','email','reminders','assets','notes','categories','approvals','connections'].includes(page));$('#noticeMenu').classList.add('hidden');closeMobileMore();if(page==='prospects')renderProspects();if(page==='email')renderEmail();if(window.matchMedia('(max-width:760px)').matches)window.scrollTo({top:0,behavior:'auto'})}
 function modal(title,body){$('#genericModalCard').innerHTML=`<div class="modalhead"><h2>${esc(title)}</h2><button class="close" onclick="closeModal()">×</button></div>${body}`;$('#genericModal').classList.remove('hidden');document.body.classList.add('modal-open')}
 window.closeModal=()=>{$('#genericModal').classList.add('hidden');document.body.classList.remove('modal-open')};
 
@@ -316,7 +362,7 @@ if($('#mobileMoreBtn'))$('#mobileMoreBtn').onclick=openMobileMore;
 if($('#mobileMoreClose'))$('#mobileMoreClose').onclick=closeMobileMore;
 document.querySelectorAll('[data-close-mobile-more]').forEach(x=>x.onclick=closeMobileMore);
 if($('#mobileFab'))$('#mobileFab').onclick=openProspectForm;
-if($('#mobileMoreLock'))$('#mobileMoreLock').onclick=()=>{localStorage.removeItem('salesOsToken');location.reload()};
+if($('#mobileMoreLock'))$('#mobileMoreLock').onclick=signOutWorkspace;
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstallPrompt=e});
 if($('#mobileInstallApp'))$('#mobileInstallApp').onclick=async()=>{
  if(deferredInstallPrompt){
@@ -328,7 +374,7 @@ if($('#mobileInstallApp'))$('#mobileInstallApp').onclick=async()=>{
   toast('Use your browser menu → Add to Home screen');
  }
 };
-$('#loginBtn').onclick=login;$('#accessCode').addEventListener('keydown',e=>{if(e.key==='Enter')login()});$('#lockBtn').onclick=()=>{localStorage.removeItem('salesOsToken');location.reload()};
+$('#loginBtn').onclick=login;if($('#memberLoginBtn'))$('#memberLoginBtn').onclick=memberLogin;$('#accessCode').addEventListener('keydown',e=>{if(e.key==='Enter'){if($('#memberEmail')?.value.trim())memberLogin();else login()}});$('#lockBtn').onclick=signOutWorkspace;if($('#identityBtn'))$('#identityBtn').onclick=()=>go('approvals');if($('#approvalRefreshBtn'))$('#approvalRefreshBtn').onclick=load;
 $('#notificationBtn').onclick=()=>$('#noticeMenu').classList.toggle('hidden');$('#globalSearch').oninput=()=>{renderProspects();if($('#globalSearch').value)go('prospects')};
 if($('#syncInboxGuideBtn'))$('#syncInboxGuideBtn').onclick=()=>openChatGPTAutopilot('sync');
 if($('#aiQueueGuideBtn'))$('#aiQueueGuideBtn').onclick=()=>openChatGPTAutopilot('autopilot');
