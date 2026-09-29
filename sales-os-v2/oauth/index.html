@@ -80,10 +80,14 @@ async function ensureCodeSession(){
 }
 
 async function memberCheck(session){
-  const r=await fetch(MCP,{
+  const r=await fetch(SUPABASE_URL+"/rest/v1/rpc/sales_os_whoami",{
     method:"POST",
-    headers:{"content-type":"application/json","authorization":"Bearer "+session.access_token},
-    body:JSON.stringify({jsonrpc:"2.0",id:1,method:"ping",params:{}})
+    headers:{
+      "content-type":"application/json",
+      "apikey":PUBLISHABLE_KEY,
+      "authorization":"Bearer "+session.access_token
+    },
+    body:JSON.stringify({p_token:null})
   });
   return r.ok;
 }
