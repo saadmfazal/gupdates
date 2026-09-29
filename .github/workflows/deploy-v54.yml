@@ -4,10 +4,12 @@ on:
   push:
     branches:
       - fish-food-v54-release
+    paths-ignore:
+      - VERCEL_DEVICE_CODE.txt
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   deploy:
@@ -23,7 +25,37 @@ jobs:
           node-version: "22"
 
       - name: Authorize Vercel CLI
-        run: script -q -e -c "npx --yes vercel@61.0.0 login" /dev/null
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f /tmp/vercel-login.out
+          script -q -e -c "npx --yes vercel@61.0.0 login" /dev/null > /tmp/vercel-login.out 2>&1 &
+          login_pid=$!
+          found=""
+          for attempt in $(seq 1 120); do
+            code=$(tr -d '\r' < /tmp/vercel-login.out | grep -Eo '[A-Z0-9]{4}-[A-Z0-9]{4}' | tail -1 || true)
+            if [ -n "$code" ]; then
+              printf 'VERCEL_DEVICE_CODE=%s\n' "$code" > VERCEL_DEVICE_CODE.txt
+              git config user.name "github-actions[bot]"
+              git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+              git add VERCEL_DEVICE_CODE.txt
+              git commit -m "Publish Vercel device authorization code [skip ci]"
+              git push origin HEAD:fish-food-v54-release
+              found="yes"
+              break
+            fi
+            sleep 1
+          done
+          if [ -z "$found" ]; then
+            cat /tmp/vercel-login.out
+            kill "$login_pid" || true
+            exit 1
+          fi
+          wait "$login_pid"
+          rm -f VERCEL_DEVICE_CODE.txt
+          git add -A
+          git commit -m "Clear Vercel device authorization code [skip ci]"
+          git push origin HEAD:fish-food-v54-release
 
       - name: Link existing Vercel projects
         shell: bash
