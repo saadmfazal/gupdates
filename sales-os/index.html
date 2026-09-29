@@ -482,7 +482,7 @@ async function copyImportPrompt(){updateImportPrompt();await navigator.clipboard
 function renderCategories(){
  const counts={};data.prospects.forEach(p=>counts[p.category]=(counts[p.category]||0)+1);
  $('#categoryList').innerHTML=(data.categories||[]).map(c=>`<div class="category-row"><div><b>${esc(c.name)}</b><small>${esc(c.description||'')}${counts[c.name]?' · '+counts[c.name]+' prospects':''}</small></div><button class="btn small copyCatPrompt" data-category="${esc(c.name)}">Copy research prompt</button></div>`).join('')||'<div class="hint">No categories yet.</div>';
- $('.copyCatPrompt').forEach(b=>b.onclick=async()=>{$('#importCategory').value=b.dataset.category;updateImportPrompt();await navigator.clipboard.writeText($('#importPrompt').value);toast('Category-specific ChatGPT prompt copied')});
+ document.querySelectorAll('.copyCatPrompt').forEach(b=>b.onclick=async()=>{$('#importCategory').value=b.dataset.category;updateImportPrompt();await navigator.clipboard.writeText($('#importPrompt').value);toast('Category-specific ChatGPT prompt copied')});
 }
 function openCategoryManager(){renderCategories();$('#categoryModal').classList.remove('hidden')}
 async function createCategory(){
