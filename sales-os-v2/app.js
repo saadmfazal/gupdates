@@ -35,6 +35,7 @@ async function memberLogin(){
  const email=$('#memberEmail').value.trim(),c=$('#accessCode').value.trim();$('#loginError').textContent='';
  if(!email||!c){$('#loginError').textContent='Enter your Sales OS email and team access code.';return}
  try{
+  localStorage.setItem('salesOsMemberEmail',email);
   $('#memberLoginBtn').disabled=true;$('#memberLoginBtn').textContent='Creating secure session…';
   const returnUrl=location.origin+'/sales-os-v2/oauth/?mode=app';
   const r=await fetch(AUTH_BOOTSTRAP,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,access_code:c,return_url:returnUrl})});
@@ -91,10 +92,11 @@ const dueReminder=r=>r.status==='open'&&new Date(r.due_at)<=new Date();
 const followupDue=p=>p.next_action_date&&p.next_action_date<=todayISO()&&!['Won','Lost','Hold'].includes(p.stage);
 
 function renderCounts(){
- const drafts=data.email_drafts.filter(d=>d.status==='draft').length,openR=data.reminders.filter(r=>r.status==='open').length,due=data.reminders.filter(dueReminder).length+data.prospects.filter(followupDue).length;
+ const drafts=data.email_drafts.filter(d=>d.status==='draft').length,openR=data.reminders.filter(r=>r.status==='open').length;
+ const pendingApprovals=data.approvals.filter(a=>a.status==='pending').length;
+ const due=data.reminders.filter(dueReminder).length+data.prospects.filter(followupDue).length+(actor?.role==='owner'?pendingApprovals:0);
  const inboxActions=data.email_messages.filter(m=>m.requires_action).length;
  const aiActions=data.recommendations.filter(r=>r.status==='open').length;
- const pendingApprovals=data.approvals.filter(a=>a.status==='pending').length;
  const activeValue=data.opportunities.filter(o=>!['Won','Lost'].includes(data.prospects.find(p=>p.id===o.prospect_id)?.stage)).reduce((sum,o)=>sum+Number(o.estimated_value||0),0);
  $('#navProspects').textContent=data.prospects.length;$('#navAssets').textContent=data.assets.length;$('#navDrafts').textContent=drafts;$('#navReminders').textContent=openR;
  if($('#navInbox'))$('#navInbox').textContent=inboxActions;if($('#navAI'))$('#navAI').textContent=aiActions;if($('#navApprovals'))$('#navApprovals').textContent=pendingApprovals;
@@ -106,6 +108,7 @@ function renderDashboard(){
  const focus=[];
  data.reminders.filter(r=>r.status==='open').forEach(r=>focus.push({title:r.title,meta:(prospectName(r.prospect_id)||'General')+' · '+new Date(r.due_at).toLocaleString(),kind:'Reminder',due:new Date(r.due_at),pid:r.prospect_id}));
  data.prospects.filter(followupDue).forEach(p=>focus.push({title:p.next_action||'Follow up',meta:p.company+' · '+p.next_action_date,kind:'Follow-up',due:new Date(p.next_action_date),pid:p.id}));
+ if(actor?.role==='owner')data.approvals.filter(a=>a.status==='pending').forEach(a=>focus.push({title:a.title,meta:'Approval requested by '+(a.requested_by_name||a.requested_by_email||'team member'),kind:'Approval',due:new Date(a.requested_at),pid:a.prospect_id}));
  focus.sort((a,b)=>a.due-b.due);
  $('#todayFocus').innerHTML=focus.length?focus.slice(0,8).map(x=>`<div class="focusrow" ${x.pid?`onclick="openProspect('${x.pid}')"`:''}><div class="maincopy"><div class="title">${esc(x.title)}</div><div class="meta">${esc(x.meta)}</div></div><span class="pill ${x.due<new Date()?'red':'amber'}">${esc(x.kind)}</span></div>`).join(''):'<div class="empty">Nothing urgent right now.</div>';
  $('#recentActivity').innerHTML=data.activities.slice(0,8).map(a=>`<div class="activityrow" onclick="openProspect('${a.prospect_id}')"><div class="maincopy"><div class="title">${esc(a.activity_type||'Activity')} · ${esc(prospectName(a.prospect_id))}</div><div class="meta">${esc(a.subject||a.outcome||'')}${a.occurred_at?' · '+new Date(a.occurred_at).toLocaleDateString():''}</div></div></div>`).join('')||'<div class="empty">No activity yet.</div>';
@@ -417,9 +420,11 @@ $('#newAssetBtn').onclick=()=>openAssetForm();$('#newEmailBtn').onclick=()=>open
 $('#saveProspect').onclick=saveProspect;if($('#saveOpportunity'))$('#saveOpportunity').onclick=saveOpportunity;$('#pdNewAsset').onclick=()=>openAssetForm(selectedProspect?.id);$('#pdNewNote').onclick=()=>openNoteForm(selectedProspect?.id);$('#pdNewReminder').onclick=()=>openReminderForm(selectedProspect?.id);
 document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>{const el=$('#'+b.dataset.close);el?.classList.add('hidden');if(b.dataset.close==='prospectDrawer')document.body.classList.remove('modal-open')});$('#genericModal').addEventListener('click',e=>{if(e.target.id==='genericModal')closeModal()});$('#prospectDrawer').addEventListener('click',e=>{if(e.target.id==='prospectDrawer'){e.currentTarget.classList.add('hidden');document.body.classList.remove('modal-open')}});
 (async()=>{
+ const lastEmail=localStorage.getItem('salesOsMemberEmail');
+ if(lastEmail&&$('#memberEmail'))$('#memberEmail').value=lastEmail;
  const memberOk=await tryMemberSession();
  if(memberOk)return;
  const saved=localStorage.getItem('salesOsToken');
- if(saved){$('#accessCode').value=saved;await login()}
+ if(saved&&$('#accessCode'))$('#accessCode').value=saved;
 })().catch(()=>{});
 if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
