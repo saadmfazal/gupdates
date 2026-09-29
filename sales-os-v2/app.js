@@ -36,7 +36,7 @@ async function memberLogin(){
  if(!email||!c){$('#loginError').textContent='Enter your Sales OS email and team access code.';return}
  try{
   $('#memberLoginBtn').disabled=true;$('#memberLoginBtn').textContent='Creating secure session…';
-  const returnUrl=location.origin+'/sales-os-v2/auth/';
+  const returnUrl=location.origin+'/sales-os-v2/oauth/?mode=app';
   const r=await fetch(AUTH_BOOTSTRAP,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,access_code:c,return_url:returnUrl})});
   const d=await r.json();
   if(!r.ok||!d.action_link)throw new Error(d.error||d.detail||'Could not sign in');
