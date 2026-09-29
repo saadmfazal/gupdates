@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#f5f7f4">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<title>Signing in · Morpheus Sales OS</title>
+<style>
+:root{--bg:#f5f7f4;--paper:#fff;--ink:#142017;--muted:#718075;--line:#dfe6df;--lime:#b7ff35}
+*{box-sizing:border-box}body{margin:0;min-height:100dvh;display:grid;place-items:center;padding:20px;background:var(--bg);color:var(--ink);font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.card{width:min(470px,100%);background:var(--paper);border:1px solid var(--line);border-radius:20px;padding:24px;box-shadow:0 18px 50px rgba(31,51,37,.08)}.mark{width:38px;height:38px;border-radius:11px;background:var(--lime);display:grid;place-items:center;font-weight:900}h1{font-size:27px;letter-spacing:-.04em;margin:16px 0 7px}p{font-size:12px;color:var(--muted);line-height:1.6}.status{padding:10px;border:1px solid var(--line);border-radius:10px;font-size:11px;background:#f8faf8}
+</style>
+</head>
+<body>
+<div class="card">
+ <div class="mark">M</div>
+ <h1>Signing you in…</h1>
+ <p>Creating your personal Sales OS session and checking your team membership.</p>
+ <div id="status" class="status">Working…</div>
+</div>
+<script type="module">
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+const URL="https://viajmvbwpmkiqxjtgshv.supabase.co";
+const KEY="sb_publishable_gGFZftPonWKNZCdvUSM3yQ_gZvyI6_H";
+const sb=createClient(URL,KEY,{auth:{persistSession:true,detectSessionInUrl:true,autoRefreshToken:true}});
+const status=document.querySelector("#status");
+try{
+  const params=new URLSearchParams(location.search);
+  const code=params.get("code");
+  if(code){
+    const {error}=await sb.auth.exchangeCodeForSession(code);
+    if(error)throw error;
+  }
+  const {data:{session},error}=await sb.auth.getSession();
+  if(error)throw error;
+  if(!session)throw new Error("No Sales OS session was created.");
+  status.textContent="Signed in. Opening Sales OS…";
+  setTimeout(()=>location.replace("../?member=1"),250);
+}catch(e){
+  status.textContent="Sign-in failed: "+String(e?.message||e);
+}
+</script>
+</body>
+</html>
