@@ -1,0 +1,79 @@
+/* V5 — cinematic freshwater farm empire */
+:root{--v5-ink:#101812;--v5-forest:#263e2d;--v5-pond:#2d6570;--v5-clay:#9d4e33;--v5-red:#a62f27;--v5-paper:#f0e7d5;--v5-sun:#f0b55d}
+html[data-brand="farm"] body{background:var(--v5-paper);color:var(--v5-ink);font-family:"Helvetica Neue",Arial,sans-serif}
+html[data-brand="farm"] .farm-nav{height:80px;padding:0 3vw;position:absolute;top:0;left:0;right:0;z-index:60;background:linear-gradient(#0a110ed9,transparent);color:white;border:0}
+html[data-brand="farm"] .farm-brand b{width:48px;height:48px;display:grid;place-items:center;border:1px solid #ffffff88;border-radius:50%;font-family:Georgia,serif}
+html[data-brand="farm"] .farm-brand span{font-family:Georgia,"Times New Roman",serif;font-weight:700;letter-spacing:.08em}
+html[data-brand="farm"] .farm-brand small{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-weight:500;color:#ffffffb3}
+html[data-brand="farm"] .farm-nav nav{font-weight:800;text-transform:uppercase;font-size:.67rem;letter-spacing:.1em}
+html[data-brand="farm"] .farm-nav nav a[aria-current="page"]{color:var(--v5-sun)}
+html[data-brand="farm"] .bag{background:#f0e7d5;color:#101812;border-color:#f0e7d5}
+html[data-brand="farm"] .farm-hero{min-height:100svh;position:relative;isolation:isolate}
+html[data-brand="farm"] .farm-hero>img{filter:saturate(.82) contrast(1.05);animation:farmV5Drift 18s ease-in-out infinite alternate}
+html[data-brand="farm"] .farm-hero:after{content:"";position:absolute;inset:0;z-index:1;background:linear-gradient(0deg,#0d1712ed 0%,#0d171267 43%,#0d171230 75%),linear-gradient(90deg,#0d17127d,transparent 55%)}
+html[data-brand="farm"] .farm-title{z-index:3;left:4vw;right:4vw;bottom:5vh}
+html[data-brand="farm"] .farm-title p{font:800 .68rem ui-monospace,SFMono-Regular,Consolas,monospace;letter-spacing:.18em;color:#f0e7d5cc}
+html[data-brand="farm"] .farm-title h1{font:400 clamp(5rem,13vw,14rem)/.72 Georgia,"Times New Roman",serif;letter-spacing:-.08em;color:var(--v5-paper);text-shadow:0 12px 50px #0007;margin:.16em 0}
+html[data-brand="farm"] .farm-title h1 span{font-style:italic;font-weight:400;color:var(--v5-sun)}
+html[data-brand="farm"] .farm-title a{font:800 .7rem ui-monospace,monospace;letter-spacing:.15em;border-bottom:1px solid #fff;padding-bottom:8px}
+html[data-brand="farm"] .farm-hero aside{z-index:3;right:3vw;top:14vh;border:1px solid #ffffff77;background:#102018aa;backdrop-filter:blur(8px);width:170px;height:170px;border-radius:50%;display:grid;place-items:center;align-content:center;text-align:center}
+html[data-brand="farm"] .farm-hero aside b{font:400 4rem Georgia,serif}
+html[data-brand="farm"] .farm-intro{min-height:86svh;padding:15vh 7vw;display:flex;flex-direction:column;justify-content:center;background:var(--v5-paper);position:relative}
+html[data-brand="farm"] .farm-intro:after{content:"LAKELAND / FLORIDA";position:absolute;right:3vw;bottom:5vh;writing-mode:vertical-rl;font:700 .64rem ui-monospace,monospace;letter-spacing:.2em}
+html[data-brand="farm"] .chapter{font:800 .67rem ui-monospace,SFMono-Regular,Consolas,monospace;letter-spacing:.18em;color:var(--v5-red)}
+html[data-brand="farm"] .farm-intro h2{font:400 clamp(4rem,9vw,10rem)/.84 Georgia,"Times New Roman",serif;letter-spacing:-.07em;margin:.2em 0;max-width:1100px}
+html[data-brand="farm"] .farm-intro>p:last-child{max-width:520px;font-size:1.12rem;line-height:1.75;margin-left:36vw}
+html[data-brand="farm"] .farm-zones{display:grid;grid-template-columns:1.15fr .85fr 1fr;gap:0;background:var(--v5-ink)}
+html[data-brand="farm"] .farm-zones a{min-height:84svh;position:relative;overflow:hidden;border:0}
+html[data-brand="farm"] .farm-zones a:nth-child(2){margin-top:12vh}
+html[data-brand="farm"] .farm-zones img{filter:saturate(.7) contrast(1.1);transition:transform 1.2s,filter .4s}
+html[data-brand="farm"] .farm-zones a:hover img{transform:scale(1.06);filter:saturate(1)}
+html[data-brand="farm"] .farm-zones a:after{content:"";position:absolute;inset:0;background:linear-gradient(0deg,#0d1712e8,transparent 70%)}
+html[data-brand="farm"] .farm-zones span,html[data-brand="farm"] .farm-zones b{z-index:2;left:2.3vw;right:2vw}
+html[data-brand="farm"] .farm-zones b{font:400 clamp(2.2rem,3.5vw,4.5rem)/.95 Georgia,serif;color:var(--v5-paper)}
+html[data-brand="farm"] .farm-ledger{padding:15vh 5vw;background:#152219;color:var(--v5-paper)}
+html[data-brand="farm"] .farm-ledger h2{font:400 clamp(4rem,8vw,9rem)/.84 Georgia,"Times New Roman",serif;letter-spacing:-.07em}
+html[data-brand="farm"] .farm-row{grid-template-columns:60px 1.4fr .65fr .55fr auto;border-color:#ffffff2a;min-height:110px;align-items:center}
+html[data-brand="farm"] .farm-row:hover{background:#ffffff08}
+html[data-brand="farm"] .farm-row>a b{font:400 1.65rem Georgia,serif}
+html[data-brand="farm"] .action{background:var(--v5-red);color:white;text-transform:uppercase;font:800 .7rem ui-monospace,monospace;letter-spacing:.1em}
+html[data-brand="farm"] .breeder-story{min-height:100svh;display:grid;grid-template-columns:1.25fr .75fr;background:#5d2b22;color:var(--v5-paper);align-items:stretch}
+html[data-brand="farm"] .breeder-story .product-world{min-height:100svh}
+html[data-brand="farm"] .breeder-story>div:last-child{padding:9vh 4vw;align-self:center}
+html[data-brand="farm"] .breeder-story h2{font:400 clamp(3.5rem,7vw,8rem)/.86 Georgia,serif;letter-spacing:-.06em}
+html[data-brand="farm"] .bag-stack{transform:translateX(-14%);gap:8px}
+html[data-brand="farm"] .history-line{min-height:72svh;background:var(--v5-paper);padding:12vh 4vw;display:grid;grid-template-columns:.55fr repeat(4,1fr);align-items:end}
+html[data-brand="farm"] .history-line div{min-height:300px;border-left:1px solid #10181240;padding:0 2vw;display:flex;flex-direction:column;justify-content:flex-end}
+html[data-brand="farm"] .history-line b{font:400 clamp(3rem,6vw,7rem)/1 Georgia,serif}
+html[data-brand="farm"] .history-line span{font-size:.8rem;max-width:160px}
+html[data-brand="farm"] .tool>header,html[data-brand="farm"] .catalog>header,html[data-brand="farm"] .info>header{max-width:1200px;border-bottom:1px solid #10181255;padding-bottom:45px}
+html[data-brand="farm"] .tool>header h1,html[data-brand="farm"] .catalog>header h1,html[data-brand="farm"] .info h1{font-family:Georgia,"Times New Roman",serif;font-weight:400}
+html[data-brand="farm"] .farm-tour{padding:130px 3vw 90px;background:var(--v5-ink);color:white}
+html[data-brand="farm"] .farm-film{min-height:78svh;border:0;box-shadow:0 40px 120px #0007}
+html[data-brand="farm"] .farm-film:after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent 45%,#101812dc 100%);pointer-events:none}
+html[data-brand="farm"] .farm-film aside{z-index:3;background:transparent;max-width:410px}
+html[data-brand="farm"] .farm-hotspots{z-index:4}
+html[data-brand="farm"] .farm-hotspots button{border-radius:50%;background:var(--v5-paper);color:var(--v5-ink);border:4px solid #ffffff55;box-shadow:0 0 0 12px #ffffff18}
+html[data-brand="farm"] .farm-sequence li{border-color:#ffffff2f;background:#162019}
+html[data-brand="farm"] .nutrition-pdp{min-height:100svh;grid-template-columns:1.15fr .85fr;background:var(--v5-paper)}
+html[data-brand="farm"] .commercial-gallery{min-height:100svh}
+html[data-brand="farm"] .commercial-gallery>img{min-height:100svh}
+html[data-brand="farm"] .nutrition-pdp>div:last-child{padding:7vw 5vw}
+html[data-brand="farm"] .nutrition-pdp h1{font-family:Georgia,"Times New Roman",serif;font-weight:400}
+html[data-brand="farm"] .pack-system{grid-template-columns:1.2fr .8fr .8fr 1.2fr;background:#d5c6aa;gap:1px;padding:1px}
+html[data-brand="farm"] .pack-system>div{background:var(--v5-paper);padding:3vw;border:0!important}
+html[data-brand="farm"] .pack-system>div:first-child{background:#e4d4b9}
+html[data-brand="farm"] .product-ecosystem{background:var(--v5-forest);color:white}
+html[data-brand="farm"] .product-ecosystem h2{font-family:Georgia,serif;font-weight:400}
+html[data-brand="farm"] footer{background:var(--v5-ink);color:var(--v5-paper);border:0}
+html[data-brand="farm"] main>section,html[data-brand="farm"] main>article{opacity:0;transform:scale(.985);transition:opacity 1.1s ease,transform 1.4s cubic-bezier(.2,.7,.1,1)}
+html[data-brand="farm"] main>section.v5-in,html[data-brand="farm"] main>article.v5-in{opacity:1;transform:none}
+@keyframes farmV5Drift{to{transform:scale(1.06) translateY(1.5%)}}
+
+@media(prefers-reduced-motion:reduce){html[data-brand="farm"] main>section,html[data-brand="farm"] main>article{opacity:1;transform:none}}
+
+/* V5.4 generated shipping-house visual: make the final farm system tangible. */
+html[data-brand="farm"] .shipping-house-visual{position:relative;height:clamp(340px,58vw,760px);margin:0 0 55px;overflow:hidden;background:#102017}
+html[data-brand="farm"] .shipping-house-visual img{width:100%;height:100%;object-fit:cover;object-position:center}
+html[data-brand="farm"] .shipping-house-visual:after{content:"";position:absolute;inset:50% 0 0;background:linear-gradient(transparent,#101812bb);pointer-events:none}
+html[data-brand="farm"] .shipping-house-visual figcaption{position:absolute;z-index:2;left:18px;bottom:18px;padding:10px 13px;background:#101812e8;color:#f0e4cf;font:800 .66rem/1.2 ui-monospace,SFMono-Regular,Consolas,monospace;letter-spacing:.12em}

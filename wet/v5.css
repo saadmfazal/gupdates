@@ -1,0 +1,79 @@
+/* V5 — glowing independent-store night world */
+:root{--v5-black:#030508;--v5-ink:#080d12;--v5-cyan:#5eeaff;--v5-blue:#126f8f;--v5-lime:#b9f96a;--v5-red:#ff4b3e;--v5-paper:#e8e0d3}
+html[data-brand="store"] body{background:var(--v5-black);color:white;font-family:"Helvetica Neue",Arial,sans-serif}
+html[data-brand="store"] body:after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;background:linear-gradient(90deg,transparent 49.8%,#5eeaff08 50%,transparent 50.2%),radial-gradient(circle at 20% 30%,#005b7540,transparent 33%),radial-gradient(circle at 85% 72%,#ff4b3e2b,transparent 25%)}
+html[data-brand="store"] .store-nav{height:72px;padding:0 2.5vw;position:absolute;top:0;left:0;right:0;z-index:60;background:linear-gradient(#020507e8,transparent);border:0;color:white}
+html[data-brand="store"] .store-brand b{width:46px;height:46px;display:grid;place-items:center;background:var(--v5-cyan);color:var(--v5-black);transform:rotate(-3deg);font:950 .82rem "Arial Black",sans-serif}
+html[data-brand="store"] .store-brand span{font:950 .78rem "Arial Black",sans-serif;letter-spacing:.12em}
+html[data-brand="store"] .store-nav nav{font-size:.68rem;font-weight:900;text-transform:uppercase;letter-spacing:.07em}
+html[data-brand="store"] .store-nav nav a[aria-current="page"]{color:var(--v5-cyan)}
+html[data-brand="store"] .bag{background:var(--v5-red);border-color:var(--v5-red);color:white;transform:rotate(1deg)}
+html[data-brand="store"] .store-hero{min-height:100svh;position:relative;overflow:hidden;isolation:isolate}
+html[data-brand="store"] .store-hero>img{position:absolute;inset:0;filter:contrast(1.08) saturate(1.15);animation:storeV5Pulse 7s ease-in-out infinite alternate}
+html[data-brand="store"] .store-hero:after{content:"";position:absolute;inset:0;z-index:1;background:linear-gradient(90deg,#020507cf 0,transparent 48%),linear-gradient(0deg,#020507ef 0,transparent 54%)}
+html[data-brand="store"] .store-title{z-index:3;left:3vw;bottom:7vh;max-width:1100px}
+html[data-brand="store"] .store-title p{font:800 .68rem ui-monospace,SFMono-Regular,Consolas,monospace;color:var(--v5-cyan);letter-spacing:.17em}
+html[data-brand="store"] .store-title h1{font:950 clamp(5rem,12vw,13rem)/.73 "Arial Black","Helvetica Neue",Arial,sans-serif;letter-spacing:-.085em;margin:.18em 0;text-transform:uppercase;text-shadow:0 14px 45px #000}
+html[data-brand="store"] .store-title h1 span{color:transparent;-webkit-text-stroke:2px var(--v5-cyan);text-shadow:0 0 35px #5eeaff55}
+html[data-brand="store"] .action{background:var(--v5-cyan);color:var(--v5-black);text-transform:uppercase;font:950 .72rem "Arial Black",sans-serif;letter-spacing:.08em}
+html[data-brand="store"] .open-sign{z-index:3;right:3vw;top:14vh;background:var(--v5-red);color:white;border:0;box-shadow:12px 12px 0 #030508;transform:rotate(3deg)}
+html[data-brand="store"] .tank-marquee{background:var(--v5-cyan);color:var(--v5-black);border:0;padding:14px 0;overflow:hidden;white-space:nowrap;font-family:"Arial Black",sans-serif;font-weight:950}
+html[data-brand="store"] .tank-marquee span{margin:0 3vw}
+html[data-brand="store"] .tank-rail{padding:14vh 0 12vh;background:#05090d}
+html[data-brand="store"] .tank-rail>header{padding:0 4vw 50px}
+html[data-brand="store"] .staff-script{color:var(--v5-lime);font-family:Georgia,serif;font-style:italic;font-size:1.15rem;transform:rotate(-1deg);display:inline-block}
+html[data-brand="store"] .tank-rail h2,html[data-brand="store"] .community-game h2,html[data-brand="store"] .service-board h2{font:950 clamp(4rem,8vw,9rem)/.78 "Arial Black",sans-serif;letter-spacing:-.075em;text-transform:uppercase}
+html[data-brand="store"] .horizontal-tanks{display:flex;gap:16px;overflow-x:auto;padding:0 4vw 38px;scroll-snap-type:x mandatory;scrollbar-color:var(--v5-cyan) #121820}
+html[data-brand="store"] .tank-card{flex:0 0 min(440px,74vw);min-height:650px;scroll-snap-align:start;border:0;background:#0a1118;position:relative;overflow:hidden}
+html[data-brand="store"] .tank-card:nth-child(even){transform:translateY(38px)}
+html[data-brand="store"] .tank-card img{height:390px;filter:saturate(1.18);transition:transform .8s}
+html[data-brand="store"] .tank-card:hover img{transform:scale(1.05)}
+html[data-brand="store"] .tank-card h3{font:950 2rem/1 "Arial Black",sans-serif;letter-spacing:-.04em}
+html[data-brand="store"] .tank-card>a{display:block;padding:0 25px 24px}
+html[data-brand="store"] .tank-card>a img{width:calc(100% + 50px);margin-left:-25px}
+html[data-brand="store"] .tank-card .add{position:absolute;left:25px;right:25px;bottom:24px;width:auto;background:var(--v5-cyan);color:var(--v5-black);font-weight:950;text-transform:uppercase}
+html[data-brand="store"] .community-game{min-height:100svh;display:grid;grid-template-columns:1.2fr .8fr;background:linear-gradient(130deg,#08131a,#030508);align-items:center;padding:8vh 5vw;gap:7vw}
+html[data-brand="store"] .digital-tank{min-height:70svh;border:2px solid #ffffff33;box-shadow:0 0 100px #17bfe830 inset,0 0 70px #17bfe826;background:linear-gradient(#062b38cc,#031015);position:relative;overflow:hidden}
+html[data-brand="store"] .fish-token{background:var(--v5-cyan);color:#021014;border-radius:0;box-shadow:0 0 25px #5eeaff55;font-family:ui-monospace,SFMono-Regular,Consolas,monospace}
+html[data-brand="store"] .service-board{min-height:100svh;display:grid;grid-template-columns:1.15fr .85fr;align-items:center;background:var(--v5-paper);color:#090d12;padding:11vh 5vw;gap:7vw}
+html[data-brand="store"] .service-list a{border-color:#090d1233;font:900 1.05rem "Arial Black",sans-serif;text-transform:uppercase;transition:padding .2s,color .2s}
+html[data-brand="store"] .service-list a:hover{padding-left:20px;color:#126f8f}
+html[data-brand="store"] .my-tank{background:#080d12;color:white;transform:rotate(1deg);box-shadow:18px 18px 0 var(--v5-red);border:0;padding:48px}
+html[data-brand="store"] .essentials-neon{min-height:90svh;display:grid;grid-template-columns:.75fr 1.25fr;background:#030508;padding:0;align-items:stretch}
+html[data-brand="store"] .essentials-neon>div:first-child{padding:9vh 4vw;align-self:center}
+html[data-brand="store"] .essentials-neon h2{font:950 clamp(4.2rem,8vw,9rem)/.76 "Arial Black",sans-serif;letter-spacing:-.08em;color:var(--v5-cyan);text-shadow:0 0 32px #5eeaff55}
+html[data-brand="store"] .neon-packs{min-height:90svh;clip-path:polygon(8% 0,100% 0,100% 100%,0 100%)}
+html[data-brand="store"] .tool>header,html[data-brand="store"] .catalog>header,html[data-brand="store"] .info>header{max-width:1180px;border-left:8px solid var(--v5-cyan);padding-left:3vw}
+html[data-brand="store"] .tool>header h1,html[data-brand="store"] .catalog>header h1,html[data-brand="store"] .info h1{font-family:"Arial Black","Helvetica Neue",Arial,sans-serif;font-weight:950;text-transform:uppercase}
+html[data-brand="store"] .store-builder{padding-top:120px;background:#030508}
+html[data-brand="store"] .builder-room{display:grid;grid-template-columns:.55fr 1.15fr .65fr;gap:0;background:#090e14;border:1px solid #5eeaff44;box-shadow:0 0 90px #5eeaff18}
+html[data-brand="store"] .builder-room form{background:#e8e0d3;color:#080d12}
+html[data-brand="store"] .community-tank{min-height:680px;background:linear-gradient(#0b394a,#03151d)}
+html[data-brand="store"] .builder-room aside{background:#090e14;color:white}
+html[data-brand="store"] .compatibility{background:#142530!important;color:white}
+html[data-brand="store"] .nutrition-pdp{min-height:100svh;grid-template-columns:1.15fr .85fr;background:#05090d}
+html[data-brand="store"] .commercial-gallery{min-height:100svh;box-shadow:0 0 90px #5eeaff1f inset}
+html[data-brand="store"] .commercial-gallery>img{min-height:100svh;filter:saturate(1.1)}
+html[data-brand="store"] .nutrition-pdp>div:last-child{padding:7vw 4vw}
+html[data-brand="store"] .nutrition-pdp h1{font-family:"Arial Black","Helvetica Neue",Arial,sans-serif;font-weight:950;text-transform:uppercase}
+html[data-brand="store"] .pack-system{grid-template-columns:1fr .8fr .8fr 1.25fr;gap:0;padding:0;background:#05090d;border-top:1px solid #5eeaff55}
+html[data-brand="store"] .pack-system>div{background:#081017;padding:3vw;border:0;border-right:1px solid #5eeaff33!important}
+html[data-brand="store"] .pack-system>div:nth-child(2){background:#102532}
+html[data-brand="store"] .product-ecosystem{background:var(--v5-paper);color:#080d12}
+html[data-brand="store"] .product-ecosystem h2{font-family:"Arial Black",sans-serif;font-weight:950;text-transform:uppercase}
+html[data-brand="store"] footer{background:#020406;border-color:#5eeaff2c}
+html[data-brand="store"] main>section,html[data-brand="store"] main>article{opacity:0;transform:translateY(28px);transition:opacity .55s ease,transform .7s cubic-bezier(.2,.7,.1,1)}
+html[data-brand="store"] main>section:nth-child(even),html[data-brand="store"] main>article:nth-child(even){transform:translateY(28px)}
+html[data-brand="store"] main>section.v5-in,html[data-brand="store"] main>article.v5-in{opacity:1;transform:none}
+@keyframes storeV5Pulse{to{transform:scale(1.035);filter:contrast(1.12) saturate(1.25) brightness(1.04)}}
+
+@media(prefers-reduced-motion:reduce){html[data-brand="store"] main>section,html[data-brand="store"] main>article{opacity:1;transform:none}}
+
+/* V5.4 generated community habitat: the interactive fish now enter a real tank. */
+html[data-brand="store"] .community-tank{isolation:isolate;overflow:hidden;background:#061116}
+html[data-brand="store"] .community-habitat{position:absolute;z-index:0;inset:0;width:100%;height:100%;object-fit:cover;object-position:center}
+html[data-brand="store"] .community-tank:after{content:"";position:absolute;z-index:1;inset:0;background:linear-gradient(180deg,#00101422,#00101455 72%,#001014aa);pointer-events:none}
+html[data-brand="store"] .community-tank .plant{display:none}
+html[data-brand="store"] .community-tank [data-fish-cloud]{position:absolute;z-index:2;inset:0}
+html[data-brand="store"] .community-tank .waterline,html[data-brand="store"] .community-tank .tank-empty{z-index:2}
+html[data-brand="store"] .community-tank>strong{z-index:3}

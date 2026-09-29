@@ -1,0 +1,126 @@
+/* V5.4 mobile — Aqua Huna / overnight logistics manifest */
+@media (max-width:850px){
+  html[data-brand="ops"],html[data-brand="ops"] body{width:100%;min-width:0;max-width:none;inline-size:100%;min-inline-size:0;max-inline-size:none}
+  html[data-brand="ops"] body{margin:0}
+  html[data-brand="ops"] body>header,html[data-brand="ops"] body>main,html[data-brand="ops"] body>footer{box-sizing:border-box;width:100%;min-width:0;max-width:none;inline-size:100%;min-inline-size:0;max-inline-size:none;margin-inline:0}
+  html[data-brand="ops"] body>main{display:block}
+  html[data-brand="ops"] body>main>section,html[data-brand="ops"] body>main>article{box-sizing:border-box;width:100%;min-width:0;max-width:none;inline-size:100%;min-inline-size:0;max-inline-size:none;margin-inline:0;opacity:1!important;transform:none!important;clip-path:none!important}
+  html[data-brand="ops"] body>main>*>*{min-width:0;min-inline-size:0}
+  html[data-brand="ops"] body.nav-open,html[data-brand="ops"] body.cart-open{overflow:hidden}
+  html[data-brand="ops"] main,html[data-brand="ops"] main>*{min-width:0}
+  html[data-brand="ops"] img,html[data-brand="ops"] video,html[data-brand="ops"] svg{max-width:100%}
+  html[data-brand="ops"] .ops-nav{height:64px;padding:0 max(12px,env(safe-area-inset-right)) 0 max(12px,env(safe-area-inset-left));position:sticky;top:0;z-index:100;isolation:isolate}
+  html[data-brand="ops"] .ops-brand b{width:38px;height:38px}
+  html[data-brand="ops"] .ops-brand span{font-size:.69rem}
+  html[data-brand="ops"] .ops-signal{display:none}
+  html[data-brand="ops"] .nav-toggle{display:inline-flex;align-items:center;justify-content:center;min-width:58px;min-height:44px;margin-left:auto;border:1px solid var(--v5-ink);background:transparent;color:inherit;font:900 .64rem ui-monospace,monospace;letter-spacing:.08em;text-transform:uppercase}
+  html[data-brand="ops"] .ops-nav nav{display:none;position:fixed;z-index:101;inset:64px 0 0;width:auto;max-width:none;height:calc(100dvh - 64px);padding:26px 16px calc(28px + env(safe-area-inset-bottom));background:#f7fbfc!important;color:var(--v5-ink);opacity:1;flex-direction:column;align-items:stretch;gap:0;counter-reset:route;overflow-y:auto;overscroll-behavior:contain}
+  html[data-brand="ops"] .ops-nav nav:before{content:"ROUTE MENU / SYSTEM ONLINE";padding:14px 0 22px;border-top:5px solid var(--v5-ink);color:#08778d;font:900 .62rem ui-monospace,monospace;letter-spacing:.14em}
+  html[data-brand="ops"] .ops-nav nav.open{display:flex}
+  html[data-brand="ops"] .ops-nav nav a{counter-increment:route;display:grid;grid-template-columns:48px 1fr;align-items:center;min-height:55px;border-top:1px solid var(--v5-line);font-size:.72rem}
+  html[data-brand="ops"] .ops-nav nav a:before{content:"RT-0" counter(route);color:#08778d}
+  html[data-brand="ops"] .bag{min-height:44px;padding:7px 10px;font-size:.65rem}
+
+  html[data-brand="ops"] .ops-hero{display:grid;grid-template-columns:1fr;min-height:0}
+  html[data-brand="ops"] .ops-copy{min-height:0;padding:58px 18px 46px;border:0}
+  html[data-brand="ops"] .ops-copy h1{font-size:clamp(3.9rem,18vw,6.2rem);line-height:.78;letter-spacing:-.07em;margin:.18em 0 .24em}
+  html[data-brand="ops"] .ops-copy>p{font-size:.94rem;line-height:1.6}
+  html[data-brand="ops"] .ops-actions{display:flex;flex-wrap:wrap;gap:8px}
+  html[data-brand="ops"] .ops-actions>*{min-height:48px}
+  html[data-brand="ops"] .box-stage{min-height:0;height:auto;aspect-ratio:4/3;border-top:2px solid var(--v5-ink)}
+  html[data-brand="ops"] .box-stage>img{object-position:64% center}
+  html[data-brand="ops"] .box-stage:after{font-size:clamp(5rem,23vw,8rem)}
+  html[data-brand="ops"] .scan-card{left:12px;right:12px;bottom:12px;max-width:none;padding:16px}
+  html[data-brand="ops"] .ops-hero:after{display:none}
+  html[data-brand="ops"] .route-strip{display:grid;grid-template-columns:1fr 1fr}
+  html[data-brand="ops"] .route-strip div{padding:18px 15px;min-width:0}
+  html[data-brand="ops"] .route-strip span{font-size:.64rem;overflow-wrap:normal;word-break:normal}
+
+  html[data-brand="ops"] .inventory-console{padding:74px 16px 84px}
+  html[data-brand="ops"] .inventory-console header{padding-bottom:24px}
+  html[data-brand="ops"] .inventory-console h2{font-size:clamp(3.25rem,15vw,5.5rem);line-height:.82}
+  html[data-brand="ops"] .load-grid{display:grid;grid-template-columns:1fr;border-left:1px solid var(--v5-line)}
+  html[data-brand="ops"] .ops-card{display:grid;grid-template-columns:82px minmax(0,1fr) auto;grid-template-rows:auto auto auto;column-gap:14px;min-height:0;padding:16px;border-right:1px solid var(--v5-line)}
+  html[data-brand="ops"] .ops-card .manifest-visual{grid-row:1/4;width:82px;height:108px;margin:0;background:#dbeaec;border:1px solid var(--v5-line);overflow:hidden}
+  html[data-brand="ops"] .ops-card .manifest-visual img{width:100%;height:100%;object-fit:cover;filter:saturate(.72)}
+  html[data-brand="ops"] .ops-card .ops-code{grid-column:2/4;align-self:start}
+  html[data-brand="ops"] .ops-card>a{grid-column:2/4;min-width:0}
+  html[data-brand="ops"] .ops-card h3{margin:14px 0 6px;font-size:1.22rem;overflow-wrap:normal;word-break:normal}
+  html[data-brand="ops"] .ops-card dl{grid-column:2;align-self:end;margin:0}
+  html[data-brand="ops"] .ops-card .add{grid-column:3;align-self:end;min-height:44px;padding:9px 10px}
+
+  html[data-brand="ops"] .arrival-system{display:grid;grid-template-columns:1fr;padding:76px 18px;gap:58px;min-height:0}
+  html[data-brand="ops"] .arrival-phone{transform:none;box-shadow:9px 10px 0 var(--v5-aqua)}
+  html[data-brand="ops"] .arrival-system h2,html[data-brand="ops"] .micro-system h2{font-size:clamp(3.25rem,15vw,5.5rem);line-height:.83}
+  html[data-brand="ops"] .micro-system{display:grid;grid-template-columns:1fr;min-height:0}
+  html[data-brand="ops"] .micro-system>div:first-child{padding:70px 18px}
+  html[data-brand="ops"] .sachet-wall{min-height:0;aspect-ratio:4/5;clip-path:none}
+
+  html[data-brand="ops"] .catalog,html[data-brand="ops"] .tool,html[data-brand="ops"] .info,html[data-brand="ops"] .owner{padding:70px 16px}
+  html[data-brand="ops"] .tool>header{padding-bottom:26px;margin-bottom:44px}
+  html[data-brand="ops"] .tool>header h1,html[data-brand="ops"] .catalog>header h1,html[data-brand="ops"] .info h1,html[data-brand="ops"] .owner>h1{font-size:clamp(3.2rem,15vw,5.6rem);overflow-wrap:normal;word-break:normal}
+  html[data-brand="ops"] .arrival-tool{padding-top:70px}
+  html[data-brand="ops"] .arrival-dashboard{display:grid;grid-template-columns:1fr;box-shadow:8px 9px 0 var(--v5-aqua)}
+  html[data-brand="ops"] .arrival-dashboard>aside:first-child{padding:22px}
+  html[data-brand="ops"] .arrival-list button{width:100%;min-height:58px;text-align:left}
+  html[data-brand="ops"] .arrival-side{padding:26px}
+  html[data-brand="ops"] .arrival-side>button{min-height:44px}
+  html[data-brand="ops"] .filter-bar{align-items:stretch;flex-direction:column}
+  html[data-brand="ops"] .filter-bar input{width:100%}
+
+  html[data-brand="ops"] .pdp,html[data-brand="ops"] .nutrition-pdp{display:grid;grid-template-columns:1fr;min-height:0;padding:0;gap:0}
+  html[data-brand="ops"] .pdp-image,html[data-brand="ops"] .commercial-gallery,html[data-brand="ops"] .commercial-gallery>img{min-height:0;height:auto;aspect-ratio:4/5}
+  html[data-brand="ops"] .pdp-copy,html[data-brand="ops"] .nutrition-pdp>div:last-child{padding:48px 18px 64px}
+  html[data-brand="ops"] .pdp-copy h1,html[data-brand="ops"] .nutrition-pdp h1{font-size:clamp(2.85rem,13vw,5rem);overflow-wrap:normal;word-break:normal;hyphens:auto}
+  html[data-brand="ops"] .care-ledger,html[data-brand="ops"] .info-chapters,html[data-brand="ops"] .owner-grid{display:grid;grid-template-columns:1fr;padding:64px 18px;gap:20px}
+  html[data-brand="ops"] .feeding-bridge{display:grid;grid-template-columns:1fr;min-height:0}
+  html[data-brand="ops"] .feeding-bridge>div{padding:54px 18px}
+  html[data-brand="ops"] .feeding-bridge img{min-height:0;aspect-ratio:4/3}
+  html[data-brand="ops"] .pack-system{display:flex;gap:0;padding:0 18px 28px;overflow-x:auto;scroll-snap-type:x mandatory;border-block:2px solid var(--v5-ink)}
+  html[data-brand="ops"] .pack-system>div{flex:0 0 82vw;min-height:380px;padding:28px;scroll-snap-align:start;border-right:1px solid var(--v5-line)}
+  html[data-brand="ops"] .product-ecosystem{padding:70px 18px}
+  html[data-brand="ops"] .product-ecosystem>div,html[data-brand="ops"] .nutrition-logic{grid-template-columns:1fr;margin:42px 0}
+  html[data-brand="ops"] .family-hero{grid-template-columns:1fr;min-height:0}
+  html[data-brand="ops"] .family-hero img{min-height:0;aspect-ratio:4/3}
+  html[data-brand="ops"] .family-hero figcaption{padding:28px 20px}
+  html[data-brand="ops"] .owner-thesis,html[data-brand="ops"] .owner-columns{grid-template-columns:1fr}
+  html[data-brand="ops"] .owner-timeline{grid-template-columns:1fr 1fr}
+  html[data-brand="ops"] .shoreline-ledger,html[data-brand="ops"] .order-path,html[data-brand="ops"] .feed-room-ledger,html[data-brand="ops"] .tank-profile{grid-template-columns:1fr;margin:48px 0}
+  html[data-brand="ops"] .locality-page,html[data-brand="ops"] .orders-page,html[data-brand="ops"] .feed-room-page,html[data-brand="ops"] .my-tank-page{padding:76px 18px}
+  html[data-brand="ops"] .locality-page h1,html[data-brand="ops"] .orders-page h1,html[data-brand="ops"] .feed-room-page h1,html[data-brand="ops"] .my-tank-page h1{font-size:clamp(3rem,14vw,5.4rem);overflow-wrap:normal;word-break:normal}
+  html[data-brand="ops"] footer{grid-template-columns:1fr;padding:48px 18px calc(48px + env(safe-area-inset-bottom))}
+
+  html[data-brand="ops"] .cart{display:none;inset:0;width:100%;height:100dvh;padding:calc(18px + env(safe-area-inset-top)) max(18px,env(safe-area-inset-right)) calc(18px + env(safe-area-inset-bottom)) max(18px,env(safe-area-inset-left));transform:none}
+  html[data-brand="ops"] .cart.open{display:flex}
+  html[data-brand="ops"] .cart-head{position:sticky;top:0;z-index:2;background:var(--surface)}
+  html[data-brand="ops"] .cart-lines{min-height:0}
+  html[data-brand="ops"] .checkout{flex:0 0 54px}
+  html[data-brand="ops"] dialog{width:calc(100% - 28px);padding:30px 20px}
+}
+
+@media(max-width:760px){
+  html[data-brand="ops"] .arrival-visual{height:430px;margin:0 0 26px}
+  html[data-brand="ops"] .arrival-visual img{object-position:48% center}
+  html[data-brand="ops"] .arrival-visual figcaption{left:10px;right:10px;bottom:10px;font-size:.58rem}
+}
+
+@media (max-width:850px) and (orientation:landscape) and (max-height:500px){
+  html[data-brand="ops"] .ops-copy{padding:36px 18px}
+  html[data-brand="ops"] .ops-copy h1{font-size:clamp(3.5rem,10vw,5rem)}
+  html[data-brand="ops"] .ops-hero{grid-template-columns:.9fr 1.1fr}
+  html[data-brand="ops"] .box-stage{height:auto;aspect-ratio:auto;min-height:430px;border-top:0;border-left:2px solid var(--v5-ink)}
+  html[data-brand="ops"] .ops-nav nav{overflow:auto}
+}
+
+@media (max-width:480px){
+  html[data-brand="ops"] .ops-brand span{max-width:82px;line-height:1.05}
+  html[data-brand="ops"] .ops-card{grid-template-columns:70px minmax(0,1fr)}
+  html[data-brand="ops"] .ops-card .manifest-visual{width:70px;height:100px}
+  html[data-brand="ops"] .ops-card .ops-code,html[data-brand="ops"] .ops-card>a{grid-column:2}
+  html[data-brand="ops"] .ops-card dl{grid-column:2}
+  html[data-brand="ops"] .ops-card .add{grid-column:1/3;margin-top:14px;width:100%}
+  html[data-brand="ops"] .owner-timeline{grid-template-columns:1fr}
+  html[data-brand="ops"] .tool-actions{display:grid}
+  html[data-brand="ops"] .tool-actions button{width:100%}
+  html[data-brand="ops"] .product-facts>div{grid-template-columns:1fr;gap:6px}
+}

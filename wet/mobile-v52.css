@@ -1,0 +1,123 @@
+/* V5.4 mobile — The Wet Spot / neon browse drawer */
+@media (max-width:850px){
+  html[data-brand="store"],html[data-brand="store"] body{width:100%;min-width:0;max-width:none;inline-size:100%;min-inline-size:0;max-inline-size:none}
+  html[data-brand="store"] body{margin:0}
+  html[data-brand="store"] body>header,html[data-brand="store"] body>main,html[data-brand="store"] body>footer{box-sizing:border-box;width:100%;min-width:0;max-width:none;inline-size:100%;min-inline-size:0;max-inline-size:none;margin-inline:0}
+  html[data-brand="store"] body>main{display:block}
+  html[data-brand="store"] body>main>section,html[data-brand="store"] body>main>article{box-sizing:border-box;width:100%;min-width:0;max-width:none;inline-size:100%;min-inline-size:0;max-inline-size:none;margin-inline:0;opacity:1!important;transform:none!important}
+  html[data-brand="store"] body>main>*>*{min-width:0;min-inline-size:0}
+  html[data-brand="store"] body.nav-open,html[data-brand="store"] body.cart-open{overflow:hidden}
+  html[data-brand="store"] main,html[data-brand="store"] main>*{min-width:0}
+  html[data-brand="store"] img,html[data-brand="store"] video,html[data-brand="store"] svg{max-width:100%}
+  html[data-brand="store"] .store-nav{height:64px;padding:0 max(13px,env(safe-area-inset-right)) 0 max(13px,env(safe-area-inset-left));position:absolute;top:0;left:0;right:0}
+  html[data-brand="store"] .store-brand b{width:39px;height:39px}
+  html[data-brand="store"] .store-brand span{font-size:.68rem}
+  html[data-brand="store"] .nav-toggle{display:inline-flex;align-items:center;justify-content:center;min-width:62px;min-height:44px;margin-left:auto;border:1px solid #5eeaff88;background:#03050888;color:inherit;font:950 .62rem "Arial Black",sans-serif;letter-spacing:.06em;text-transform:uppercase}
+  html[data-brand="store"] .store-nav nav{display:none;position:fixed;z-index:70;inset:0;padding:calc(82px + env(safe-area-inset-top)) 18px calc(30px + env(safe-area-inset-bottom));background:linear-gradient(145deg,#030508 0,#071923 68%,#29100f 100%);color:white;flex-direction:column;align-items:stretch;gap:0;counter-reset:tank}
+  html[data-brand="store"] .store-nav nav:before{content:"BROWSE THE STORE / 400 TANKS";padding:15px 0 22px;border-top:7px solid var(--v5-cyan);color:var(--v5-lime);font:950 .62rem "Arial Black",sans-serif;letter-spacing:.12em}
+  html[data-brand="store"] .store-nav nav.open{display:flex}
+  html[data-brand="store"] .store-nav nav a{counter-increment:tank;display:grid;grid-template-columns:42px 1fr;align-items:center;min-height:56px;border-top:1px solid #5eeaff35;font-size:.78rem}
+  html[data-brand="store"] .store-nav nav a:before{content:"T" counter(tank);color:var(--v5-cyan);font:900 .62rem ui-monospace,monospace}
+  html[data-brand="store"] .bag{min-height:44px;padding:7px 10px;font-size:.65rem;transform:none}
+
+  html[data-brand="store"] .store-hero{min-height:100dvh}
+  html[data-brand="store"] .store-hero>img{object-position:60% center}
+  html[data-brand="store"] .store-hero:after{background:linear-gradient(0deg,#020507f2 0,#020507bd 42%,transparent 72%),linear-gradient(90deg,#02050785,transparent 72%)}
+  html[data-brand="store"] .store-title{left:18px;right:18px;top:auto;bottom:7vh;max-width:620px}
+  html[data-brand="store"] .store-title h1{font-size:clamp(4rem,18.5vw,6.5rem);line-height:.76;letter-spacing:-.08em;margin:.18em 0}
+  html[data-brand="store"] .store-title h1 span{-webkit-text-stroke:1px var(--v5-cyan)}
+  html[data-brand="store"] .store-title>div{display:flex;flex-wrap:wrap;gap:8px}
+  html[data-brand="store"] .store-title .action{min-height:48px}
+  html[data-brand="store"] .open-sign{display:block;right:13px;top:76px;padding:8px 11px;box-shadow:5px 5px 0 #030508;font-size:.66rem;line-height:1.05;transform:rotate(2deg)}
+  html[data-brand="store"] .tank-marquee{padding:12px 0}
+
+  html[data-brand="store"] .tank-rail{padding:76px 0 84px}
+  html[data-brand="store"] .tank-rail>header{padding:0 18px 34px}
+  html[data-brand="store"] .tank-rail>header:after{content:"SWIPE → NEXT TANK";display:block;margin-top:24px;color:var(--v5-cyan);font:900 .62rem ui-monospace,monospace;letter-spacing:.13em}
+  html[data-brand="store"] .tank-rail h2,html[data-brand="store"] .community-game h2,html[data-brand="store"] .service-board h2{font-size:clamp(3.3rem,15vw,5.6rem);line-height:.8}
+  html[data-brand="store"] .horizontal-tanks{gap:12px;padding:0 9vw 28px 18px;scroll-padding-left:18px;overscroll-behavior-inline:contain}
+  html[data-brand="store"] .tank-card,html[data-brand="store"] .tank-card:nth-child(even){flex:0 0 82vw;min-height:0;transform:none;padding-bottom:76px}
+  html[data-brand="store"] .tank-card>a{padding:0 18px 18px}
+  html[data-brand="store"] .tank-card>a img{width:calc(100% + 36px);height:auto;aspect-ratio:4/3;margin-left:-18px}
+  html[data-brand="store"] .tank-card h3{font-size:1.55rem}
+  html[data-brand="store"] .tank-card small{display:block;color:#ffffff9c}
+  html[data-brand="store"] .tank-card .add{left:18px;right:18px;bottom:18px;min-height:48px}
+  html[data-brand="store"] .tank-card .habitat-note{display:block;margin:12px 18px 0;color:var(--v5-lime);font:800 .58rem ui-monospace,monospace;letter-spacing:.08em}
+
+  html[data-brand="store"] .community-game{display:grid;grid-template-columns:1fr;padding:76px 18px;gap:46px;min-height:0}
+  html[data-brand="store"] .digital-tank{min-height:0;aspect-ratio:4/5}
+  html[data-brand="store"] .service-board{display:grid;grid-template-columns:1fr;padding:76px 18px;gap:48px;min-height:0}
+  html[data-brand="store"] .service-list a{grid-template-columns:38px minmax(0,1fr) auto;min-height:54px;align-items:center}
+  html[data-brand="store"] .my-tank{transform:none;padding:30px 22px;box-shadow:8px 9px 0 var(--v5-red)}
+  html[data-brand="store"] .essentials-neon{display:grid;grid-template-columns:1fr;min-height:0}
+  html[data-brand="store"] .essentials-neon>div:first-child{padding:70px 18px}
+  html[data-brand="store"] .essentials-neon h2{font-size:clamp(3.5rem,16vw,5.8rem)}
+  html[data-brand="store"] .neon-packs{min-height:0;aspect-ratio:4/5;clip-path:none}
+
+  html[data-brand="store"] .catalog,html[data-brand="store"] .tool,html[data-brand="store"] .info,html[data-brand="store"] .owner{padding:82px 18px 70px}
+  html[data-brand="store"] .tool>header,html[data-brand="store"] .catalog>header,html[data-brand="store"] .info>header{padding-left:14px;margin-bottom:46px;border-left-width:6px}
+  html[data-brand="store"] .tool>header h1,html[data-brand="store"] .catalog>header h1,html[data-brand="store"] .info h1,html[data-brand="store"] .owner>h1{font-size:clamp(3.2rem,14.5vw,5.7rem);overflow-wrap:normal;word-break:normal}
+  html[data-brand="store"] .tank-grid{display:grid;grid-template-columns:1fr;gap:16px}
+  html[data-brand="store"] .tank-grid .tank-card{width:100%}
+  html[data-brand="store"] .filter-bar{align-items:stretch;flex-direction:column}
+  html[data-brand="store"] .filter-bar input{width:100%}
+  html[data-brand="store"] .store-builder{padding-top:88px}
+  html[data-brand="store"] .builder-room{display:grid;grid-template-columns:1fr;box-shadow:none}
+  html[data-brand="store"] .builder-room form{padding:24px 18px}
+  html[data-brand="store"] .builder-room label{min-height:44px}
+  html[data-brand="store"] .builder-room select{min-height:48px}
+  html[data-brand="store"] .builder-room form button{min-height:50px}
+  html[data-brand="store"] .community-tank{min-height:0;aspect-ratio:4/5}
+  html[data-brand="store"] .builder-room aside{padding:28px 18px}
+
+  html[data-brand="store"] .pdp,html[data-brand="store"] .nutrition-pdp{display:grid;grid-template-columns:1fr;min-height:0;padding:0;gap:0}
+  html[data-brand="store"] .pdp-image,html[data-brand="store"] .commercial-gallery,html[data-brand="store"] .commercial-gallery>img{min-height:0;height:auto;aspect-ratio:4/5}
+  html[data-brand="store"] .pdp-copy,html[data-brand="store"] .nutrition-pdp>div:last-child{padding:48px 18px 64px}
+  html[data-brand="store"] .pdp-copy h1,html[data-brand="store"] .nutrition-pdp h1{font-size:clamp(2.85rem,13vw,5rem);overflow-wrap:normal;word-break:normal;hyphens:auto}
+  html[data-brand="store"] .care-ledger,html[data-brand="store"] .info-chapters,html[data-brand="store"] .owner-grid{display:grid;grid-template-columns:1fr;padding:64px 18px;gap:20px}
+  html[data-brand="store"] .feeding-bridge{display:grid;grid-template-columns:1fr;min-height:0}
+  html[data-brand="store"] .feeding-bridge>div{padding:54px 18px}
+  html[data-brand="store"] .feeding-bridge img{min-height:0;aspect-ratio:4/3}
+  html[data-brand="store"] .pack-system{display:flex;gap:1px;padding:1px 9vw 28px 18px;overflow-x:auto;scroll-snap-type:x mandatory}
+  html[data-brand="store"] .pack-system>div{flex:0 0 82vw;min-height:390px;padding:28px;scroll-snap-align:start}
+  html[data-brand="store"] .product-ecosystem{padding:70px 18px}
+  html[data-brand="store"] .product-ecosystem>div,html[data-brand="store"] .nutrition-logic{grid-template-columns:1fr;margin:42px 0}
+  html[data-brand="store"] .nutrition-stage{display:flex;justify-content:flex-start;gap:14px;max-width:100%;overflow-x:auto;scroll-snap-type:x mandatory;padding:48px 9vw 28px 0}
+  html[data-brand="store"] .nutrition-stage .pack{flex:0 0 68vw;scroll-snap-align:start}
+  html[data-brand="store"] .family-hero{grid-template-columns:1fr;min-height:0}
+  html[data-brand="store"] .family-hero img{min-height:0;aspect-ratio:4/3}
+  html[data-brand="store"] .family-hero figcaption{padding:28px 20px}
+  html[data-brand="store"] .owner-thesis,html[data-brand="store"] .owner-columns{grid-template-columns:1fr}
+  html[data-brand="store"] .owner-timeline{grid-template-columns:1fr 1fr}
+  html[data-brand="store"] .shoreline-ledger,html[data-brand="store"] .order-path,html[data-brand="store"] .feed-room-ledger,html[data-brand="store"] .tank-profile{grid-template-columns:1fr;margin:48px 0}
+  html[data-brand="store"] .locality-page,html[data-brand="store"] .orders-page,html[data-brand="store"] .feed-room-page,html[data-brand="store"] .my-tank-page{padding:82px 18px 70px}
+  html[data-brand="store"] .locality-page h1,html[data-brand="store"] .orders-page h1,html[data-brand="store"] .feed-room-page h1,html[data-brand="store"] .my-tank-page h1{font-size:clamp(3rem,14vw,5.4rem);overflow-wrap:normal;word-break:normal}
+  html[data-brand="store"] footer{grid-template-columns:1fr;padding:48px 18px calc(48px + env(safe-area-inset-bottom))}
+
+  html[data-brand="store"] .cart{display:none;inset:0;width:100%;height:100dvh;padding:calc(18px + env(safe-area-inset-top)) max(18px,env(safe-area-inset-right)) calc(18px + env(safe-area-inset-bottom)) max(18px,env(safe-area-inset-left));transform:none}
+  html[data-brand="store"] .cart.open{display:flex}
+  html[data-brand="store"] .cart-head{position:sticky;top:0;z-index:2;background:var(--surface)}
+  html[data-brand="store"] .cart-lines{min-height:0}
+  html[data-brand="store"] .checkout{flex:0 0 54px}
+  html[data-brand="store"] dialog{width:calc(100% - 28px);padding:30px 20px}
+}
+
+@media(max-width:760px){
+  html[data-brand="store"] .community-tank{min-height:430px}
+  html[data-brand="store"] .community-habitat{object-position:center}
+}
+
+@media (max-width:850px) and (orientation:landscape) and (max-height:500px){
+  html[data-brand="store"] .store-hero{min-height:620px}
+  html[data-brand="store"] .store-title{max-width:62%;bottom:38px}
+  html[data-brand="store"] .store-title h1{font-size:clamp(3.8rem,10vw,5.2rem)}
+  html[data-brand="store"] .store-nav nav{overflow:auto}
+}
+
+@media (max-width:480px){
+  html[data-brand="store"] .store-brand span{max-width:78px;line-height:1.05}
+  html[data-brand="store"] .owner-timeline{grid-template-columns:1fr}
+  html[data-brand="store"] .tool-actions{display:grid}
+  html[data-brand="store"] .tool-actions button{width:100%}
+  html[data-brand="store"] .product-facts>div{grid-template-columns:1fr;gap:6px}
+}

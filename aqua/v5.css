@@ -1,0 +1,73 @@
+/* V5 — live shipment operating machine */
+:root{--v5-paper:#f7fbfc;--v5-ink:#07181f;--v5-navy:#0c2a38;--v5-aqua:#00a9c7;--v5-mint:#98edf1;--v5-line:#bdd4da;--v5-orange:#ff6b3d}
+html[data-brand="ops"] body{background:var(--v5-paper);color:var(--v5-ink);font-family:"Helvetica Neue",Arial,sans-serif}
+html[data-brand="ops"] body:before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;background:linear-gradient(90deg,transparent 0 calc(100% - 1px),#0c2a380c calc(100% - 1px)),linear-gradient(0deg,transparent 0 calc(100% - 1px),#0c2a380c calc(100% - 1px));background-size:72px 72px}
+html[data-brand="ops"] .ops-nav{height:72px;padding:0 2.5vw;position:sticky;top:0;z-index:60;background:#f7fbfcf2;backdrop-filter:blur(16px);border-bottom:2px solid var(--v5-ink)}
+html[data-brand="ops"] .ops-brand b{width:44px;height:44px;display:grid;place-items:center;background:var(--v5-ink);color:white;font:900 .8rem ui-monospace,SFMono-Regular,Consolas,monospace}
+html[data-brand="ops"] .ops-brand span{font-weight:950;letter-spacing:.12em}
+html[data-brand="ops"] .ops-signal{font:800 .62rem ui-monospace,SFMono-Regular,Consolas,monospace;border-left:1px solid var(--v5-line);padding-left:24px}
+html[data-brand="ops"] .ops-signal i{background:var(--v5-aqua)}
+html[data-brand="ops"] .ops-nav nav{font:800 .68rem ui-monospace,SFMono-Regular,Consolas,monospace;text-transform:uppercase}
+html[data-brand="ops"] .ops-nav nav a[aria-current="page"]{box-shadow:inset 0 -3px 0 var(--v5-aqua)}
+html[data-brand="ops"] .bag{background:var(--v5-ink);color:white;border-color:var(--v5-ink)}
+html[data-brand="ops"] .ops-hero{min-height:calc(100svh - 72px);display:grid;grid-template-columns:.82fr 1.18fr;padding:0;background:var(--v5-paper);position:relative}
+html[data-brand="ops"] .ops-hero:after{content:"LIVE ANIMAL / HANDLE WITH CARE";position:absolute;left:3vw;bottom:3vh;font:800 .58rem ui-monospace,monospace;letter-spacing:.16em;color:#07181f88}
+html[data-brand="ops"] .ops-copy{padding:7vh 3vw 12vh;display:flex;flex-direction:column;justify-content:center;border-right:2px solid var(--v5-ink)}
+html[data-brand="ops"] .scanline{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-weight:800;letter-spacing:.15em;color:#08778d}
+html[data-brand="ops"] .ops-copy h1{font:950 clamp(4.6rem,9vw,10rem)/.78 "Arial Narrow","Helvetica Neue",Arial,sans-serif;letter-spacing:-.075em;margin:.18em 0;text-transform:uppercase}
+html[data-brand="ops"] .ops-copy h1 span{color:var(--v5-aqua)}
+html[data-brand="ops"] .ops-copy>p{font-size:1.02rem;line-height:1.7;max-width:510px}
+html[data-brand="ops"] .action{background:var(--v5-ink);color:white;border:2px solid var(--v5-ink);text-transform:uppercase;font:900 .72rem ui-monospace,monospace;letter-spacing:.1em}
+html[data-brand="ops"] .box-stage{min-height:calc(100svh - 72px);position:relative;overflow:hidden;background:#eaf2f4}
+html[data-brand="ops"] .box-stage:after{content:"ROUTE 09";position:absolute;right:-.05em;top:.02em;color:#ffffffb8;font:950 clamp(7rem,15vw,16rem)/1 "Arial Narrow",sans-serif;letter-spacing:-.08em;pointer-events:none}
+html[data-brand="ops"] .box-stage>img{position:absolute;inset:0;object-position:center;filter:contrast(1.04)}
+html[data-brand="ops"] .scan-card{left:auto;right:2vw;bottom:2vw;background:var(--v5-ink);color:white;border:0;border-left:6px solid var(--v5-aqua);border-radius:0;box-shadow:none}
+html[data-brand="ops"] .route-strip{position:relative;z-index:4;display:grid;grid-template-columns:repeat(4,1fr);padding:0;border:0;background:var(--v5-ink);color:white}
+html[data-brand="ops"] .route-strip div{padding:30px 3vw;border-right:1px solid #ffffff2b;position:relative}
+html[data-brand="ops"] .route-strip div:before{content:"";position:absolute;left:0;right:0;top:0;height:4px;background:#ffffff26}
+html[data-brand="ops"] .route-strip .active:before{background:var(--v5-aqua)}
+html[data-brand="ops"] .route-strip span,html[data-brand="ops"] .route-strip small{font-family:ui-monospace,SFMono-Regular,Consolas,monospace}
+html[data-brand="ops"] .inventory-console{padding:15vh 3vw;background:white}
+html[data-brand="ops"] .inventory-console header{border-bottom:5px solid var(--v5-ink);padding-bottom:32px}
+html[data-brand="ops"] .inventory-console h2{font:950 clamp(3.8rem,8vw,8.5rem)/.82 "Arial Narrow",sans-serif;letter-spacing:-.07em;text-transform:uppercase}
+html[data-brand="ops"] .load-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:0;border-left:1px solid var(--v5-line);border-top:1px solid var(--v5-line)}
+html[data-brand="ops"] .ops-card{min-height:330px;padding:28px;display:flex;flex-direction:column;border:0;border-right:1px solid var(--v5-line);border-bottom:1px solid var(--v5-line);background:white;border-radius:0;box-shadow:none;transition:background .2s}
+html[data-brand="ops"] .ops-card:hover{background:#eafcfe}
+html[data-brand="ops"] .ops-card h3{font-size:1.65rem;line-height:1.05;margin:45px 0 5px}
+html[data-brand="ops"] .ops-card dl{margin-top:auto}
+html[data-brand="ops"] .ops-code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace}
+html[data-brand="ops"] .add{background:var(--v5-aqua);color:var(--v5-ink);text-transform:uppercase;font:900 .68rem ui-monospace,monospace}
+html[data-brand="ops"] .arrival-system{min-height:100svh;display:grid;grid-template-columns:.9fr 1.1fr;align-items:center;background:var(--v5-navy);color:white;padding:10vh 6vw;gap:8vw}
+html[data-brand="ops"] .arrival-phone{transform:rotate(-2deg);border:1px solid #ffffff42;background:#061a22;box-shadow:25px 30px 0 var(--v5-aqua)}
+html[data-brand="ops"] .arrival-system h2,html[data-brand="ops"] .micro-system h2{font:950 clamp(4rem,8vw,8.5rem)/.82 "Arial Narrow",sans-serif;letter-spacing:-.07em;text-transform:uppercase}
+html[data-brand="ops"] .micro-system{min-height:100svh;display:grid;grid-template-columns:.8fr 1.2fr;align-items:stretch;background:var(--v5-paper);padding:0}
+html[data-brand="ops"] .micro-system>div:first-child{padding:10vh 4vw;align-self:center}
+html[data-brand="ops"] .sachet-wall{min-height:100svh;clip-path:polygon(7% 0,100% 0,100% 100%,0 100%)}
+html[data-brand="ops"] .tool>header{padding-left:0;border-bottom:5px solid var(--v5-ink);padding-bottom:38px}
+html[data-brand="ops"] .tool>header h1,html[data-brand="ops"] .catalog>header h1,html[data-brand="ops"] .info h1{font-family:"Arial Narrow","Helvetica Neue",Arial,sans-serif;font-weight:950;text-transform:uppercase}
+html[data-brand="ops"] .arrival-tool{padding-top:8vh}
+html[data-brand="ops"] .arrival-dashboard{display:grid;grid-template-columns:.35fr 1.15fr .65fr;gap:0;border:2px solid var(--v5-ink);background:white;box-shadow:18px 18px 0 var(--v5-aqua)}
+html[data-brand="ops"] .arrival-dashboard>aside:first-child{background:var(--v5-ink);color:white;border-radius:0}
+html[data-brand="ops"] .arrival-list button{border-radius:0;border-color:var(--v5-line)}
+html[data-brand="ops"] .arrival-list button:hover{background:#eafcfe}
+html[data-brand="ops"] .arrival-side{background:#d8f9fc}
+html[data-brand="ops"] .nutrition-pdp{min-height:calc(100svh - 72px);grid-template-columns:1.05fr .95fr;background:white}
+html[data-brand="ops"] .commercial-gallery{border-right:2px solid var(--v5-ink)}
+html[data-brand="ops"] .nutrition-pdp>div:last-child{padding:6vw}
+html[data-brand="ops"] .nutrition-pdp h1{font-family:"Arial Narrow","Helvetica Neue",Arial,sans-serif;font-weight:950;text-transform:uppercase}
+html[data-brand="ops"] .pack-system{grid-template-columns:.8fr 1.1fr .8fr 1.3fr;gap:0;padding:0;background:white;border-top:2px solid var(--v5-ink);border-bottom:2px solid var(--v5-ink)}
+html[data-brand="ops"] .pack-system>div{border-right:1px solid var(--v5-line);background:white;padding:3vw}
+html[data-brand="ops"] .pack-system>div:nth-child(odd){background:#edf9fa}
+html[data-brand="ops"] .product-ecosystem{background:var(--v5-ink);color:white}
+html[data-brand="ops"] .product-ecosystem>div{gap:0;border-top:1px solid #ffffff33;border-left:1px solid #ffffff33}
+html[data-brand="ops"] .product-ecosystem article{border-color:#ffffff33}
+html[data-brand="ops"] footer{background:var(--v5-ink);color:white;border:0}
+html[data-brand="ops"] main>section,html[data-brand="ops"] main>article{opacity:0;clip-path:inset(0 0 14% 0);transition:opacity .45s linear,clip-path .65s cubic-bezier(.2,.7,.1,1)}
+html[data-brand="ops"] main>section.v5-in,html[data-brand="ops"] main>article.v5-in{opacity:1;clip-path:inset(0)}
+
+@media(prefers-reduced-motion:reduce){html[data-brand="ops"] main>section,html[data-brand="ops"] main>article{opacity:1;clip-path:none}}
+
+/* V5.4 generated arrival visual: operational photography replaces abstract empty space. */
+html[data-brand="ops"] .arrival-visual{position:relative;height:clamp(330px,56vw,720px);margin:0 0 42px;overflow:hidden;border:1px solid #07181f30;background:#dbeef2}
+html[data-brand="ops"] .arrival-visual img{width:100%;height:100%;object-fit:cover;object-position:center}
+html[data-brand="ops"] .arrival-visual figcaption{position:absolute;left:18px;bottom:18px;padding:10px 13px;background:#07181fe8;color:#fff;font:800 .66rem/1.2 ui-monospace,SFMono-Regular,Consolas,monospace;letter-spacing:.12em}

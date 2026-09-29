@@ -1,0 +1,122 @@
+/* V5.4 mobile — Dave's Rare Fish / field archive */
+@media (max-width:850px){
+  html[data-brand="rift"],html[data-brand="rift"] body{width:100%;min-width:0;max-width:none;inline-size:100%;min-inline-size:0;max-inline-size:none}
+  html[data-brand="rift"] body{margin:0}
+  html[data-brand="rift"] body>header,html[data-brand="rift"] body>main,html[data-brand="rift"] body>footer{box-sizing:border-box;width:100%;min-width:0;max-width:none;inline-size:100%;min-inline-size:0;max-inline-size:none;margin-inline:0}
+  html[data-brand="rift"] body>main{display:block}
+  html[data-brand="rift"] body>main>section,html[data-brand="rift"] body>main>article{box-sizing:border-box;width:100%;min-width:0;max-width:none;inline-size:100%;min-inline-size:0;max-inline-size:none;margin-inline:0;opacity:1!important;transform:none!important}
+  html[data-brand="rift"] body>main>*>*{min-width:0;min-inline-size:0}
+  html[data-brand="rift"] body.nav-open,html[data-brand="rift"] body.cart-open{overflow:hidden}
+  html[data-brand="rift"] main,html[data-brand="rift"] main>*{min-width:0}
+  html[data-brand="rift"] img,html[data-brand="rift"] video,html[data-brand="rift"] svg{max-width:100%}
+  html[data-brand="rift"] .rift-nav{height:64px;padding:0 max(14px,env(safe-area-inset-right)) 0 max(14px,env(safe-area-inset-left));position:sticky;top:0}
+  html[data-brand="rift"] .rift-brand b{width:36px;height:36px}
+  html[data-brand="rift"] .rift-brand span{font-size:.68rem;letter-spacing:.16em}
+  html[data-brand="rift"] .nav-toggle{display:inline-flex;align-items:center;justify-content:center;min-width:58px;min-height:44px;margin-left:auto;border:1px solid #c69a5077;background:transparent;color:inherit;font:800 .65rem ui-monospace,monospace;letter-spacing:.1em;text-transform:uppercase}
+  html[data-brand="rift"] .rift-nav nav{display:none;position:fixed;z-index:70;inset:64px 0 0;padding:38px 18px calc(32px + env(safe-area-inset-bottom));background:#02070af7;color:var(--v5-bone);flex-direction:column;align-items:stretch;gap:0;counter-reset:archive}
+  html[data-brand="rift"] .rift-nav nav:before{content:"FIELD ARCHIVE / INDEX";padding-bottom:22px;color:var(--v5-cyan);font:700 .63rem ui-monospace,monospace;letter-spacing:.2em}
+  html[data-brand="rift"] .rift-nav nav.open{display:flex}
+  html[data-brand="rift"] .rift-nav nav a{counter-increment:archive;display:grid;grid-template-columns:34px 1fr;align-items:center;min-height:54px;border-top:1px solid #ffffff25;font-size:.82rem;opacity:1}
+  html[data-brand="rift"] .rift-nav nav a:before{content:"0" counter(archive);color:var(--v5-gold);font-size:.62rem}
+  html[data-brand="rift"] .bag{min-height:44px;padding:7px 10px;font-size:.65rem}
+
+  html[data-brand="rift"] .rift-hero{min-height:calc(100dvh - 64px);height:auto;padding:0;overflow:hidden}
+  html[data-brand="rift"] .rift-hero figure{position:absolute;inset:0;height:100%;width:100%}
+  html[data-brand="rift"] .rift-hero figure img{object-position:68% center}
+  html[data-brand="rift"] .rift-hero figure:after{background:linear-gradient(0deg,#02070a 4%,#02070ae8 35%,#02070a55 70%,#02070a33 100%)}
+  html[data-brand="rift"] .rift-copy{left:18px;right:18px;bottom:82px;width:auto;max-width:590px}
+  html[data-brand="rift"] .rift-copy h1{font-size:clamp(3.35rem,16.5vw,5.7rem);line-height:.76;letter-spacing:-.075em;margin:.2em 0}
+  html[data-brand="rift"] .rift-copy>p:not(.overline){max-width:34rem;font-size:.92rem;line-height:1.55}
+  html[data-brand="rift"] .rift-depth,html[data-brand="rift"] .rift-hero figcaption{display:none}
+  html[data-brand="rift"] .locality-ticker{height:44px;gap:34px;padding:13px 18px;overflow-x:auto;overscroll-behavior-inline:contain;scroll-snap-type:x proximity;scrollbar-width:thin}
+  html[data-brand="rift"] .locality-ticker span{flex:0 0 auto;scroll-snap-align:start}
+
+  html[data-brand="rift"] .rift-map{display:block;padding:78px 18px 88px}
+  html[data-brand="rift"] .rift-map h2,html[data-brand="rift"] .specimen-focus h2,html[data-brand="rift"] .rift-builder h2,html[data-brand="rift"] .nutrition-world h2{font-size:clamp(2.75rem,12vw,4.5rem);line-height:.88}
+  html[data-brand="rift"] .map-list{margin-top:44px}
+  html[data-brand="rift"] .map-list a{grid-template-columns:34px minmax(0,1fr);gap:12px;padding:21px 0}
+  html[data-brand="rift"] .map-list b{font-size:1.45rem;overflow-wrap:normal;word-break:normal}
+  html[data-brand="rift"] .map-list small{grid-column:2;display:block}
+  html[data-brand="rift"] .rift-map:after{right:18px;bottom:22px}
+  html[data-brand="rift"] .specimen-focus{display:grid;grid-template-columns:1fr;min-height:0}
+  html[data-brand="rift"] .specimen-photo{min-height:0;height:auto;aspect-ratio:4/5;clip-path:polygon(0 0,100% 0,100% 94%,0 100%)}
+  html[data-brand="rift"] .specimen-focus>div:last-child{padding:52px 18px 76px}
+  html[data-brand="rift"] .specimen-focus dl div{grid-template-columns:82px minmax(0,1fr)}
+  html[data-brand="rift"] .rift-builder{display:grid;grid-template-columns:1fr;padding:74px 18px;gap:42px;min-height:0}
+  html[data-brand="rift"] .topography{min-height:310px;transform:none;padding:22px}
+  html[data-brand="rift"] .nutrition-world{display:grid;grid-template-columns:1fr;min-height:0}
+  html[data-brand="rift"] .nutrition-world .product-world{min-height:0;aspect-ratio:4/5;clip-path:none}
+  html[data-brand="rift"] .nutrition-world>div:last-child{padding:52px 18px 70px}
+  html[data-brand="rift"] .pack-row,html[data-brand="rift"] .nutrition-stage{display:flex;justify-content:flex-start;gap:14px;max-width:100%;overflow-x:auto;scroll-snap-type:x mandatory;padding:12px 9vw 28px 0;transform:none}
+  html[data-brand="rift"] .pack-row .pack,html[data-brand="rift"] .nutrition-stage .pack{flex:0 0 68vw;scroll-snap-align:start}
+
+  html[data-brand="rift"] .catalog,html[data-brand="rift"] .tool,html[data-brand="rift"] .info,html[data-brand="rift"] .owner{padding:70px 18px}
+  html[data-brand="rift"] .catalog>header,html[data-brand="rift"] .tool>header,html[data-brand="rift"] .info>header{padding-left:16px;margin-bottom:48px}
+  html[data-brand="rift"] .catalog>header h1,html[data-brand="rift"] .tool>header h1,html[data-brand="rift"] .info h1,html[data-brand="rift"] .owner>h1{font-size:clamp(3rem,14vw,5.5rem);overflow-wrap:normal;word-break:normal}
+  html[data-brand="rift"] .rift-card>a{grid-template-columns:30px 88px minmax(0,1fr);gap:12px;padding:18px 0}
+  html[data-brand="rift"] .rift-card img{height:92px}
+  html[data-brand="rift"] .rift-card h2{font-size:1.18rem;overflow-wrap:normal;word-break:normal}
+  html[data-brand="rift"] .rift-card>.add{margin:0 0 20px 130px;min-height:44px}
+  html[data-brand="rift"] .filter-bar{align-items:stretch;flex-direction:column}
+  html[data-brand="rift"] .filter-bar input{width:100%}
+  html[data-brand="rift"] .rift-tool-grid{display:grid;grid-template-columns:1fr;gap:34px}
+  html[data-brand="rift"] .rift-tool-grid>*{min-width:0;width:100%}
+  html[data-brand="rift"] .rift-tool fieldset{min-width:0;display:flex;flex-wrap:wrap}
+  html[data-brand="rift"] .rift-tool label{min-width:0;min-height:44px;display:inline-flex;align-items:center}
+  html[data-brand="rift"] .rift-tool label span{min-height:44px;white-space:normal;display:flex;align-items:center}
+  html[data-brand="rift"] .rift-result{position:relative;top:auto;min-width:0;min-height:0;padding:34px 22px;clip-path:polygon(0 0,100% 0,100% 97%,94% 100%,0 100%)}
+  html[data-brand="rift"] .rift-result h2{font-size:2.35rem;overflow-wrap:normal;word-break:normal}
+  html[data-brand="rift"] .rift-result dl div{grid-template-columns:95px minmax(0,1fr)}
+
+  html[data-brand="rift"] .pdp,html[data-brand="rift"] .nutrition-pdp{display:grid;grid-template-columns:1fr;min-height:0;padding:0;gap:0}
+  html[data-brand="rift"] .pdp-image,html[data-brand="rift"] .commercial-gallery,html[data-brand="rift"] .commercial-gallery>img{min-height:0;height:auto;aspect-ratio:4/5}
+  html[data-brand="rift"] .pdp-copy,html[data-brand="rift"] .nutrition-pdp>div:last-child{padding:48px 18px 64px}
+  html[data-brand="rift"] .pdp-copy h1,html[data-brand="rift"] .nutrition-pdp h1{font-size:clamp(2.7rem,12vw,4.8rem);overflow-wrap:normal;word-break:normal;hyphens:auto}
+  html[data-brand="rift"] .care-ledger,html[data-brand="rift"] .info-chapters,html[data-brand="rift"] .owner-grid{display:grid;grid-template-columns:1fr;padding:64px 18px;gap:22px}
+  html[data-brand="rift"] .feeding-bridge{display:grid;grid-template-columns:1fr;min-height:0}
+  html[data-brand="rift"] .feeding-bridge>div{padding:54px 18px}
+  html[data-brand="rift"] .feeding-bridge img{min-height:0;aspect-ratio:4/3}
+  html[data-brand="rift"] .pack-system{display:flex;gap:10px;padding:28px 18px 36px;overflow-x:auto;scroll-snap-type:x mandatory;border-block:1px solid #ffffff22}
+  html[data-brand="rift"] .pack-system>div{flex:0 0 82vw;min-height:390px;padding:28px;scroll-snap-align:start}
+  html[data-brand="rift"] .product-ecosystem{padding:70px 18px}
+  html[data-brand="rift"] .product-ecosystem>div,html[data-brand="rift"] .nutrition-logic{grid-template-columns:1fr;margin:42px 0}
+  html[data-brand="rift"] .family-hero{grid-template-columns:1fr;min-height:0}
+  html[data-brand="rift"] .family-hero img{min-height:0;aspect-ratio:4/3}
+  html[data-brand="rift"] .family-hero figcaption{padding:28px 20px}
+  html[data-brand="rift"] .owner-thesis,html[data-brand="rift"] .owner-columns{grid-template-columns:1fr}
+  html[data-brand="rift"] .owner-timeline{grid-template-columns:1fr 1fr}
+  html[data-brand="rift"] .shoreline-ledger,html[data-brand="rift"] .order-path,html[data-brand="rift"] .feed-room-ledger,html[data-brand="rift"] .tank-profile{grid-template-columns:1fr;margin:48px 0}
+  html[data-brand="rift"] .locality-page,html[data-brand="rift"] .orders-page,html[data-brand="rift"] .feed-room-page,html[data-brand="rift"] .my-tank-page{padding:76px 18px}
+  html[data-brand="rift"] .locality-page h1,html[data-brand="rift"] .orders-page h1,html[data-brand="rift"] .feed-room-page h1,html[data-brand="rift"] .my-tank-page h1{font-size:clamp(3rem,14vw,5.4rem);overflow-wrap:normal;word-break:normal}
+  html[data-brand="rift"] footer{grid-template-columns:1fr;padding:48px 18px calc(48px + env(safe-area-inset-bottom))}
+
+  html[data-brand="rift"] .cart{display:none;inset:0;width:100%;height:100dvh;padding:calc(18px + env(safe-area-inset-top)) max(18px,env(safe-area-inset-right)) calc(18px + env(safe-area-inset-bottom)) max(18px,env(safe-area-inset-left));transform:none}
+  html[data-brand="rift"] .cart.open{display:flex}
+  html[data-brand="rift"] .cart-head{position:sticky;top:0;z-index:2;background:var(--surface)}
+  html[data-brand="rift"] .cart-lines{min-height:0}
+  html[data-brand="rift"] .checkout{flex:0 0 54px}
+  html[data-brand="rift"] dialog{width:calc(100% - 28px);padding:30px 20px}
+}
+
+@media(max-width:760px){
+  html[data-brand="rift"] .topography{min-height:390px;padding:18px 12px;gap:6px}
+  html[data-brand="rift"] .topography>img{object-position:48% center}
+  html[data-brand="rift"] .topography span{min-width:0;flex:1;padding:8px 4px;font-size:.58rem}
+}
+
+@media (max-width:850px) and (orientation:landscape) and (max-height:500px){
+  html[data-brand="rift"] .rift-hero{min-height:620px}
+  html[data-brand="rift"] .rift-copy{bottom:72px;max-width:58%}
+  html[data-brand="rift"] .rift-copy h1{font-size:clamp(3.1rem,9vw,4.7rem)}
+  html[data-brand="rift"] .rift-copy>p:not(.overline){display:none}
+  html[data-brand="rift"] .rift-hero figure img{object-position:72% center}
+  html[data-brand="rift"] .rift-nav nav{overflow:auto}
+}
+
+@media (max-width:480px){
+  html[data-brand="rift"] .rift-brand span{max-width:88px;line-height:1.08}
+  html[data-brand="rift"] .owner-timeline{grid-template-columns:1fr}
+  html[data-brand="rift"] .tool-actions{display:grid}
+  html[data-brand="rift"] .tool-actions button{width:100%}
+  html[data-brand="rift"] .product-facts>div{grid-template-columns:1fr;gap:6px}
+}

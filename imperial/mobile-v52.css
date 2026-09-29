@@ -1,0 +1,123 @@
+/* V5.4 mobile — Imperial Tropicals / cinematic farm journal */
+@media (max-width:850px){
+  html[data-brand="farm"],html[data-brand="farm"] body{width:100%;min-width:0;max-width:none;inline-size:100%;min-inline-size:0;max-inline-size:none}
+  html[data-brand="farm"] body{margin:0}
+  html[data-brand="farm"] body>header,html[data-brand="farm"] body>main,html[data-brand="farm"] body>footer{box-sizing:border-box;width:100%;min-width:0;max-width:none;inline-size:100%;min-inline-size:0;max-inline-size:none;margin-inline:0}
+  html[data-brand="farm"] body>main{display:block}
+  html[data-brand="farm"] body>main>section,html[data-brand="farm"] body>main>article{box-sizing:border-box;width:100%;min-width:0;max-width:none;inline-size:100%;min-inline-size:0;max-inline-size:none;margin-inline:0;opacity:1!important;transform:none!important}
+  html[data-brand="farm"] body>main>*>*{min-width:0;min-inline-size:0}
+  html[data-brand="farm"] body.nav-open,html[data-brand="farm"] body.cart-open{overflow:hidden}
+  html[data-brand="farm"] main,html[data-brand="farm"] main>*{min-width:0}
+  html[data-brand="farm"] img,html[data-brand="farm"] video,html[data-brand="farm"] svg{max-width:100%}
+  html[data-brand="farm"] .farm-nav{height:64px;padding:0 max(13px,env(safe-area-inset-right)) 0 max(13px,env(safe-area-inset-left));position:absolute;top:0;left:0;right:0;background:linear-gradient(#101812e8,transparent);color:var(--v5-paper)}
+  html[data-brand="farm"] .farm-brand small{display:none}
+  html[data-brand="farm"] .farm-brand span{font-size:.72rem}
+  html[data-brand="farm"] .nav-toggle{display:inline-flex;align-items:center;justify-content:center;min-width:64px;min-height:44px;margin-left:auto;border:1px solid #ffffff7a;background:#10181255;color:inherit;font:800 .64rem ui-monospace,monospace;letter-spacing:.08em;text-transform:uppercase}
+  html[data-brand="farm"] .farm-nav nav{display:none;position:fixed;z-index:70;inset:0;padding:calc(86px + env(safe-area-inset-top)) 22px calc(34px + env(safe-area-inset-bottom));background:#101812f8;color:var(--v5-paper);flex-direction:column;align-items:stretch;gap:0;counter-reset:chapter}
+  html[data-brand="farm"] .farm-nav nav:before{content:"IMPERIAL FIELD JOURNAL / 1970—NOW";padding-bottom:22px;color:var(--v5-sun);font:800 .62rem ui-monospace,monospace;letter-spacing:.16em}
+  html[data-brand="farm"] .farm-nav nav.open{display:flex}
+  html[data-brand="farm"] .farm-nav nav a{counter-increment:chapter;display:grid;grid-template-columns:44px 1fr;align-items:center;min-height:56px;border-top:1px solid #ffffff2b;font:400 1.18rem Georgia,serif}
+  html[data-brand="farm"] .farm-nav nav a:before{content:"0" counter(chapter);color:var(--v5-sun);font:700 .6rem ui-monospace,monospace}
+  html[data-brand="farm"] .bag{min-height:44px;padding:7px 10px;font-size:.65rem;background:var(--v5-red);border-color:var(--v5-red)}
+
+  html[data-brand="farm"] .farm-hero{min-height:100dvh}
+  html[data-brand="farm"] .farm-hero>img{object-position:58% center}
+  html[data-brand="farm"] .farm-hero:after{background:linear-gradient(0deg,#101812ed 0,#10181282 48%,transparent 76%)}
+  html[data-brand="farm"] .farm-title{left:18px;right:18px;bottom:7vh;max-width:610px}
+  html[data-brand="farm"] .farm-title h1{font-size:clamp(4.2rem,19vw,6.8rem);line-height:.78;letter-spacing:-.075em}
+  html[data-brand="farm"] .farm-hero aside{width:102px;height:102px;top:82px;right:14px}
+  html[data-brand="farm"] .farm-hero aside b{font-size:2.4rem}
+  html[data-brand="farm"] .farm-intro{min-height:0;padding:82px 18px 92px}
+  html[data-brand="farm"] .farm-intro h2{font-size:clamp(3.25rem,14vw,5.4rem);line-height:.86}
+  html[data-brand="farm"] .farm-intro>p:last-child{margin-left:0;font-size:1rem}
+  html[data-brand="farm"] .farm-intro:after{right:10px;bottom:22px}
+  html[data-brand="farm"] .farm-zones{display:grid;grid-template-columns:1fr;padding:0 18px 72px;gap:14px}
+  html[data-brand="farm"] .farm-zones a,html[data-brand="farm"] .farm-zones a:nth-child(2){min-height:0;height:auto;aspect-ratio:4/3;margin:0}
+  html[data-brand="farm"] .farm-zones a:first-child{aspect-ratio:4/5}
+  html[data-brand="farm"] .farm-zones span,html[data-brand="farm"] .farm-zones b{left:18px;right:18px}
+  html[data-brand="farm"] .farm-zones b{font-size:2.25rem}
+  html[data-brand="farm"] .farm-ledger{padding:76px 16px}
+  html[data-brand="farm"] .farm-ledger h2{font-size:clamp(3.2rem,14vw,5.4rem);line-height:.86}
+  html[data-brand="farm"] .farm-row{display:grid;grid-template-columns:34px minmax(0,1fr) auto;min-height:0;padding:20px 0;gap:8px 10px}
+  html[data-brand="farm"] .farm-row>a{min-width:0}
+  html[data-brand="farm"] .farm-row>a b{font-size:1.22rem;overflow-wrap:normal;word-break:normal}
+  html[data-brand="farm"] .farm-row small,html[data-brand="farm"] .farm-row strong{grid-column:2}
+  html[data-brand="farm"] .farm-row button{grid-column:3;grid-row:1/4;align-self:center;min-width:52px;min-height:44px}
+  html[data-brand="farm"] .breeder-story{display:grid;grid-template-columns:1fr;min-height:0}
+  html[data-brand="farm"] .breeder-story .product-world{min-height:0;aspect-ratio:4/5}
+  html[data-brand="farm"] .breeder-story>div:last-child{padding:62px 18px 76px}
+  html[data-brand="farm"] .breeder-story h2{font-size:clamp(3rem,13vw,5rem)}
+  html[data-brand="farm"] .bag-stack,html[data-brand="farm"] .nutrition-stage{display:flex;justify-content:flex-start;gap:14px;max-width:100%;overflow-x:auto;scroll-snap-type:x mandatory;padding:10px 9vw 28px 0;transform:none}
+  html[data-brand="farm"] .bag-stack .pack,html[data-brand="farm"] .nutrition-stage .pack{flex:0 0 68vw;scroll-snap-align:start}
+  html[data-brand="farm"] .history-line{display:grid;grid-template-columns:1fr;padding:74px 18px 84px;min-height:0;align-items:start}
+  html[data-brand="farm"] .history-line>a{margin-bottom:30px}
+  html[data-brand="farm"] .history-line div{min-height:0;padding:22px 0 22px 22px;border-left:1px solid #10181255}
+  html[data-brand="farm"] .history-line b{font-size:3.4rem}
+  html[data-brand="farm"] .history-line span{max-width:260px}
+
+  html[data-brand="farm"] .catalog,html[data-brand="farm"] .tool,html[data-brand="farm"] .info,html[data-brand="farm"] .owner{padding:82px 18px 70px}
+  html[data-brand="farm"] .tool>header,html[data-brand="farm"] .catalog>header,html[data-brand="farm"] .info>header{padding-bottom:28px;margin-bottom:46px}
+  html[data-brand="farm"] .tool>header h1,html[data-brand="farm"] .catalog>header h1,html[data-brand="farm"] .info h1,html[data-brand="farm"] .owner>h1{font-size:clamp(3.2rem,14.5vw,5.7rem);overflow-wrap:normal;word-break:normal}
+  html[data-brand="farm"] .farm-tour{padding:92px 0 62px}
+  html[data-brand="farm"] .farm-tour>header{padding:0 18px}
+  html[data-brand="farm"] .farm-film{display:flex;flex-direction:column;min-height:0;box-shadow:none}
+  html[data-brand="farm"] .farm-film>img{position:relative;height:auto;aspect-ratio:4/3}
+  html[data-brand="farm"] .farm-film:after{display:none}
+  html[data-brand="farm"] .farm-film aside{position:relative;inset:auto;max-width:none;padding:28px 18px 12px;background:#162019}
+  html[data-brand="farm"] .farm-hotspots{position:absolute;top:calc((100vw * .75) - 54px);left:14px;right:14px;display:flex;justify-content:space-between}
+  html[data-brand="farm"] .farm-hotspots button{position:static!important;transform:none!important;width:44px;height:44px;border-width:2px;box-shadow:0 0 0 5px #ffffff18}
+  html[data-brand="farm"] .farm-sequence{display:flex;max-width:100%;overflow-x:auto;scroll-snap-type:x mandatory;padding:0 18px 16px}
+  html[data-brand="farm"] .farm-sequence li{flex:0 0 132px;min-width:132px;scroll-snap-align:start}
+  html[data-brand="farm"] .filter-bar{align-items:stretch;flex-direction:column}
+  html[data-brand="farm"] .filter-bar input{width:100%}
+
+  html[data-brand="farm"] .pdp,html[data-brand="farm"] .nutrition-pdp{display:grid;grid-template-columns:1fr;min-height:0;padding:0;gap:0}
+  html[data-brand="farm"] .pdp-image,html[data-brand="farm"] .commercial-gallery,html[data-brand="farm"] .commercial-gallery>img{min-height:0;height:auto;aspect-ratio:4/5}
+  html[data-brand="farm"] .pdp-copy,html[data-brand="farm"] .nutrition-pdp>div:last-child{padding:48px 18px 64px}
+  html[data-brand="farm"] .pdp-copy h1,html[data-brand="farm"] .nutrition-pdp h1{font-size:clamp(2.85rem,13vw,5rem);overflow-wrap:normal;word-break:normal;hyphens:auto}
+  html[data-brand="farm"] .care-ledger,html[data-brand="farm"] .info-chapters,html[data-brand="farm"] .owner-grid{display:grid;grid-template-columns:1fr;padding:64px 18px;gap:20px}
+  html[data-brand="farm"] .feeding-bridge{display:grid;grid-template-columns:1fr;min-height:0}
+  html[data-brand="farm"] .feeding-bridge>div{padding:54px 18px}
+  html[data-brand="farm"] .feeding-bridge img{min-height:0;aspect-ratio:4/3}
+  html[data-brand="farm"] .pack-system{display:flex;gap:1px;padding:1px 18px 28px;overflow-x:auto;scroll-snap-type:x mandatory}
+  html[data-brand="farm"] .pack-system>div{flex:0 0 82vw;min-height:390px;padding:28px;scroll-snap-align:start}
+  html[data-brand="farm"] .product-ecosystem{padding:70px 18px}
+  html[data-brand="farm"] .product-ecosystem>div,html[data-brand="farm"] .nutrition-logic{grid-template-columns:1fr;margin:42px 0}
+  html[data-brand="farm"] .family-hero{grid-template-columns:1fr;min-height:0}
+  html[data-brand="farm"] .family-hero img{min-height:0;aspect-ratio:4/3}
+  html[data-brand="farm"] .family-hero figcaption{padding:28px 20px}
+  html[data-brand="farm"] .owner-thesis,html[data-brand="farm"] .owner-columns{grid-template-columns:1fr}
+  html[data-brand="farm"] .owner-timeline{grid-template-columns:1fr 1fr}
+  html[data-brand="farm"] .shoreline-ledger,html[data-brand="farm"] .order-path,html[data-brand="farm"] .feed-room-ledger,html[data-brand="farm"] .tank-profile{grid-template-columns:1fr;margin:48px 0}
+  html[data-brand="farm"] .locality-page,html[data-brand="farm"] .orders-page,html[data-brand="farm"] .feed-room-page,html[data-brand="farm"] .my-tank-page{padding:82px 18px 70px}
+  html[data-brand="farm"] .locality-page h1,html[data-brand="farm"] .orders-page h1,html[data-brand="farm"] .feed-room-page h1,html[data-brand="farm"] .my-tank-page h1{font-size:clamp(3rem,14vw,5.4rem);overflow-wrap:normal;word-break:normal}
+  html[data-brand="farm"] footer{grid-template-columns:1fr;padding:48px 18px calc(48px + env(safe-area-inset-bottom))}
+
+  html[data-brand="farm"] .cart{display:none;inset:0;width:100%;height:100dvh;padding:calc(18px + env(safe-area-inset-top)) max(18px,env(safe-area-inset-right)) calc(18px + env(safe-area-inset-bottom)) max(18px,env(safe-area-inset-left));transform:none}
+  html[data-brand="farm"] .cart.open{display:flex}
+  html[data-brand="farm"] .cart-head{position:sticky;top:0;z-index:2;background:var(--surface)}
+  html[data-brand="farm"] .cart-lines{min-height:0}
+  html[data-brand="farm"] .checkout{flex:0 0 54px}
+  html[data-brand="farm"] dialog{width:calc(100% - 28px);padding:30px 20px}
+}
+
+@media(max-width:760px){
+  html[data-brand="farm"] .shipping-house-visual{height:430px;margin:0 0 30px}
+  html[data-brand="farm"] .shipping-house-visual img{object-position:54% center}
+  html[data-brand="farm"] .shipping-house-visual figcaption{left:10px;right:10px;bottom:10px;font-size:.58rem}
+}
+
+@media (max-width:850px) and (orientation:landscape) and (max-height:500px){
+  html[data-brand="farm"] .farm-hero{min-height:620px}
+  html[data-brand="farm"] .farm-title{max-width:62%;bottom:38px}
+  html[data-brand="farm"] .farm-title h1{font-size:clamp(3.8rem,10vw,5.2rem)}
+  html[data-brand="farm"] .farm-nav nav{overflow:auto}
+}
+
+@media (max-width:480px){
+  html[data-brand="farm"] .farm-brand span{max-width:88px;line-height:1.05}
+  html[data-brand="farm"] .owner-timeline{grid-template-columns:1fr}
+  html[data-brand="farm"] .tool-actions{display:grid}
+  html[data-brand="farm"] .tool-actions button{width:100%}
+  html[data-brand="farm"] .product-facts>div{grid-template-columns:1fr;gap:6px}
+}
