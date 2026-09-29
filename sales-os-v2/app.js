@@ -1,12 +1,15 @@
 const API='https://viajmvbwpmkiqxjtgshv.supabase.co/rest/v1/rpc/';
 const APIKEY='sb_publishable_gGFZftPonWKNZCdvUSM3yQ_gZvyI6_H';
+const SUPABASE_URL='https://viajmvbwpmkiqxjtgshv.supabase.co';
+const AUTH_BOOTSTRAP=SUPABASE_URL+'/functions/v1/sales-os-auth-bootstrap';
 const STAGES=['Research','Asset ready','Ready to contact','Contacted','Follow-up','Replied','Qualified','Meeting','Proposal','Negotiation','Won','Lost','Hold'];
 const PIPELINE_STAGES=['Research','Ready to contact','Follow-up','Replied','Qualified','Proposal'];
 const CSV_COLUMNS=['company','category','segment','location','website','contact_name','contact_role','contact_email','phone','priority','score','owner_assigned','sender_name','sender_email','stage','status','next_action','next_action_date','caution','notes','tags','source_groups','source_notes','asset_type','asset_title','asset_url','asset_status','outreach_subject','outreach_message'];
 
 let token='';
-let data={prospects:[],assets:[],activities:[],templates:[],categories:[],notes:[],reminders:[],email_drafts:[],notifications:[],connections:[],email_messages:[],recommendations:[],opportunities:[]};
+let data={prospects:[],assets:[],activities:[],templates:[],categories:[],notes:[],reminders:[],email_drafts:[],notifications:[],connections:[],email_messages:[],recommendations:[],opportunities:[],approvals:[],audit_log:[],members:[]};
 let selectedProspect=null,currentDraft=null,currentPage='dashboard',deferredInstallPrompt=null;
+let sessionAccessToken='',supabaseClient=null,actor=null;
 
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
@@ -14,16 +17,66 @@ const todayISO=()=>new Date().toISOString().slice(0,10);
 const dateTimeLocal=x=>{if(!x)return'';const d=new Date(x),p=n=>String(n).padStart(2,'0');return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`};
 const pill=s=>{const v=String(s||'Research');let c='';if(v==='Won')c='green';else if(['Lost','Hold'].includes(v))c='red';else if(['Follow-up','Ready to contact'].includes(v))c='amber';else if(['Replied','Qualified','Meeting'].includes(v))c='blue';return `<span class="pill ${c}">${esc(v)}</span>`};
 function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.remove('hidden');setTimeout(()=>t.classList.add('hidden'),2200)}
-async function rpc(fn,payload){const r=await fetch(API+fn,{method:'POST',headers:{apikey:APIKEY,'Content-Type':'application/json'},body:JSON.stringify(payload)});const txt=await r.text();if(!r.ok)throw new Error(txt||`HTTP ${r.status}`);return txt?JSON.parse(txt):null}
-function norm(){for(const k of ['prospects','assets','activities','templates','categories','notes','reminders','email_drafts','notifications','connections','email_messages','recommendations','opportunities'])data[k]=Array.isArray(data[k])?data[k]:[]}
+async function rpc(fn,payload={}){
+ const headers={apikey:APIKEY,'Content-Type':'application/json'};
+ if(sessionAccessToken)headers.Authorization='Bearer '+sessionAccessToken;
+ const r=await fetch(API+fn,{method:'POST',headers,body:JSON.stringify(payload)});
+ const txt=await r.text();if(!r.ok)throw new Error(txt||`HTTP ${r.status}`);return txt?JSON.parse(txt):null
+}
+function norm(){for(const k of ['prospects','assets','activities','templates','categories','notes','reminders','email_drafts','notifications','connections','email_messages','recommendations','opportunities','approvals','audit_log','members'])data[k]=Array.isArray(data[k])?data[k]:[]}
 
+async function ensureSupabaseClient(){
+ if(supabaseClient)return supabaseClient;
+ const mod=await import('https://esm.sh/@supabase/supabase-js@2');
+ supabaseClient=mod.createClient(SUPABASE_URL,APIKEY,{auth:{persistSession:true,detectSessionInUrl:true,autoRefreshToken:true}});
+ return supabaseClient;
+}
+async function memberLogin(){
+ const email=$('#memberEmail').value.trim(),c=$('#accessCode').value.trim();$('#loginError').textContent='';
+ if(!email||!c){$('#loginError').textContent='Enter your Sales OS email and team access code.';return}
+ try{
+  $('#memberLoginBtn').disabled=true;$('#memberLoginBtn').textContent='Creating secure session…';
+  const returnUrl=location.origin+'/sales-os-v2/auth/';
+  const r=await fetch(AUTH_BOOTSTRAP,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,access_code:c,return_url:returnUrl})});
+  const d=await r.json();
+  if(!r.ok||!d.action_link)throw new Error(d.error||d.detail||'Could not sign in');
+  location.href=d.action_link;
+ }catch(e){
+  $('#memberLoginBtn').disabled=false;$('#memberLoginBtn').textContent='Continue as team member';
+  $('#loginError').textContent=String(e?.message||e);
+ }
+}
+async function tryMemberSession(){
+ try{
+  const sb=await ensureSupabaseClient();
+  const {data:{session}}=await sb.auth.getSession();
+  if(!session)return false;
+  sessionAccessToken=session.access_token;token='';
+  actor=await rpc('sales_os_whoami',{p_token:null});
+  $('#login').classList.add('hidden');$('#app').classList.remove('hidden');
+  await load();return true;
+ }catch(e){sessionAccessToken='';actor=null;return false}
+}
 async function login(){
  const c=$('#accessCode').value.trim();$('#loginError').textContent='';
- try{const ok=await rpc('sales_os_verify',{p_token:c});if(!ok)throw new Error('denied');token=c;if($('#remember').checked)localStorage.setItem('salesOsToken',c);$('#login').classList.add('hidden');$('#app').classList.remove('hidden');await load()}
- catch(e){$('#loginError').textContent='Could not open Sales OS. Check the access code.'}
+ try{
+  const ok=await rpc('sales_os_verify',{p_token:c});if(!ok)throw new Error('denied');
+  token=c;sessionAccessToken='';actor={display_name:'Shared team access',role:'shared',mode:'team_code'};
+  if($('#remember').checked)localStorage.setItem('salesOsToken',c);
+  $('#login').classList.add('hidden');$('#app').classList.remove('hidden');await load()
+ }catch(e){$('#loginError').textContent='Could not open Sales OS. Check the access code.'}
 }
-async function load(){data=await rpc('sales_os_snapshot',{p_token:token});norm();renderAll();$('#syncLabel').textContent='Last synced '+new Date(data.synced_at||Date.now()).toLocaleString();showDueBrowserNotifications()}
-function renderAll(){renderCounts();renderDashboard();syncFilters();renderProspects();renderPipeline();renderInbox();renderAIQueue();renderEmail();renderAssets();renderReminders();renderNotes();renderCategories();renderConnections();renderNotifications()}
+async function signOutWorkspace(){
+ localStorage.removeItem('salesOsToken');
+ try{if(supabaseClient)await supabaseClient.auth.signOut()}catch(e){}
+ sessionAccessToken='';token='';location.reload();
+}
+async function load(){
+ data=await rpc('sales_os_snapshot',{p_token:token||null});norm();actor=data.actor||actor;
+ renderAll();renderIdentity();
+ $('#syncLabel').textContent='Last synced '+new Date(data.synced_at||Date.now()).toLocaleString();showDueBrowserNotifications()
+}
+function renderAll(){renderCounts();renderDashboard();syncFilters();renderProspects();renderPipeline();renderInbox();renderAIQueue();renderEmail();renderAssets();renderReminders();renderNotes();renderCategories();renderConnections();renderNotifications();renderApprovals()}
 const categoryNames=()=>[...new Set([...data.categories.map(c=>c.name),...data.prospects.map(p=>p.category).filter(Boolean)])].sort();
 const owners=()=>[...new Set(data.prospects.map(p=>p.owner_assigned).filter(Boolean))].sort();
 const prospectName=id=>data.prospects.find(p=>p.id===id)?.company||'';
@@ -291,5 +344,10 @@ $('#quickProspectBtn').onclick=openProspectForm;$('#addProspectBtn').onclick=ope
 $('#newAssetBtn').onclick=()=>openAssetForm();$('#newEmailBtn').onclick=()=>openNewDraft();$('#categoryManagerBtn').onclick=openCategoryManager;$('#openImportBtn').onclick=openImporter;$('#categoryImportBtn').onclick=openImporter;$('#dashImportBtn').onclick=openImporter;$('#prospectImportBtn').onclick=openImporter;
 $('#saveProspect').onclick=saveProspect;if($('#saveOpportunity'))$('#saveOpportunity').onclick=saveOpportunity;$('#pdNewAsset').onclick=()=>openAssetForm(selectedProspect?.id);$('#pdNewNote').onclick=()=>openNoteForm(selectedProspect?.id);$('#pdNewReminder').onclick=()=>openReminderForm(selectedProspect?.id);
 document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>{const el=$('#'+b.dataset.close);el?.classList.add('hidden');if(b.dataset.close==='prospectDrawer')document.body.classList.remove('modal-open')});$('#genericModal').addEventListener('click',e=>{if(e.target.id==='genericModal')closeModal()});$('#prospectDrawer').addEventListener('click',e=>{if(e.target.id==='prospectDrawer'){e.currentTarget.classList.add('hidden');document.body.classList.remove('modal-open')}});
-const saved=localStorage.getItem('salesOsToken');if(saved){$('#accessCode').value=saved;login()}
+(async()=>{
+ const memberOk=await tryMemberSession();
+ if(memberOk)return;
+ const saved=localStorage.getItem('salesOsToken');
+ if(saved){$('#accessCode').value=saved;await login()}
+})().catch(()=>{});
 if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
