@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#f5f7f4">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<title>Connect Sales OS to ChatGPT</title>
+<style>
+:root{--bg:#f5f7f4;--paper:#fff;--ink:#142017;--muted:#718075;--line:#dfe6df;--green:#1f7a4d;--lime:#b7ff35}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;min-height:100vh;display:grid;place-items:center;padding:20px}
+.card{width:min(560px,100%);background:var(--paper);border:1px solid var(--line);border-radius:20px;padding:24px;box-shadow:0 18px 50px rgba(31,51,37,.08)}
+.brand{display:flex;gap:10px;align-items:center;margin-bottom:18px}.mark{width:36px;height:36px;border-radius:11px;background:var(--lime);display:grid;place-items:center;font-weight:900}.brand b{font-size:13px;letter-spacing:.08em}.brand span{display:block;color:var(--muted);font-size:10px;margin-top:2px}
+h1{font-size:28px;letter-spacing:-.04em;margin:8px 0}p{color:var(--muted);font-size:12px;line-height:1.6}.field{display:grid;gap:5px;margin:10px 0}.field label{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#7d8a80;font-weight:800}.input{width:100%;border:1px solid var(--line);border-radius:10px;padding:10px 11px;outline:none}.btn{border:1px solid var(--line);background:#fff;padding:10px 13px;border-radius:10px;font-weight:800;font-size:12px;cursor:pointer}.btn.primary{background:#16291c;color:#fff;border-color:#16291c}.btn.danger{color:#a33}.row{display:flex;gap:8px;flex-wrap:wrap}.status{font-size:11px;padding:9px 10px;border-radius:9px;background:#f6f8f6;color:#607066;margin-top:10px}.client{border:1px solid var(--line);border-radius:12px;padding:12px;margin:14px 0}.client b{font-size:13px}.scope{display:inline-block;border:1px solid var(--line);border-radius:999px;padding:4px 7px;font-size:9px;margin:2px}.hidden{display:none!important}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="brand"><div class="mark">M</div><div><b>MORPHEUS</b><span>Sales OS authorization</span></div></div>
+  <div id="loading">
+    <h1>Connecting Sales OS…</h1>
+    <p>Checking your authorization request.</p>
+    <div class="status" id="loadingStatus">Loading…</div>
+  </div>
+
+  <section id="signin" class="hidden">
+    <h1>Sign in to Sales OS</h1>
+    <p>Use your approved Sales OS email and the same team access code you use for the dashboard. This creates a secure Supabase session for the ChatGPT connection; the access code itself is not given to ChatGPT.</p>
+    <div class="field"><label>Email</label><input id="email" class="input" type="email" autocomplete="email"></div>
+    <div class="field"><label>Sales OS access code</label><input id="access" class="input" type="password" autocomplete="current-password"></div>
+    <button id="signinBtn" class="btn primary" style="width:100%">Continue securely</button>
+    <div id="signinStatus" class="status hidden"></div>
+  </section>
+
+  <section id="consent" class="hidden">
+    <h1>Connect ChatGPT?</h1>
+    <p>ChatGPT is requesting permission to work with your live Morpheus Sales OS account.</p>
+    <div class="client">
+      <b id="clientName">ChatGPT</b>
+      <p id="clientMeta"></p>
+      <div id="scopes"></div>
+    </div>
+    <p>With access, ChatGPT can use the Sales OS tools you approve: read prospect context, update pipeline fields, create notes and reminders, work with assets, and save email drafts. It does not receive raw database credentials.</p>
+    <div class="row"><button id="approveBtn" class="btn primary">Allow connection</button><button id="denyBtn" class="btn danger">Deny</button></div>
+    <div id="consentStatus" class="status hidden"></div>
+  </section>
+
+  <section id="error" class="hidden">
+    <h1>Connection could not continue</h1>
+    <p id="errorText"></p>
+    <button class="btn" onclick="location.reload()">Try again</button>
+  </section>
+</div>
+
+<script type="module">
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+const SUPABASE_URL="https://viajmvbwpmkiqxjtgshv.supabase.co";
+const PUBLISHABLE_KEY="sb_publishable_gGFZftPonWKNZCdvUSM3yQ_gZvyI6_H";
+const BOOTSTRAP=SUPABASE_URL+"/functions/v1/sales-os-auth-bootstrap";
+const MCP=SUPABASE_URL+"/functions/v1/sales-os-mcp/mcp";
+const supabase=createClient(SUPABASE_URL,PUBLISHABLE_KEY,{auth:{persistSession:true,detectSessionInUrl:true,autoRefreshToken:true}});
+const $=s=>document.querySelector(s);
+const authId=new URLSearchParams(location.search).get("authorization_id");
+
+function show(id){["loading","signin","consent","error"].forEach(x=>$("#"+x).classList.toggle("hidden",x!==id))}
+function fail(msg){$("#errorText").textContent=msg;show("error")}
+
+async function ensureCodeSession(){
+  const params=new URLSearchParams(location.search);
+  const code=params.get("code");
+  if(code){
+    const {error}=await supabase.auth.exchangeCodeForSession(code);
+    if(error) throw error;
+    params.delete("code");
+    history.replaceState({}, "", location.pathname+(params.toString()?"?"+params.toString():""));
+  }
+}
+
+async function memberCheck(session){
+  const r=await fetch(MCP,{
+    method:"POST",
+    headers:{"content-type":"application/json","authorization":"Bearer "+session.access_token},
+    body:JSON.stringify({jsonrpc:"2.0",id:1,method:"ping",params:{}})
+  });
+  return r.ok;
+}
+
+async function begin(){
+  if(!authId)return fail("Missing authorization request. Start the connection again from ChatGPT.");
+  try{
+    await ensureCodeSession();
+    const {data:{session}}=await supabase.auth.getSession();
+    if(!session){show("signin");return}
+    if(!(await memberCheck(session))){
+      await supabase.auth.signOut();
+      $("#signinStatus").textContent="This Supabase session is not an active Sales OS member. Sign in with an approved Sales OS email.";
+      $("#signinStatus").classList.remove("hidden");
+      show("signin");return;
+    }
+
+    $("#loadingStatus").textContent="Loading ChatGPT request…";
+    const {data,error}=await supabase.auth.oauth.getAuthorizationDetails(authId);
+    if(error)throw error;
+    const d=data||{};
+    $("#clientName").textContent=d.client?.name||d.client_name||"ChatGPT";
+    const redirect=d.redirect_uri||d.client?.redirect_uri||"";
+    $("#clientMeta").textContent=redirect?("Return address: "+redirect):"Authenticated ChatGPT connection";
+    const scopes=d.scope||d.scopes||[];
+    const arr=Array.isArray(scopes)?scopes:String(scopes).split(" ").filter(Boolean);
+    $("#scopes").innerHTML=arr.map(s=>'<span class="scope">'+String(s).replace(/[<>&]/g,"")+'</span>').join("");
+    show("consent");
+  }catch(e){fail(String(e?.message||e))}
+}
+
+$("#signinBtn").onclick=async()=>{
+  const email=$("#email").value.trim(),access=$("#access").value.trim();
+  if(!email||!access)return;
+  $("#signinStatus").textContent="Creating secure sign-in…";$("#signinStatus").classList.remove("hidden");
+  try{
+    const returnUrl=location.href;
+    const r=await fetch(BOOTSTRAP,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({email,access_code:access,return_url:returnUrl})});
+    const d=await r.json();
+    if(!r.ok||!d.action_link)throw new Error(d.error||d.detail||"Could not sign in");
+    location.href=d.action_link;
+  }catch(e){$("#signinStatus").textContent=String(e?.message||e)}
+};
+
+$("#approveBtn").onclick=async()=>{
+  $("#consentStatus").textContent="Approving…";$("#consentStatus").classList.remove("hidden");
+  try{
+    const {data,error}=await supabase.auth.oauth.approveAuthorization(authId);
+    if(error)throw error;
+    location.href=data.redirect_url;
+  }catch(e){$("#consentStatus").textContent=String(e?.message||e)}
+};
+
+$("#denyBtn").onclick=async()=>{
+  try{
+    const {data,error}=await supabase.auth.oauth.denyAuthorization(authId);
+    if(error)throw error;
+    location.href=data.redirect_url;
+  }catch(e){fail(String(e?.message||e))}
+};
+
+begin();
+</script>
+</body>
+</html>
