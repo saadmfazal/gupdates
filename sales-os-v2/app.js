@@ -151,33 +151,36 @@ SUBJECT:
 BODY:`;
  modal('AI writing',`<div class="ai-box"><h3>ChatGPT-ready context</h3><p>While the private MCP connection is being activated, this keeps the context clean and complete.</p></div><div class="field" style="margin-top:10px"><textarea id="aiPrompt" class="textarea" rows="17" readonly>${esc(prompt)}</textarea></div><div class="pageactions"><button id="copyAiPrompt" class="btn primary">Copy prompt</button><button id="openChatGPT" class="btn">Open ChatGPT</button></div>`);$('#copyAiPrompt').onclick=async()=>{await navigator.clipboard.writeText($('#aiPrompt').value);toast('AI prompt copied')};$('#openChatGPT').onclick=()=>window.open('https://chatgpt.com/','_blank');
 }
-function handleDirectSend(){const c=data.connections.find(x=>x.key==='gmail');if(c?.status!=='connected'){go('connections');toast('Connect Gmail first');return}toast('Gmail connection is active')}
+function handleDirectSend(){const d=currentDraft;if(!d)return;const p=data.prospects.find(x=>x.id===d.prospect_id);const prompt=`Use my connected Morpheus Sales OS and Gmail apps.
+
+Open the Sales OS prospect "${p?.company||''}" and find the email draft with ID ${d.id}. Review the recipient, subject and body exactly as saved. If anything looks unsafe or incomplete, tell me instead of sending. Otherwise send that exact draft through my connected Gmail account, then call Sales OS mark_email_sent with the Gmail message ID so the CRM stays synchronized.`;navigator.clipboard.writeText(prompt).then(()=>{window.open('https://chatgpt.com/','_blank');toast('Send instruction copied — paste it into ChatGPT')})}
 async function markNotice(id,action){await rpc('sales_os_set_notification_state',{p_token:token,p_id:id,p_action:action});await load()}
 window.markNotice=markNotice;
 
 function openConnection(key){
  if(key==='chatgpt'){
-  const mcp='https://viajmvbwpmkiqxjtgshv.supabase.co/functions/v1/sales-os-mcp/mcp';
-  modal('Connect ChatGPT',`<div class="ai-box"><h3>Sales OS MCP backend is ready</h3><p>The CRM tool server, member allow-list and secure consent page are already deployed. One Supabase project setting remains before ChatGPT can complete OAuth.</p></div>
+  const base='https://viajmvbwpmkiqxjtgshv.supabase.co/functions/v1/sales-os-mcp/mcp';
+  const mcp=base+'?access_code='+encodeURIComponent(token);
+  modal('Connect ChatGPT',`<div class="ai-box"><h3>Sales OS is ready to connect now</h3><p>Use the private MCP URL below in ChatGPT. It carries your current Sales OS team access code, so no extra OAuth setup is required for this private build.</p></div>
   <div style="margin-top:14px;border:1px solid var(--line);border-radius:12px;padding:13px">
-    <div class="title">1 · Enable OAuth 2.1 in Supabase</div>
-    <div class="meta" style="font-size:11px;line-height:1.7">Supabase Dashboard → Authentication → OAuth Server → Enable OAuth Server. Set the authorization path to:<br><b>https://george.morpheuspd.io/sales-os-v2/oauth/</b><br>Enable Dynamic Client Registration and require user approval.</div>
-  </div>
-  <div style="margin-top:9px;border:1px solid var(--line);border-radius:12px;padding:13px">
-    <div class="title">2 · Add Sales OS in ChatGPT</div>
-    <div class="meta" style="font-size:11px;line-height:1.7">Use this MCP URL when adding the private Sales OS connection:</div>
-    <input id="mcpUrlCopy" class="input" readonly value="${mcp}" style="margin-top:7px">
+    <div class="title">1 · Copy the private MCP URL</div>
+    <div class="meta" style="font-size:11px;line-height:1.7">Treat this URL like a password. Share it only with the Sales OS team.</div>
+    <input id="mcpUrlCopy" class="input" readonly value="${esc(mcp)}" style="margin-top:7px">
     <button id="copyMcpBtn" class="btn primary" style="margin-top:8px">Copy MCP URL</button>
   </div>
   <div style="margin-top:9px;border:1px solid var(--line);border-radius:12px;padding:13px">
-    <div class="title">3 · Approve with your Sales OS identity</div>
-    <div class="meta" style="font-size:11px;line-height:1.7">The connection redirects to the Sales OS consent screen. Only active Sales OS members are allowed. After approval, ChatGPT receives CRM tools — not raw database credentials.</div>
+    <div class="title">2 · Add it to ChatGPT</div>
+    <div class="meta" style="font-size:11px;line-height:1.7">In ChatGPT, add a custom MCP / private plugin connection and paste the URL. No additional authentication should be required for this team-code build.</div>
   </div>
-  <p class="meta" style="font-size:11px;line-height:1.7;margin-top:12px">Once connected, you can ask ChatGPT to find an account, draft from live context, edit an asset record, add notes/reminders, move a prospect through the pipeline and save an email draft back into Sales OS.</p>`);
-  $('#copyMcpBtn').onclick=async()=>{await navigator.clipboard.writeText(mcp);toast('MCP URL copied')};
+  <div style="margin-top:9px;border:1px solid var(--line);border-radius:12px;padding:13px">
+    <div class="title">3 · Work naturally</div>
+    <div class="meta" style="font-size:11px;line-height:1.7">Ask ChatGPT to search or create prospects, update stages, add notes and reminders, create/edit asset records, draft email, or save drafts back into Sales OS. For an actual email send, use the connected Gmail app in the same ChatGPT conversation, then ChatGPT can mark the Sales OS draft as sent.</div>
+  </div>
+  <details style="margin-top:12px"><summary style="font-size:11px;font-weight:800;cursor:pointer">Stronger OAuth mode later</summary><p class="meta" style="font-size:11px;line-height:1.7">The OAuth consent screen and member allow-list are already built. When Supabase OAuth Server is enabled, the same MCP backend can switch to per-user OAuth instead of the shared team code.</p></details>`);
+  $('#copyMcpBtn').onclick=async()=>{await navigator.clipboard.writeText(mcp);toast('Private MCP URL copied')};
  } else {
-  modal('Connect Gmail',`<div class="ai-box"><h3>Email sending is deliberately separated from CRM access</h3><p>Connect Gmail in ChatGPT. Then ChatGPT can draft from the live Sales OS account, send through the authorized Gmail connection, and call Sales OS again to mark the exact draft as sent.</p></div>
-  <p class="meta" style="font-size:11px;line-height:1.7;margin-top:12px">This keeps Gmail credentials out of Sales OS and avoids storing Google access tokens in the dashboard. Until Gmail is authorized, Sales OS keeps drafts editable and Open mail app remains available for manual sending.</p>`);
+  modal('Email connection',`<div class="ai-box"><h3>Email works through ChatGPT + Gmail</h3><p>Sales OS stores the editable draft and account context. ChatGPT can use your connected Gmail app to send the actual message, then update the exact Sales OS draft and activity history.</p></div>
+  <p class="meta" style="font-size:11px;line-height:1.7;margin-top:12px">This avoids placing Gmail credentials in the static dashboard. If Gmail is connected in ChatGPT, the full flow is: open Sales OS in ChatGPT → draft/update → send via Gmail → mark the CRM draft sent.</p>`);
  }
 }
 window.openConnection=openConnection;
