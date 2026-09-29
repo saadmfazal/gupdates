@@ -168,8 +168,8 @@ function showDraftEditor(d){
  $('#emailEditor').innerHTML=`<div class="panelhead"><div><h2>${esc(p?.company||'Email draft')}</h2><small>${esc(d.status)}</small></div><button class="btn" id="aiDraftBtn">AI writing</button></div>
  <div class="formgrid2"><div class="field"><label>To</label><input id="edTo" class="input" value="${esc(d.recipient||'')}"></div><div class="field"><label>From</label><input id="edFrom" class="input" value="${esc(d.sender_email||'')}"></div></div>
  <div class="field"><label>Subject</label><input id="edSubject" class="input" value="${esc(d.subject||'')}"></div><div class="field"><label>Message</label><textarea id="edBody" class="textarea" rows="16">${esc(d.body||'')}</textarea></div>
- <div class="pageactions"><button class="btn" id="saveDraftBtn">Save</button><button class="btn" id="copyDraftBtn">Copy</button><button class="btn" id="openMailBtn">Open mail app</button><button class="btn green" id="directSendBtn">Send with ChatGPT</button></div><p class="meta" style="margin-top:10px">ChatGPT uses the live Sales OS draft plus your connected Gmail app, then writes the confirmed send back to the CRM.</p>`;
- $('#saveDraftBtn').onclick=saveCurrentDraft;$('#copyDraftBtn').onclick=async()=>{await navigator.clipboard.writeText($('#edBody').value);toast('Copied')};$('#openMailBtn').onclick=()=>location.href=`mailto:${encodeURIComponent($('#edTo').value)}?subject=${encodeURIComponent($('#edSubject').value)}&body=${encodeURIComponent($('#edBody').value)}`;$('#aiDraftBtn').onclick=()=>openAIWriter(d.prospect_id);$('#directSendBtn').onclick=()=>handleDirectSend(d.id);
+ <div class="pageactions"><button class="btn" id="saveDraftBtn">Save</button><button class="btn" id="copyDraftBtn">Copy</button><button class="btn green" id="directSendBtn">${actor?.role==='owner'?'Send with ChatGPT':'Request approval'}</button></div><p class="meta" style="margin-top:10px">${actor?.role==='owner'?'Owner session: protected send is allowed after your own review.':'The exact recipient, subject and body must be approved by the Sales OS owner before sending.'}</p>`;
+ $('#saveDraftBtn').onclick=saveCurrentDraft;$('#copyDraftBtn').onclick=async()=>{await navigator.clipboard.writeText($('#edBody').value);toast('Copied')};$('#aiDraftBtn').onclick=()=>openAIWriter(d.prospect_id);$('#directSendBtn').onclick=()=>handleDirectSend(d.id);
 }
 window.openDraft=id=>{currentDraft=data.email_drafts.find(d=>d.id===id);renderEmail();if(window.matchMedia('(max-width:760px)').matches)setTimeout(()=>$('#emailEditor')?.scrollIntoView({behavior:'smooth',block:'start'}),60)};
 function renderAssets(){$('#assetGrid').innerHTML=data.assets.length?data.assets.map(a=>`<article class="assetcard"><span class="pill">${esc(a.asset_type)}</span><h3 style="font-size:13px;margin:9px 0 4px">${esc(a.title)}</h3><p>${esc(prospectName(a.prospect_id)||'Unlinked')} · ${esc(a.status||'')}</p><div class="assetactions">${a.url?`<a class="btn" href="${esc(a.url)}" target="_blank">Open ↗</a>`:''}<button class="btn" onclick="editAsset('${a.id}')">Edit</button></div></article>`).join(''):'<div class="empty">No assets.</div>'}
@@ -294,9 +294,35 @@ SUBJECT:
 BODY:`;
  modal('AI writing',`<div class="ai-box"><h3>ChatGPT-ready context</h3><p>While the private MCP connection is being activated, this keeps the context clean and complete.</p></div><div class="field" style="margin-top:10px"><textarea id="aiPrompt" class="textarea" rows="17" readonly>${esc(prompt)}</textarea></div><div class="pageactions"><button id="copyAiPrompt" class="btn primary">Copy prompt</button><button id="openChatGPT" class="btn">Open ChatGPT</button></div>`);$('#copyAiPrompt').onclick=async()=>{await navigator.clipboard.writeText($('#aiPrompt').value);toast('AI prompt copied')};$('#openChatGPT').onclick=()=>window.open('https://chatgpt.com/','_blank');
 }
-async function handleDirectSend(){const d=currentDraft;if(!d)return;await saveCurrentDraft();const fresh=data.email_drafts.find(x=>x.id===d.id)||d;const p=data.prospects.find(x=>x.id===fresh.prospect_id);const prompt=`Use my connected Morpheus Sales OS and Gmail apps.
+async function launchApprovedSend(d,approval=null){
+ const p=data.prospects.find(x=>x.id===d.prospect_id);
+ const approvalLine=approval?` This draft has Sales OS approval ID ${approval.id}; verify that approval before sending.`:' This send is initiated from an authenticated Sales OS Owner session.';
+ const prompt=`Use my connected Morpheus Sales OS and Gmail apps.
 
-Open the Sales OS prospect "${p?.company||''}" and find the email draft with ID ${fresh.id}. Review the recipient, subject and body exactly as saved. If anything looks unsafe or incomplete, tell me instead of sending. Otherwise send that exact draft through my connected Gmail account, then call Sales OS mark_email_sent with the Gmail message ID so the CRM stays synchronized.`;navigator.clipboard.writeText(prompt).then(()=>{window.open('https://chatgpt.com/','_blank');toast('Send instruction copied — paste it into ChatGPT')})}
+Open the Sales OS prospect "${p?.company||''}" and find email draft ID ${d.id}.${approvalLine}
+Review the exact saved recipient, subject and body. If the approved snapshot no longer matches the current draft, do not send and tell me. Otherwise send that exact draft through my connected Gmail account, then call Sales OS mark_email_sent with the Gmail message ID so the CRM and audit trail stay synchronized.`;
+ await navigator.clipboard.writeText(prompt);window.open('https://chatgpt.com/','_blank');toast('Approved send instruction copied');
+}
+async function handleDirectSend(){
+ const d=currentDraft;if(!d)return;
+ await saveCurrentDraft();
+ const fresh=data.email_drafts.find(x=>x.id===d.id)||d;
+ if(actor?.role==='owner'){await launchApprovedSend(fresh,null);return}
+ const approved=approvalForDraft(fresh.id,'approved');
+ if(approved&&approvalMatchesDraft(approved,fresh)){await launchApprovedSend(fresh,approved);return}
+ const pending=approvalForDraft(fresh.id,'pending');
+ if(pending&&approvalMatchesDraft(pending,fresh)){go('approvals');toast('Already waiting for owner approval');return}
+ try{
+  await rpc('sales_os_request_approval',{p_token:token||null,p_payload:{
+    prospect_id:fresh.prospect_id,item_type:'email_send',source_table:'sales_os_email_drafts',source_id:fresh.id,
+    title:'Send email to '+(prospectName(fresh.prospect_id)||fresh.recipient||'prospect'),
+    description:'Protected outbound email. Approval is tied to this exact draft snapshot.',
+    ai_assisted:!!fresh.ai_assisted,
+    payload:{recipient:fresh.recipient||'',sender_name:fresh.sender_name||'',sender_email:fresh.sender_email||'',subject:fresh.subject||'',body:fresh.body||''}
+  }});
+  await load();go('approvals');toast('Approval requested');
+ }catch(e){toast('Could not request approval: '+String(e.message||e))}
+}
 async function markNotice(id,action){await rpc('sales_os_set_notification_state',{p_token:token,p_id:id,p_action:action});await load()}
 window.markNotice=markNotice;
 
