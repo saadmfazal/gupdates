@@ -8,22 +8,28 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Sales OS">
-<link rel="manifest" href="./manifest.webmanifest?v=15">
+<link rel="manifest" href="./manifest.webmanifest?v=16">
 <link rel="icon" href="./icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="./icon.svg">
 <meta name="robots" content="noindex,nofollow,noarchive">
 <title>Morpheus Sales OS</title>
-<link rel="stylesheet" href="./styles.css?v=15">
+<link rel="stylesheet" href="./styles.css?v=16">
 </head>
 <body>
 <section id="login" class="login">
  <div class="logincard">
    <div class="loginbrand">Morpheus PD · Private</div>
    <h1>Sales OS</h1>
-   <p>Your shared operating system for prospects, assets, outreach, follow-ups, reminders, notes and AI-assisted sales work.</p>
+   <p>Sign in as yourself so Sales OS can track who changed what and route approvals correctly.</p>
+   <div class="field"><label>Your Sales OS email</label><input id="memberEmail" class="input" type="email" autocomplete="email" placeholder="you@example.com"></div>
    <div class="field"><label>Team access code</label><input id="accessCode" class="input" type="password" autocomplete="current-password"></div>
-   <label style="font-size:10px;color:var(--muted);display:flex;gap:7px;align-items:center;margin:10px 0 14px"><input id="remember" type="checkbox" checked> Remember this device</label>
-   <button id="loginBtn" class="btn primary" style="width:100%">Open Sales OS</button>
+   <button id="memberLoginBtn" class="btn primary" style="width:100%">Continue as team member</button>
+   <details style="margin-top:12px">
+     <summary style="font-size:10px;color:var(--muted);cursor:pointer">Emergency shared-code access</summary>
+     <p style="font-size:10px;color:var(--muted);line-height:1.5">Use only if personal sign-in is unavailable. Shared access can work in the CRM but cannot approve protected actions.</p>
+     <label style="font-size:10px;color:var(--muted);display:flex;gap:7px;align-items:center;margin:8px 0"><input id="remember" type="checkbox"> Remember shared-code access on this device</label>
+     <button id="loginBtn" class="btn" style="width:100%">Open with team code</button>
+   </details>
    <div id="loginError" style="font-size:10px;color:var(--red);margin-top:9px"></div>
  </div>
 </section>
@@ -40,6 +46,7 @@
      <button class="navitem" data-page="ai">AI Action Queue <span id="navAI" class="count">0</span></button>
      <button class="navitem" data-page="email">Email Drafts <span id="navDrafts" class="count">0</span></button>
      <button class="navitem" data-page="assets">Assets <span id="navAssets" class="count">0</span></button>
+     <button class="navitem" data-page="approvals">Approval Center <span id="navApprovals" class="count">0</span></button>
    </div>
    <div class="navgroup">
      <div class="navlabel">Work</div>
@@ -51,7 +58,10 @@
      <div class="navlabel">System</div>
      <button class="navitem" data-page="connections">Connections</button>
    </div>
-   <div class="side-bottom"><button class="navitem" id="lockBtn">Lock workspace</button></div>
+   <div class="side-bottom">
+     <div id="sideIdentity" class="side-identity"><b>Shared access</b><span>Not signed in personally</span></div>
+     <button class="navitem" id="lockBtn">Sign out / lock</button>
+   </div>
  </aside>
 
  <div class="main">
@@ -60,6 +70,7 @@
     <div class="topactions">
       <button class="btn" id="quickNoteBtn">+ Note</button>
       <button class="btn primary" id="quickProspectBtn">+ Prospect</button>
+      <button id="identityBtn" class="identity-chip" title="Current Sales OS identity"><span id="identityInitial">?</span><span class="identity-copy"><b id="identityName">Shared</b><small id="identityRole">team code</small></span></button>
       <button class="iconbtn" id="notificationBtn" aria-label="Notifications">◔<span id="notificationDot" class="dot hidden"></span></button>
     </div>
   </header>
@@ -132,6 +143,16 @@
     <div class="grid dashboardgrid"><section class="card panel"><div class="panelhead"><h2>Categories</h2></div><div id="categoriesOverview"></div></section><section class="card panel"><div class="panelhead"><h2>ChatGPT prospect workflow</h2></div><div class="ai-box"><h3>Research → CSV → Sales OS</h3><p>Pick a category, copy the exact research prompt, run it in any ChatGPT conversation, download the CSV, and import it here.</p><button class="btn green" id="categoryImportBtn">Open importer</button></div></section></div>
    </section>
 
+
+   <section class="page hidden" data-page-view="approvals">
+    <div class="pagehead"><div><h1>Approval Center</h1><p>Review protected actions, see who requested them, and keep a clear audit trail.</p></div><div class="pageactions"><button class="btn" id="approvalRefreshBtn">Refresh</button></div></div>
+    <div class="grid dashboardgrid">
+      <section class="card panel"><div class="panelhead"><h2>Pending approvals</h2><small id="approvalSummary"></small></div><div id="approvalList" class="focuslist"></div></section>
+      <section class="card panel"><div class="panelhead"><h2>Recent decisions</h2></div><div id="approvalHistory" class="activitylist"></div></section>
+    </div>
+    <section class="card panel" style="margin-top:14px"><div class="panelhead"><h2>Audit trail</h2><small>Latest changes across Sales OS</small></div><div id="auditList" class="activitylist"></div></section>
+   </section>
+
    <section class="page hidden" data-page-view="connections">
     <div class="pagehead"><div><h1>Connections</h1><p>Turn Sales OS into a connected working system instead of a database you have to babysit.</p></div></div>
     <div id="connectionsGrid" class="connections"></div>
@@ -164,6 +185,7 @@
       <button data-more-page="assets"><span>◇</span><b>Assets</b><small>Sites & proposals</small></button>
       <button data-more-page="notes"><span>≡</span><b>Notes</b><small>Account context</small></button>
       <button data-more-page="categories"><span>⊞</span><b>Categories</b><small>Markets & import</small></button>
+      <button data-more-page="approvals"><span>✓</span><b>Approvals</b><small>Review protected work</small></button>
       <button data-more-page="connections"><span>⌁</span><b>Connections</b><small>ChatGPT & mail</small></button>
       <button id="mobileInstallApp"><span>⇩</span><b>Install app</b><small>Add to home screen</small></button>
       <button id="mobileMoreLock"><span>◉</span><b>Lock</b><small>Close workspace</small></button>
@@ -192,6 +214,6 @@
 <div id="genericModal" class="modal hidden"><div id="genericModalCard" class="modalcard"></div></div>
 <div id="toast" class="toast hidden"></div>
 
-<script src="./app.js?v=15"></script>
+<script src="./app.js?v=16"></script>
 </body>
 </html>
