@@ -1,0 +1,47 @@
+name: Deploy Fish Food V5.4 to Existing Vercel Projects
+
+on:
+  push:
+    branches:
+      - fish-food-v54-release
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out V5.4 release
+        uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Authorize Vercel CLI
+        run: script -q -e -c "npx --yes vercel@61.0.0 login" /dev/null
+
+      - name: Link existing Vercel projects
+        shell: bash
+        run: |
+          mkdir -p dave/.vercel aqua/.vercel imperial/.vercel wet/.vercel
+          printf '%s\n' '{"orgId":"team_Lpaim94AHX7EoRfgIfUITfR8","projectId":"prj_YZmn3RLSsny8Gb2RTcQtwyTPeIFG"}' > dave/.vercel/project.json
+          printf '%s\n' '{"orgId":"team_Lpaim94AHX7EoRfgIfUITfR8","projectId":"prj_WuB7JeY9cN0xrKUsvf2IRCVUzL4M"}' > aqua/.vercel/project.json
+          printf '%s\n' '{"orgId":"team_Lpaim94AHX7EoRfgIfUITfR8","projectId":"prj_U1CFsSGUxaa9BzDmKI7bsM334syv"}' > imperial/.vercel/project.json
+          printf '%s\n' '{"orgId":"team_Lpaim94AHX7EoRfgIfUITfR8","projectId":"prj_XEe1ZQVjrf3NCCOOPQWLLXFmlN6N"}' > wet/.vercel/project.json
+
+      - name: Deploy Dave production
+        run: npx --yes vercel@61.0.0 deploy --prod --yes --cwd dave
+
+      - name: Deploy Aqua Huna production
+        run: npx --yes vercel@61.0.0 deploy --prod --yes --cwd aqua
+
+      - name: Deploy Imperial production
+        run: npx --yes vercel@61.0.0 deploy --prod --yes --cwd imperial
+
+      - name: Deploy Wet Spot production
+        run: npx --yes vercel@61.0.0 deploy --prod --yes --cwd wet
