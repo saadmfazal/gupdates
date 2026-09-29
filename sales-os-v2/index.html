@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#f5f7f4">
 <meta name="robots" content="noindex,nofollow,noarchive">
 <title>Morpheus Sales OS</title>
-<link rel="stylesheet" href="./styles.css?v=2">
+<link rel="stylesheet" href="./styles.css?v=15">
 </head>
 <body>
 <section id="login" class="login">
@@ -80,6 +80,7 @@
     <section class="card tablecard">
       <div class="toolbar"><input id="prospectSearch" class="grow" placeholder="Search companies…"><select id="prospectCategory"><option value="">All categories</option></select><select id="prospectStage"><option value="">All stages</option></select><select id="prospectOwner"><option value="">All owners</option></select></div>
       <table><thead><tr><th>Company</th><th>Category</th><th>Contact</th><th>Assets</th><th>Owner</th><th>Stage</th><th>Next action</th><th></th></tr></thead><tbody id="prospectTable"></tbody></table>
+      <div id="mobileProspectList" class="mobile-prospect-list"></div>
     </section>
    </section>
 
@@ -133,11 +134,34 @@
  </div>
 
  <nav class="mobile-nav">
-  <button class="active" data-mobile-page="dashboard">Home</button><button data-mobile-page="prospects">Prospects</button><button data-mobile-page="pipeline">Pipeline</button><button data-mobile-page="email">Email</button><button data-mobile-page="reminders">Reminders</button>
+  <button class="active" data-mobile-page="dashboard"><span>⌂</span>Home</button>
+  <button data-mobile-page="prospects"><span>◎</span>Prospects</button>
+  <button data-mobile-page="inbox"><span>✉</span>Inbox</button>
+  <button data-mobile-page="ai"><span>✦</span>Actions</button>
+  <button id="mobileMoreBtn"><span>•••</span>More</button>
  </nav>
+ <button id="mobileFab" class="mobile-fab" aria-label="Add prospect">＋</button>
 </div>
 
 <div id="noticeMenu" class="notice-menu hidden"><h3>Notifications</h3><div id="noticeList"></div></div>
+
+<div id="mobileMoreSheet" class="mobile-more-sheet hidden">
+  <div class="mobile-sheet-backdrop" data-close-mobile-more></div>
+  <div class="mobile-sheet">
+    <div class="mobile-sheet-handle"></div>
+    <div class="mobile-sheet-head"><div><strong>More</strong><small>Everything in Sales OS</small></div><button id="mobileMoreClose" class="close">×</button></div>
+    <div class="mobile-more-grid">
+      <button data-more-page="pipeline"><span>▥</span><b>Pipeline</b><small>Visual stages</small></button>
+      <button data-more-page="email"><span>✎</span><b>Email drafts</b><small>Review & send</small></button>
+      <button data-more-page="reminders"><span>◷</span><b>Reminders</b><small>Due work</small></button>
+      <button data-more-page="assets"><span>◇</span><b>Assets</b><small>Sites & proposals</small></button>
+      <button data-more-page="notes"><span>≡</span><b>Notes</b><small>Account context</small></button>
+      <button data-more-page="categories"><span>⊞</span><b>Categories</b><small>Markets & import</small></button>
+      <button data-more-page="connections"><span>⌁</span><b>Connections</b><small>ChatGPT & mail</small></button>
+      <button id="mobileMoreLock"><span>◉</span><b>Lock</b><small>Close workspace</small></button>
+    </div>
+  </div>
+</div>
 
 <div id="prospectDrawer" class="drawer hidden"><div class="drawerpanel">
  <div class="drawerhead"><div><span id="pdCategory" class="pill"></span><h2 id="pdCompany"></h2><div id="pdMeta" class="meta"></div></div><button class="close" data-close="prospectDrawer">×</button></div>
@@ -160,6 +184,6 @@
 <div id="genericModal" class="modal hidden"><div id="genericModalCard" class="modalcard"></div></div>
 <div id="toast" class="toast hidden"></div>
 
-<script src="./app.js?v=2"></script>
+<script src="./app.js?v=15"></script>
 </body>
 </html>
