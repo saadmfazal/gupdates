@@ -6,7 +6,7 @@ const CSV_COLUMNS=['company','category','segment','location','website','contact_
 
 let token='';
 let data={prospects:[],assets:[],activities:[],templates:[],categories:[],notes:[],reminders:[],email_drafts:[],notifications:[],connections:[],email_messages:[],recommendations:[],opportunities:[]};
-let selectedProspect=null,currentDraft=null,currentPage='dashboard';
+let selectedProspect=null,currentDraft=null,currentPage='dashboard',deferredInstallPrompt=null;
 
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
@@ -136,7 +136,7 @@ function renderNotifications(){
  const ns=data.notifications.filter(n=>!n.dismissed_at);$('#noticeList').innerHTML=ns.length?ns.slice(0,20).map(n=>`<div class="noticeitem ${n.read_at?'':'unread'}"><b>${esc(n.title)}</b><p>${esc(n.body||'')}</p><button class="btn" onclick="markNotice('${n.id}','read')">Read</button> <button class="btn" onclick="markNotice('${n.id}','dismiss')">Dismiss</button></div>`).join(''):'<div class="empty">You’re all caught up.</div>';
 }
 
-function go(page){currentPage=page;$('[data-page-view]').forEach(s=>s.classList.toggle('hidden',s.dataset.pageView!==page));$('.navitem[data-page]').forEach(b=>b.classList.toggle('active',b.dataset.page===page));$('[data-mobile-page]').forEach(b=>b.classList.toggle('active',b.dataset.mobilePage===page));$('#noticeMenu').classList.add('hidden');closeMobileMore();if(page==='prospects')renderProspects();if(page==='email')renderEmail();if(window.matchMedia('(max-width:760px)').matches)window.scrollTo({top:0,behavior:'instant'})}
+function go(page){currentPage=page;document.querySelectorAll('[data-page-view]').forEach(s=>s.classList.toggle('hidden',s.dataset.pageView!==page));document.querySelectorAll('.navitem[data-page]').forEach(b=>b.classList.toggle('active',b.dataset.page===page));document.querySelectorAll('[data-mobile-page]').forEach(b=>b.classList.toggle('active',b.dataset.mobilePage===page));if($('#mobileMoreBtn'))$('#mobileMoreBtn').classList.toggle('active',['pipeline','email','reminders','assets','notes','categories','connections'].includes(page));$('#noticeMenu').classList.add('hidden');closeMobileMore();if(page==='prospects')renderProspects();if(page==='email')renderEmail();if(window.matchMedia('(max-width:760px)').matches)window.scrollTo({top:0,behavior:'auto'})}
 function modal(title,body){$('#genericModalCard').innerHTML=`<div class="modalhead"><h2>${esc(title)}</h2><button class="close" onclick="closeModal()">×</button></div>${body}`;$('#genericModal').classList.remove('hidden');document.body.classList.add('modal-open')}
 window.closeModal=()=>{$('#genericModal').classList.add('hidden');document.body.classList.remove('modal-open')};
 
@@ -257,13 +257,24 @@ function showDueBrowserNotifications(){if(!('Notification'in window)||Notificati
 
 function openMobileMore(){$('#mobileMoreSheet')?.classList.remove('hidden');document.body.classList.add('modal-open')}
 function closeMobileMore(){$('#mobileMoreSheet')?.classList.add('hidden');if($('#genericModal')?.classList.contains('hidden')&&$('#prospectDrawer')?.classList.contains('hidden'))document.body.classList.remove('modal-open')}
-$('[data-page]').forEach(b=>b.onclick=()=>go(b.dataset.page));$('[data-mobile-page]').forEach(b=>b.onclick=()=>go(b.dataset.mobilePage));$('[data-go]').forEach(b=>b.onclick=()=>go(b.dataset.go));
-$('[data-more-page]').forEach(b=>b.onclick=()=>go(b.dataset.morePage));
+document.querySelectorAll('[data-page]').forEach(b=>b.onclick=()=>go(b.dataset.page));document.querySelectorAll('[data-mobile-page]').forEach(b=>b.onclick=()=>go(b.dataset.mobilePage));document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>go(b.dataset.go));
+document.querySelectorAll('[data-more-page]').forEach(b=>b.onclick=()=>go(b.dataset.morePage));
 if($('#mobileMoreBtn'))$('#mobileMoreBtn').onclick=openMobileMore;
 if($('#mobileMoreClose'))$('#mobileMoreClose').onclick=closeMobileMore;
-$('[data-close-mobile-more]').forEach(x=>x.onclick=closeMobileMore);
+document.querySelectorAll('[data-close-mobile-more]').forEach(x=>x.onclick=closeMobileMore);
 if($('#mobileFab'))$('#mobileFab').onclick=openProspectForm;
 if($('#mobileMoreLock'))$('#mobileMoreLock').onclick=()=>{localStorage.removeItem('salesOsToken');location.reload()};
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstallPrompt=e});
+if($('#mobileInstallApp'))$('#mobileInstallApp').onclick=async()=>{
+ if(deferredInstallPrompt){
+  deferredInstallPrompt.prompt();
+  await deferredInstallPrompt.userChoice;
+  deferredInstallPrompt=null;
+  closeMobileMore();
+ }else{
+  toast('Use your browser menu → Add to Home screen');
+ }
+};
 $('#loginBtn').onclick=login;$('#accessCode').addEventListener('keydown',e=>{if(e.key==='Enter')login()});$('#lockBtn').onclick=()=>{localStorage.removeItem('salesOsToken');location.reload()};
 $('#notificationBtn').onclick=()=>$('#noticeMenu').classList.toggle('hidden');$('#globalSearch').oninput=()=>{renderProspects();if($('#globalSearch').value)go('prospects')};
 if($('#syncInboxGuideBtn'))$('#syncInboxGuideBtn').onclick=()=>openChatGPTAutopilot('sync');
@@ -279,5 +290,6 @@ function openChatGPTAutopilot(mode){
 $('#quickProspectBtn').onclick=openProspectForm;$('#addProspectBtn').onclick=openProspectForm;$('#quickNoteBtn').onclick=()=>openNoteForm();$('#newNoteBtn').onclick=()=>openNoteForm();$('#newReminderBtn').onclick=()=>openReminderForm();$('#dashReminderBtn').onclick=()=>openReminderForm();$('#browserNotifyBtn').onclick=requestBrowserNotifications;
 $('#newAssetBtn').onclick=()=>openAssetForm();$('#newEmailBtn').onclick=()=>openNewDraft();$('#categoryManagerBtn').onclick=openCategoryManager;$('#openImportBtn').onclick=openImporter;$('#categoryImportBtn').onclick=openImporter;$('#dashImportBtn').onclick=openImporter;$('#prospectImportBtn').onclick=openImporter;
 $('#saveProspect').onclick=saveProspect;if($('#saveOpportunity'))$('#saveOpportunity').onclick=saveOpportunity;$('#pdNewAsset').onclick=()=>openAssetForm(selectedProspect?.id);$('#pdNewNote').onclick=()=>openNoteForm(selectedProspect?.id);$('#pdNewReminder').onclick=()=>openReminderForm(selectedProspect?.id);
-$('[data-close]').forEach(b=>b.onclick=()=>{const el=$('#'+b.dataset.close);el?.classList.add('hidden');if(b.dataset.close==='prospectDrawer')document.body.classList.remove('modal-open')});$('#genericModal').addEventListener('click',e=>{if(e.target.id==='genericModal')closeModal()});$('#prospectDrawer').addEventListener('click',e=>{if(e.target.id==='prospectDrawer'){e.currentTarget.classList.add('hidden');document.body.classList.remove('modal-open')}});
+document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>{const el=$('#'+b.dataset.close);el?.classList.add('hidden');if(b.dataset.close==='prospectDrawer')document.body.classList.remove('modal-open')});$('#genericModal').addEventListener('click',e=>{if(e.target.id==='genericModal')closeModal()});$('#prospectDrawer').addEventListener('click',e=>{if(e.target.id==='prospectDrawer'){e.currentTarget.classList.add('hidden');document.body.classList.remove('modal-open')}});
 const saved=localStorage.getItem('salesOsToken');if(saved){$('#accessCode').value=saved;login()}
+if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
