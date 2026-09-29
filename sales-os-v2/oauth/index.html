@@ -61,7 +61,9 @@ const BOOTSTRAP=SUPABASE_URL+"/functions/v1/sales-os-auth-bootstrap";
 const MCP=SUPABASE_URL+"/functions/v1/sales-os-mcp/mcp";
 const supabase=createClient(SUPABASE_URL,PUBLISHABLE_KEY,{auth:{persistSession:true,detectSessionInUrl:true,autoRefreshToken:true}});
 const $=s=>document.querySelector(s);
-const authId=new URLSearchParams(location.search).get("authorization_id");
+const queryParams=new URLSearchParams(location.search);
+const authId=queryParams.get("authorization_id");
+const appMode=queryParams.get("mode")==="app";
 
 function show(id){["loading","signin","consent","error"].forEach(x=>$("#"+x).classList.toggle("hidden",x!==id))}
 function fail(msg){$("#errorText").textContent=msg;show("error")}
@@ -87,7 +89,7 @@ async function memberCheck(session){
 }
 
 async function begin(){
-  if(!authId)return fail("Missing authorization request. Start the connection again from ChatGPT.");
+  if(!authId&&!appMode)return fail("Missing authorization request. Start again from Sales OS or ChatGPT.");
   try{
     await ensureCodeSession();
     const {data:{session}}=await supabase.auth.getSession();
@@ -97,6 +99,12 @@ async function begin(){
       $("#signinStatus").textContent="This Supabase session is not an active Sales OS member. Sign in with an approved Sales OS email.";
       $("#signinStatus").classList.remove("hidden");
       show("signin");return;
+    }
+
+    if(appMode){
+      $("#loadingStatus").textContent="Identity verified. Opening Sales OS…";
+      location.replace("../?member=1");
+      return;
     }
 
     $("#loadingStatus").textContent="Loading ChatGPT request…";
