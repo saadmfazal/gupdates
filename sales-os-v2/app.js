@@ -69,7 +69,21 @@ function filteredProspects(){
  return data.prospects.filter(p=>{const blob=[p.company,p.category,p.segment,p.location,p.contact_name,p.contact_email,p.website,p.notes,(p.tags||[]).join(' ')].join(' ').toLowerCase();return(!q||blob.includes(q))&&(!g||blob.includes(g))&&(!cat||p.category===cat)&&(!st||p.stage===st)&&(!ow||p.owner_assigned===ow)}).sort((a,b)=>(b.score||0)-(a.score||0)||a.company.localeCompare(b.company));
 }
 function renderProspects(){
- $('#prospectTable').innerHTML=filteredProspects().map(p=>`<tr><td><div class="company">${esc(p.company)}</div><div class="sub">${esc(p.location||p.segment||'')}</div></td><td>${esc(p.category||'General')}</td><td>${esc(p.contact_name||'')}<div class="sub">${esc(p.contact_email||'')}</div></td><td>${pAssets(p.id).length}</td><td>${esc(p.owner_assigned||'')}</td><td>${pill(p.stage)}</td><td>${p.next_action_date?`<span class="datechip">${esc(p.next_action_date)}</span>`:''}<div class="sub">${esc(p.next_action||'')}</div></td><td><button class="btn" onclick="openProspect('${p.id}')">Open</button></td></tr>`).join('');
+ const rows=filteredProspects();
+ $('#prospectTable').innerHTML=rows.map(p=>`<tr><td><div class="company">${esc(p.company)}</div><div class="sub">${esc(p.location||p.segment||'')}</div></td><td>${esc(p.category||'General')}</td><td>${esc(p.contact_name||'')}<div class="sub">${esc(p.contact_email||'')}</div></td><td>${pAssets(p.id).length}</td><td>${esc(p.owner_assigned||'')}</td><td>${pill(p.stage)}</td><td>${p.next_action_date?`<span class="datechip">${esc(p.next_action_date)}</span>`:''}<div class="sub">${esc(p.next_action||'')}</div></td><td><button class="btn" onclick="openProspect('${p.id}')">Open</button></td></tr>`).join('');
+ if($('#mobileProspectList')){
+  $('#mobileProspectList').innerHTML=rows.length?rows.map(p=>`<article class="mobile-prospect-card" onclick="openProspect('${p.id}')">
+    <div class="mobile-prospect-top">
+      <div><span class="pill">${esc(p.category||'General')}</span><h3>${esc(p.company)}</h3><div class="mobile-prospect-meta">${esc([p.contact_name,p.location].filter(Boolean).join(' · ')||p.contact_email||'No contact yet')}</div></div>
+      ${pill(p.stage)}
+    </div>
+    <div class="mobile-prospect-row">
+      <div class="mobile-prospect-next">${p.next_action?`<b>Next:</b> ${esc(p.next_action)}`:''}${p.next_action_date?` · ${esc(p.next_action_date)}`:''}</div>
+      <span class="pill">${pAssets(p.id).length} assets</span>
+    </div>
+    <div class="mobile-prospect-row"><div class="mobile-prospect-meta">Owner · ${esc(p.owner_assigned||'Unassigned')}</div><button class="btn" onclick="event.stopPropagation();openProspect('${p.id}')">Open</button></div>
+  </article>`).join(''):'<div class="empty">No prospects match these filters.</div>';
+ }
 }
 function renderPipeline(){
  $('#kanban').innerHTML=PIPELINE_STAGES.map(s=>{const ps=data.prospects.filter(p=>p.stage===s);return`<section class="lane"><div class="lanehead"><span>${s}</span><span>${ps.length}</span></div>${ps.map(p=>`<div class="deal" onclick="openProspect('${p.id}')"><b>${esc(p.company)}</b><small>${esc(p.category||'')}</small>${p.next_action_date?`<div style="margin-top:7px"><span class="datechip">${esc(p.next_action_date)}</span></div>`:''}</div>`).join('')}</section>`}).join('');
@@ -103,7 +117,7 @@ function showDraftEditor(d){
  <div class="pageactions"><button class="btn" id="saveDraftBtn">Save</button><button class="btn" id="copyDraftBtn">Copy</button><button class="btn" id="openMailBtn">Open mail app</button><button class="btn green" id="directSendBtn">Send with ChatGPT</button></div><p class="meta" style="margin-top:10px">ChatGPT uses the live Sales OS draft plus your connected Gmail app, then writes the confirmed send back to the CRM.</p>`;
  $('#saveDraftBtn').onclick=saveCurrentDraft;$('#copyDraftBtn').onclick=async()=>{await navigator.clipboard.writeText($('#edBody').value);toast('Copied')};$('#openMailBtn').onclick=()=>location.href=`mailto:${encodeURIComponent($('#edTo').value)}?subject=${encodeURIComponent($('#edSubject').value)}&body=${encodeURIComponent($('#edBody').value)}`;$('#aiDraftBtn').onclick=()=>openAIWriter(d.prospect_id);$('#directSendBtn').onclick=()=>handleDirectSend(d.id);
 }
-window.openDraft=id=>{currentDraft=data.email_drafts.find(d=>d.id===id);renderEmail()};
+window.openDraft=id=>{currentDraft=data.email_drafts.find(d=>d.id===id);renderEmail();if(window.matchMedia('(max-width:760px)').matches)setTimeout(()=>$('#emailEditor')?.scrollIntoView({behavior:'smooth',block:'start'}),60)};
 function renderAssets(){$('#assetGrid').innerHTML=data.assets.length?data.assets.map(a=>`<article class="assetcard"><span class="pill">${esc(a.asset_type)}</span><h3 style="font-size:13px;margin:9px 0 4px">${esc(a.title)}</h3><p>${esc(prospectName(a.prospect_id)||'Unlinked')} · ${esc(a.status||'')}</p><div class="assetactions">${a.url?`<a class="btn" href="${esc(a.url)}" target="_blank">Open ↗</a>`:''}<button class="btn" onclick="editAsset('${a.id}')">Edit</button></div></article>`).join(''):'<div class="empty">No assets.</div>'}
 function renderReminders(){
  const open=data.reminders.filter(r=>r.status==='open').sort((a,b)=>new Date(a.due_at)-new Date(b.due_at)),done=data.reminders.filter(r=>r.status==='completed').sort((a,b)=>new Date(b.completed_at||b.updated_at)-new Date(a.completed_at||a.updated_at));
@@ -122,9 +136,9 @@ function renderNotifications(){
  const ns=data.notifications.filter(n=>!n.dismissed_at);$('#noticeList').innerHTML=ns.length?ns.slice(0,20).map(n=>`<div class="noticeitem ${n.read_at?'':'unread'}"><b>${esc(n.title)}</b><p>${esc(n.body||'')}</p><button class="btn" onclick="markNotice('${n.id}','read')">Read</button> <button class="btn" onclick="markNotice('${n.id}','dismiss')">Dismiss</button></div>`).join(''):'<div class="empty">You’re all caught up.</div>';
 }
 
-function go(page){currentPage=page;$$('[data-page-view]').forEach(s=>s.classList.toggle('hidden',s.dataset.pageView!==page));$$('.navitem[data-page]').forEach(b=>b.classList.toggle('active',b.dataset.page===page));$$('[data-mobile-page]').forEach(b=>b.classList.toggle('active',b.dataset.mobilePage===page));$('#noticeMenu').classList.add('hidden');if(page==='prospects')renderProspects();if(page==='email')renderEmail()}
-function modal(title,body){$('#genericModalCard').innerHTML=`<div class="modalhead"><h2>${esc(title)}</h2><button class="close" onclick="closeModal()">×</button></div>${body}`;$('#genericModal').classList.remove('hidden')}
-window.closeModal=()=>$('#genericModal').classList.add('hidden');
+function go(page){currentPage=page;$('[data-page-view]').forEach(s=>s.classList.toggle('hidden',s.dataset.pageView!==page));$('.navitem[data-page]').forEach(b=>b.classList.toggle('active',b.dataset.page===page));$('[data-mobile-page]').forEach(b=>b.classList.toggle('active',b.dataset.mobilePage===page));$('#noticeMenu').classList.add('hidden');closeMobileMore();if(page==='prospects')renderProspects();if(page==='email')renderEmail();if(window.matchMedia('(max-width:760px)').matches)window.scrollTo({top:0,behavior:'instant'})}
+function modal(title,body){$('#genericModalCard').innerHTML=`<div class="modalhead"><h2>${esc(title)}</h2><button class="close" onclick="closeModal()">×</button></div>${body}`;$('#genericModal').classList.remove('hidden');document.body.classList.add('modal-open')}
+window.closeModal=()=>{$('#genericModal').classList.add('hidden');document.body.classList.remove('modal-open')};
 
 window.openProspect=id=>{
  selectedProspect=data.prospects.find(p=>p.id===id);if(!selectedProspect)return;const p=selectedProspect;
@@ -136,7 +150,7 @@ window.openProspect=id=>{
  $('#pdReminders').innerHTML=pReminders(id).filter(r=>r.status==='open').map(r=>`<div class="reminderrow"><div class="maincopy"><div class="title">${esc(r.title)}</div><div class="meta">${new Date(r.due_at).toLocaleString()}</div></div></div>`).join('')||'<div class="meta">No open reminders.</div>';
  const opp=pOpportunity(id);if($('#pdOppValue'))$('#pdOppValue').value=opp?.estimated_value||'';if($('#pdOppKg'))$('#pdOppKg').value=opp?.monthly_volume_kg||'';if($('#pdOppProb'))$('#pdOppProb').value=opp?.probability_pct||'';if($('#pdOppNotes'))$('#pdOppNotes').value=opp?.commercial_notes||'';
  $('#pdActivity').innerHTML=pActivities(id).slice(0,20).map(a=>`<div class="activityrow"><div class="maincopy"><div class="title">${esc(a.activity_type||'Activity')}</div><div class="meta">${esc(a.subject||a.outcome||'')} · ${new Date(a.occurred_at).toLocaleDateString()}</div></div></div>`).join('')||'<div class="meta">No activity yet.</div>';
- $('#prospectDrawer').classList.remove('hidden');
+ $('#prospectDrawer').classList.remove('hidden');document.body.classList.add('modal-open');
 };
 async function saveProspect(){const p=selectedProspect;if(!p)return;await rpc('sales_os_save_prospect',{p_token:token,p_payload:{id:p.id,category:$('#pdCategorySelect').value,stage:$('#pdStage').value,owner_assigned:$('#pdOwner').value,priority:$('#pdPriority').value,contact_name:$('#pdContact').value,contact_email:$('#pdEmail').value,website:$('#pdWebsite').value,location:$('#pdLocation').value,next_action:$('#pdNextAction').value,next_action_date:$('#pdNextDate').value}});toast('Account updated');await load();openProspect(p.id)}
 async function saveOpportunity(){
@@ -241,7 +255,15 @@ function openImporter(){const cats=categoryNames();modal('Import prospects',`<di
 async function requestBrowserNotifications(){if(!('Notification'in window)){toast('Browser notifications are not supported here');return}const p=await Notification.requestPermission();toast(p==='granted'?'Browser notifications enabled':'Notification permission not granted');if(p==='granted')showDueBrowserNotifications()}
 function showDueBrowserNotifications(){if(!('Notification'in window)||Notification.permission!=='granted')return;data.reminders.filter(dueReminder).slice(0,3).forEach(r=>new Notification('Morpheus Sales OS',{body:r.title+(prospectName(r.prospect_id)?' · '+prospectName(r.prospect_id):'')}))}
 
-$$('[data-page]').forEach(b=>b.onclick=()=>go(b.dataset.page));$$('[data-mobile-page]').forEach(b=>b.onclick=()=>go(b.dataset.mobilePage));$$('[data-go]').forEach(b=>b.onclick=()=>go(b.dataset.go));
+function openMobileMore(){$('#mobileMoreSheet')?.classList.remove('hidden');document.body.classList.add('modal-open')}
+function closeMobileMore(){$('#mobileMoreSheet')?.classList.add('hidden');if($('#genericModal')?.classList.contains('hidden')&&$('#prospectDrawer')?.classList.contains('hidden'))document.body.classList.remove('modal-open')}
+$('[data-page]').forEach(b=>b.onclick=()=>go(b.dataset.page));$('[data-mobile-page]').forEach(b=>b.onclick=()=>go(b.dataset.mobilePage));$('[data-go]').forEach(b=>b.onclick=()=>go(b.dataset.go));
+$('[data-more-page]').forEach(b=>b.onclick=()=>go(b.dataset.morePage));
+if($('#mobileMoreBtn'))$('#mobileMoreBtn').onclick=openMobileMore;
+if($('#mobileMoreClose'))$('#mobileMoreClose').onclick=closeMobileMore;
+$('[data-close-mobile-more]').forEach(x=>x.onclick=closeMobileMore);
+if($('#mobileFab'))$('#mobileFab').onclick=openProspectForm;
+if($('#mobileMoreLock'))$('#mobileMoreLock').onclick=()=>{localStorage.removeItem('salesOsToken');location.reload()};
 $('#loginBtn').onclick=login;$('#accessCode').addEventListener('keydown',e=>{if(e.key==='Enter')login()});$('#lockBtn').onclick=()=>{localStorage.removeItem('salesOsToken');location.reload()};
 $('#notificationBtn').onclick=()=>$('#noticeMenu').classList.toggle('hidden');$('#globalSearch').oninput=()=>{renderProspects();if($('#globalSearch').value)go('prospects')};
 if($('#syncInboxGuideBtn'))$('#syncInboxGuideBtn').onclick=()=>openChatGPTAutopilot('sync');
@@ -257,5 +279,5 @@ function openChatGPTAutopilot(mode){
 $('#quickProspectBtn').onclick=openProspectForm;$('#addProspectBtn').onclick=openProspectForm;$('#quickNoteBtn').onclick=()=>openNoteForm();$('#newNoteBtn').onclick=()=>openNoteForm();$('#newReminderBtn').onclick=()=>openReminderForm();$('#dashReminderBtn').onclick=()=>openReminderForm();$('#browserNotifyBtn').onclick=requestBrowserNotifications;
 $('#newAssetBtn').onclick=()=>openAssetForm();$('#newEmailBtn').onclick=()=>openNewDraft();$('#categoryManagerBtn').onclick=openCategoryManager;$('#openImportBtn').onclick=openImporter;$('#categoryImportBtn').onclick=openImporter;$('#dashImportBtn').onclick=openImporter;$('#prospectImportBtn').onclick=openImporter;
 $('#saveProspect').onclick=saveProspect;if($('#saveOpportunity'))$('#saveOpportunity').onclick=saveOpportunity;$('#pdNewAsset').onclick=()=>openAssetForm(selectedProspect?.id);$('#pdNewNote').onclick=()=>openNoteForm(selectedProspect?.id);$('#pdNewReminder').onclick=()=>openReminderForm(selectedProspect?.id);
-$$('[data-close]').forEach(b=>b.onclick=()=>$('#'+b.dataset.close).classList.add('hidden'));$('#genericModal').addEventListener('click',e=>{if(e.target.id==='genericModal')closeModal()});$('#prospectDrawer').addEventListener('click',e=>{if(e.target.id==='prospectDrawer')$('#prospectDrawer').classList.add('hidden')});
+$('[data-close]').forEach(b=>b.onclick=()=>{const el=$('#'+b.dataset.close);el?.classList.add('hidden');if(b.dataset.close==='prospectDrawer')document.body.classList.remove('modal-open')});$('#genericModal').addEventListener('click',e=>{if(e.target.id==='genericModal')closeModal()});$('#prospectDrawer').addEventListener('click',e=>{if(e.target.id==='prospectDrawer'){e.currentTarget.classList.add('hidden');document.body.classList.remove('modal-open')}});
 const saved=localStorage.getItem('salesOsToken');if(saved){$('#accessCode').value=saved;login()}
