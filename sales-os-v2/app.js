@@ -332,13 +332,14 @@ window.markNotice=markNotice;
 function openConnection(key){
  if(key==='chatgpt'){
   const base='https://viajmvbwpmkiqxjtgshv.supabase.co/functions/v1/sales-os-mcp/mcp';
-  const mcp=base+'?access_code='+encodeURIComponent(token);
-  modal('Connect ChatGPT',`<div class="ai-box"><h3>Sales OS is ready to connect now</h3><p>Use the private MCP URL below in ChatGPT. It carries your current Sales OS team access code, so no extra OAuth setup is required for this private build.</p></div>
+  const privateMode=!!token;
+  const mcp=privateMode?base+'?access_code='+encodeURIComponent(token):base;
+  modal('Connect ChatGPT',`<div class="ai-box"><h3>${privateMode?'Private team MCP is ready':'Personal Sales OS identity is active'}</h3><p>${privateMode?'Use the private MCP URL below in ChatGPT. It carries your current Sales OS team access code.':'Your dashboard is now using a named member session. The Sales OS MCP backend also supports member OAuth; until the Supabase OAuth Server setting is enabled, use emergency shared-code access when you need to copy the private MCP URL.'}</p></div>
   <div style="margin-top:14px;border:1px solid var(--line);border-radius:12px;padding:13px">
-    <div class="title">1 · Copy the private MCP URL</div>
-    <div class="meta" style="font-size:11px;line-height:1.7">Treat this URL like a password. Share it only with the Sales OS team.</div>
+    <div class="title">1 · ${privateMode?'Copy the private MCP URL':'Member MCP endpoint'}</div>
+    <div class="meta" style="font-size:11px;line-height:1.7">${privateMode?'Treat this URL like a password. Share it only with the Sales OS team.':'Per-user OAuth is prepared on this endpoint. Your personal dashboard session does not expose the team code.'}</div>
     <input id="mcpUrlCopy" class="input" readonly value="${esc(mcp)}" style="margin-top:7px">
-    <button id="copyMcpBtn" class="btn primary" style="margin-top:8px">Copy MCP URL</button>
+    ${privateMode?'<button id="copyMcpBtn" class="btn primary" style="margin-top:8px">Copy MCP URL</button>':''}
   </div>
   <div style="margin-top:9px;border:1px solid var(--line);border-radius:12px;padding:13px">
     <div class="title">2 · Add it to ChatGPT</div>
@@ -349,7 +350,7 @@ function openConnection(key){
     <div class="meta" style="font-size:11px;line-height:1.7">Ask ChatGPT to search or create prospects, update stages, add notes and reminders, create/edit asset records, draft email, or save drafts back into Sales OS. For an actual email send, use the connected Gmail app in the same ChatGPT conversation, then ChatGPT can mark the Sales OS draft as sent.</div>
   </div>
   <details style="margin-top:12px"><summary style="font-size:11px;font-weight:800;cursor:pointer">Stronger OAuth mode later</summary><p class="meta" style="font-size:11px;line-height:1.7">The OAuth consent screen and member allow-list are already built. When Supabase OAuth Server is enabled, the same MCP backend can switch to per-user OAuth instead of the shared team code.</p></details>`);
-  $('#copyMcpBtn').onclick=async()=>{await navigator.clipboard.writeText(mcp);toast('Private MCP URL copied')};
+  if($('#copyMcpBtn'))$('#copyMcpBtn').onclick=async()=>{await navigator.clipboard.writeText(mcp);toast('Private MCP URL copied')};
  } else {
   modal('Email connection',`<div class="ai-box"><h3>Email works through ChatGPT + Gmail</h3><p>Sales OS stores the editable draft and account context. ChatGPT can use your connected Gmail app to send the actual message, then update the exact Sales OS draft and activity history.</p></div>
   <p class="meta" style="font-size:11px;line-height:1.7;margin-top:12px">This avoids placing Gmail credentials in the static dashboard. If Gmail is connected in ChatGPT, the full flow is: open Sales OS in ChatGPT → draft/update → send via Gmail → mark the CRM draft sent.</p>`);
