@@ -1,0 +1,19 @@
+{
+  "name": "Morpheus Sales OS",
+  "short_name": "Sales OS",
+  "description": "Shared Morpheus sales workspace for prospects, outreach, inbox, reminders and AI actions.",
+  "start_url": "/sales-os-v2/",
+  "scope": "/sales-os-v2/",
+  "display": "standalone",
+  "background_color": "#f5f7f4",
+  "theme_color": "#f5f7f4",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
