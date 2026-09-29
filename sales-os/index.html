@@ -1,1 +1,346 @@
-The requested file reference is not currently visible. Use files.search or files.list to rediscover the file, then retry with a returned ref_id or file_id.
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#090b0a">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<title>Morpheus Sales OS</title>
+<style>
+:root{
+  --bg:#090b0a;--panel:#101310;--panel2:#151915;--line:#252c26;--text:#f3f7ef;
+  --muted:#9ba59b;--lime:#b7ff35;--amber:#ffc75a;--red:#ff7a7a;--blue:#81b7ff;
+  --radius:18px;--shadow:0 20px 50px rgba(0,0,0,.3)
+}
+*{box-sizing:border-box} html{scroll-behavior:smooth}
+body{margin:0;background:radial-gradient(circle at 15% -10%,rgba(183,255,53,.09),transparent 26%),var(--bg);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+button,input,select,textarea{font:inherit} button{cursor:pointer} a{color:inherit}
+.hidden{display:none!important}
+.shell{max-width:1600px;margin:auto;padding:18px}
+.topbar{position:sticky;top:0;z-index:20;display:flex;justify-content:space-between;gap:14px;align-items:center;padding:13px 0;background:rgba(9,11,10,.9);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+.brand{display:flex;gap:12px;align-items:center}.mark{width:35px;height:35px;border-radius:11px;background:var(--lime);color:#0c1008;display:grid;place-items:center;font-weight:900}.brand strong{display:block;letter-spacing:.05em}.brand small{color:var(--muted)}
+.actions{display:flex;gap:8px;flex-wrap:wrap}.btn{border:1px solid var(--line);background:#131713;color:var(--text);padding:10px 12px;border-radius:12px;font-weight:750}.btn:hover{border-color:#4b584c}.btn.primary{background:var(--lime);border-color:var(--lime);color:#10150a}.btn.ghost{background:transparent}.btn.danger{color:#ffb0b0}.btn.small{padding:7px 9px;font-size:12px;border-radius:9px}
+.hero{padding:30px 0 16px;display:grid;grid-template-columns:1fr auto;gap:18px;align-items:end}.eyebrow{color:var(--lime);font-size:11px;font-weight:850;letter-spacing:.16em;text-transform:uppercase}.hero h1{font-size:clamp(40px,7vw,88px);letter-spacing:-.06em;line-height:.92;margin:8px 0 14px}.hero p{max-width:780px;color:#bcc4bc;line-height:1.55;margin:0}
+.sync{color:var(--muted);font-size:12px;text-align:right}
+.stats{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px;margin:14px 0 18px}.stat{padding:15px;border:1px solid var(--line);background:rgba(255,255,255,.025);border-radius:15px}.stat b{display:block;font-size:26px;letter-spacing:-.04em}.stat span{font-size:11px;color:var(--muted)}
+.workspace{display:grid;grid-template-columns:260px minmax(0,1fr);gap:16px}
+.sidebar{position:sticky;top:74px;align-self:start;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:13px;max-height:calc(100vh - 92px);overflow:auto}
+.side-title{font-size:11px;color:var(--muted);font-weight:800;text-transform:uppercase;letter-spacing:.12em;margin:9px 6px}.navbtn{width:100%;border:0;background:transparent;color:#d7ddd7;text-align:left;padding:10px;border-radius:11px;display:flex;justify-content:space-between}.navbtn:hover,.navbtn.active{background:#1a201a;color:white}.navbtn .n{color:var(--muted)}
+.filters{display:grid;gap:8px;margin-top:12px}.field{display:grid;gap:5px}.field label{font-size:11px;color:var(--muted);font-weight:700}.input,.select,.textarea{width:100%;background:#0d100e;border:1px solid var(--line);color:var(--text);border-radius:11px;padding:10px;outline:none}.textarea{resize:vertical;min-height:110px}.input:focus,.select:focus,.textarea:focus{border-color:#526053}
+.content{min-width:0}.toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px}.search{flex:1;min-width:220px}.viewtabs{display:flex;gap:6px}.viewtabs button.active{background:#232a23}
+.tablewrap{overflow:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel)}
+table{width:100%;border-collapse:collapse;min-width:1080px}th{position:sticky;top:0;background:#111511;color:#9fa89f;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.11em;padding:12px;border-bottom:1px solid var(--line)}td{padding:11px 12px;border-bottom:1px solid #1e241f;vertical-align:top;font-size:13px}tr:hover td{background:#121712}.company{font-weight:800;font-size:14px}.sub{color:var(--muted);font-size:11px;margin-top:4px;max-width:320px}.pill{display:inline-flex;align-items:center;gap:5px;padding:5px 7px;border:1px solid #303832;border-radius:999px;font-size:10px;font-weight:750;margin:1px}.pill.lime{border-color:#496220;color:#d9ff99}.pill.amber{border-color:#624f25;color:#ffe0a0}.pill.red{border-color:#613333;color:#ffb4b4}.pill.blue{border-color:#314d68;color:#afd4ff}
+.row-actions{display:flex;gap:5px;white-space:nowrap}
+.board{display:grid;grid-template-columns:repeat(4,minmax(250px,1fr));gap:10px;overflow:auto;padding-bottom:10px}.column{background:#0f130f;border:1px solid var(--line);border-radius:15px;min-height:280px;padding:9px}.column h3{font-size:12px;margin:3px 3px 10px;display:flex;justify-content:space-between;color:#d4dbd4}.deal{background:#171c17;border:1px solid #252d26;border-radius:12px;padding:11px;margin:7px 0}.deal b{display:block;font-size:13px}.deal small{color:var(--muted)}.deal:hover{border-color:#4c5a4d}
+.drawer{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.58);display:flex;justify-content:flex-end}.drawer-panel{width:min(760px,100%);height:100%;background:#0d100e;border-left:1px solid var(--line);padding:18px;overflow:auto;box-shadow:var(--shadow)}.drawer-head{display:flex;justify-content:space-between;gap:15px;align-items:flex-start}.drawer h2{font-size:34px;line-height:1;letter-spacing:-.04em;margin:8px 0}.close{width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:#141814;color:white}.section{margin:18px 0;padding-top:16px;border-top:1px solid var(--line)}.section h3{font-size:12px;text-transform:uppercase;letter-spacing:.12em;color:#a9b2aa;margin:0 0 10px}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:9px}.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}.kv{background:#121612;border:1px solid #232a24;border-radius:12px;padding:10px}.kv label{display:block;color:#8e988f;font-size:10px;text-transform:uppercase;letter-spacing:.08em}.kv div{margin-top:5px;font-size:13px;word-break:break-word}
+.assets{display:grid;gap:8px}.asset{display:flex;justify-content:space-between;gap:10px;align-items:center;background:#131713;border:1px solid #252b25;border-radius:12px;padding:10px}.asset a{text-decoration:none;font-weight:750}.asset a:hover{color:var(--lime)}
+.timeline{display:grid;gap:9px}.event{border-left:2px solid #3a443b;padding:5px 0 5px 12px}.event.sent{border-color:var(--lime)}.event.reply{border-color:var(--blue)}.event.draft{border-color:var(--amber)}.event b{font-size:12px}.event small{display:block;color:var(--muted);margin-top:3px}.event p{font-size:12px;color:#c6cdc6;white-space:pre-wrap;line-height:1.45}
+.composer{background:#121612;border:1px solid #252c26;border-radius:14px;padding:12px}.compose-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}.hint{font-size:11px;color:var(--muted);line-height:1.5}
+.modal{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.65);display:grid;place-items:center;padding:18px}.modal-card{width:min(650px,100%);max-height:90vh;overflow:auto;background:#101410;border:1px solid var(--line);border-radius:20px;padding:18px}.modal-top{display:flex;justify-content:space-between;align-items:center}.modal h2{margin:4px 0 15px}
+.login{min-height:100vh;display:grid;place-items:center;padding:24px}.login-card{width:min(500px,100%);background:#101410;border:1px solid var(--line);border-radius:24px;padding:25px;box-shadow:var(--shadow)}.login-card h1{font-size:42px;letter-spacing:-.05em;margin:15px 0 9px}.login-card p{color:var(--muted);line-height:1.5}.error{color:#ff9d9d;font-size:12px;margin-top:9px}.notice{padding:10px;border:1px solid #5a4823;background:#1a160e;border-radius:12px;color:#f5d996;font-size:11px;line-height:1.5}
+.mobilecards{display:none}.empty{padding:55px 20px;text-align:center;color:var(--muted)}
+.toast{position:fixed;right:18px;bottom:18px;z-index:80;background:#f3f7ef;color:#101410;padding:11px 14px;border-radius:12px;font-size:12px;font-weight:800;box-shadow:var(--shadow)}
+@media(max-width:1100px){.stats{grid-template-columns:repeat(3,1fr)}.workspace{grid-template-columns:220px minmax(0,1fr)}}
+@media(max-width:780px){
+ .shell{padding:12px}.topbar{top:0}.brand small{display:none}.hero{grid-template-columns:1fr}.sync{text-align:left}
+ .hero h1{font-size:48px}.stats{grid-template-columns:repeat(2,1fr)}
+ .workspace{display:block}.sidebar{position:static;max-height:none;margin-bottom:10px}.filters{grid-template-columns:1fr 1fr}.side-title{margin-top:5px}
+ .sidebar .nav-section{display:none}.tablewrap{display:none}.mobilecards{display:grid;gap:9px}.mcard{background:var(--panel);border:1px solid var(--line);border-radius:15px;padding:13px}.mcard h3{margin:3px 0;font-size:18px}.mcard .meta{color:var(--muted);font-size:11px}.mcard .mrow{display:flex;justify-content:space-between;gap:9px;align-items:center;margin-top:11px}
+ .board{grid-template-columns:repeat(12,270px)}.grid2,.grid3{grid-template-columns:1fr}.drawer-panel{padding:14px}.drawer h2{font-size:28px}
+}
+</style>
+</head>
+<body>
+<section id="login" class="login">
+  <div class="login-card">
+    <div class="eyebrow">Morpheus PD · Private</div>
+    <h1>Sales OS</h1>
+    <p>The shared prospect pipeline for Saad and Yazeed. One place for research, what we built, outreach, follow-ups, replies and next actions.</p>
+    <div class="field"><label>Team access code</label><input id="accessCode" class="input" type="password" autocomplete="current-password" placeholder="Enter access code"></div>
+    <label style="display:flex;gap:8px;align-items:center;margin:12px 0;color:#b7c0b7;font-size:12px"><input id="remember" type="checkbox" checked> Remember this device</label>
+    <button id="loginBtn" class="btn primary" style="width:100%">Open Sales OS</button>
+    <div id="loginError" class="error"></div>
+  </div>
+</section>
+
+<div id="app" class="hidden">
+<div class="shell">
+  <header class="topbar">
+    <div class="brand"><div class="mark">M</div><div><strong>MORPHEUS SALES OS</strong><small>Shared pipeline · Saad + Yazeed</small></div></div>
+    <div class="actions">
+      <button class="btn" id="refreshBtn">↻ Sync</button>
+      <button class="btn" id="addProspectBtn">+ Prospect</button>
+      <button class="btn ghost" id="exportBtn">Export CSV</button>
+      <button class="btn ghost" id="lockBtn">Lock</button>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div>
+      <div class="eyebrow">The full sales channel</div>
+      <h1>From prospect<br>to close.</h1>
+      <p>Every company we researched, every asset we made, who owns the outreach, the exact message, what was actually sent, what came back and what happens next.</p>
+    </div>
+    <div id="syncText" class="sync">Connecting…</div>
+  </section>
+
+  <section class="stats">
+    <div class="stat"><b id="stTotal">0</b><span>Total prospects</span></div>
+    <div class="stat"><b id="stAssets">0</b><span>With built assets</span></div>
+    <div class="stat"><b id="stContacted">0</b><span>Contacted</span></div>
+    <div class="stat"><b id="stDue">0</b><span>Follow-ups due</span></div>
+    <div class="stat"><b id="stReplies">0</b><span>Replies / engaged</span></div>
+    <div class="stat"><b id="stWon">0</b><span>Won</span></div>
+  </section>
+
+  <div class="workspace">
+    <aside class="sidebar">
+      <div class="nav-section">
+        <div class="side-title">Queues</div>
+        <button class="navbtn active" data-queue="all">All prospects <span class="n" id="qAll">0</span></button>
+        <button class="navbtn" data-queue="assets">Built for them <span class="n" id="qAssets">0</span></button>
+        <button class="navbtn" data-queue="ready">Ready to contact <span class="n" id="qReady">0</span></button>
+        <button class="navbtn" data-queue="followup">Follow-up due <span class="n" id="qFollow">0</span></button>
+        <button class="navbtn" data-queue="engaged">Replied / engaged <span class="n" id="qEngaged">0</span></button>
+        <button class="navbtn" data-queue="hold">Hold / do not contact <span class="n" id="qHold">0</span></button>
+      </div>
+      <div class="side-title">Filters</div>
+      <div class="filters">
+        <div class="field"><label>Category</label><select id="catFilter" class="select"><option value="">All categories</option></select></div>
+        <div class="field"><label>Stage</label><select id="stageFilter" class="select"><option value="">All stages</option></select></div>
+        <div class="field"><label>Owner</label><select id="ownerFilter" class="select"><option value="">Everyone</option></select></div>
+        <div class="field"><label>Priority</label><select id="priorityFilter" class="select"><option value="">Any priority</option><option>A+</option><option>A</option><option>B</option><option>C</option></select></div>
+      </div>
+    </aside>
+
+    <main class="content">
+      <div class="toolbar">
+        <input id="search" class="input search" type="search" placeholder="Search company, contact, category, location, notes…">
+        <div class="viewtabs"><button class="btn small active" data-view="list">List</button><button class="btn small" data-view="board">Pipeline</button></div>
+        <span id="shown" class="pill">0 shown</span>
+      </div>
+      <div id="listView">
+        <div class="tablewrap">
+          <table>
+            <thead><tr><th>Prospect</th><th>Opportunity</th><th>What we made</th><th>Owner / sender</th><th>Stage</th><th>Next action</th><th></th></tr></thead>
+            <tbody id="tbody"></tbody>
+          </table>
+        </div>
+        <div id="mobilecards" class="mobilecards"></div>
+      </div>
+      <div id="boardView" class="hidden"><div id="board" class="board"></div></div>
+      <div id="empty" class="empty hidden">No prospects match these filters.</div>
+    </main>
+  </div>
+</div>
+</div>
+
+<div id="drawer" class="drawer hidden"><div class="drawer-panel">
+  <div class="drawer-head"><div><div id="dEyebrow" class="eyebrow"></div><h2 id="dCompany"></h2><div id="dTags"></div></div><button id="closeDrawer" class="close">×</button></div>
+  <div class="section"><h3>Account</h3><div id="dInfo" class="grid2"></div></div>
+  <div class="section"><h3>Pipeline control</h3>
+    <div class="grid3">
+      <div class="field"><label>Stage</label><select id="dStage" class="select"></select></div>
+      <div class="field"><label>Owner</label><input id="dOwner" class="input"></div>
+      <div class="field"><label>Priority</label><input id="dPriority" class="input"></div>
+    </div>
+    <div class="grid2" style="margin-top:9px">
+      <div class="field"><label>Next action</label><input id="dNextAction" class="input"></div>
+      <div class="field"><label>Next action date</label><input id="dNextDate" class="input" type="date"></div>
+    </div>
+    <div class="compose-actions"><button id="savePipeline" class="btn primary">Save pipeline</button></div>
+  </div>
+  <div class="section"><h3>What we made</h3><div id="dAssets" class="assets"></div><div style="margin-top:8px"><button id="addAssetBtn" class="btn small">+ Link an asset</button></div></div>
+  <div class="section"><h3>Outreach composer</h3>
+    <div class="composer">
+      <div class="grid2">
+        <div class="field"><label>Template</label><select id="templateSelect" class="select"></select></div>
+        <div class="field"><label>Recipient</label><input id="cRecipient" class="input"></div>
+        <div class="field"><label>Sender name</label><input id="cSender" class="input"></div>
+        <div class="field"><label>Sender email</label><input id="cSenderEmail" class="input"></div>
+      </div>
+      <div class="field" style="margin-top:8px"><label>Subject</label><input id="cSubject" class="input"></div>
+      <div class="field" style="margin-top:8px"><label>Message</label><textarea id="cBody" class="textarea" rows="12"></textarea></div>
+      <div class="grid2" style="margin-top:8px">
+        <div class="field"><label>Follow-up date after sending</label><input id="cFollowDate" class="input" type="date"></div>
+        <div class="field"><label>Channel</label><select id="cChannel" class="select"><option>Email</option><option>WhatsApp</option><option>LinkedIn</option><option>Phone</option><option>Other</option></select></div>
+      </div>
+      <div class="compose-actions">
+        <button id="copyMessage" class="btn">Copy message</button>
+        <button id="openEmail" class="btn">Open email app</button>
+        <button id="markSent" class="btn primary">Mark as sent</button>
+        <button id="saveDraft" class="btn">Save draft</button>
+      </div>
+      <p class="hint">“Open email app” prepares the message on your device. “Mark as sent” records it in the shared CRM and sets the follow-up. This version does not silently send external email.</p>
+    </div>
+  </div>
+  <div class="section"><h3>Activity</h3>
+    <div class="grid2"><div class="field"><label>Add note</label><textarea id="noteText" class="textarea" rows="3" placeholder="Call notes, reply summary, context…"></textarea></div><div><div class="field"><label>Outcome / stage</label><select id="noteStage" class="select"></select></div><button id="addNote" class="btn" style="margin-top:8px">Add to timeline</button></div></div>
+    <div id="dTimeline" class="timeline" style="margin-top:13px"></div>
+  </div>
+</div></div>
+
+<div id="prospectModal" class="modal hidden"><div class="modal-card">
+  <div class="modal-top"><h2>Add prospect</h2><button class="close" data-close="prospectModal">×</button></div>
+  <div class="grid2">
+    <div class="field"><label>Company</label><input id="pCompany" class="input"></div>
+    <div class="field"><label>Category</label><input id="pCategory" class="input" placeholder="Aquanix / Tin Tech / Website…"></div>
+    <div class="field"><label>Segment</label><input id="pSegment" class="input"></div>
+    <div class="field"><label>Location</label><input id="pLocation" class="input"></div>
+    <div class="field"><label>Website</label><input id="pWebsite" class="input"></div>
+    <div class="field"><label>Contact name</label><input id="pContact" class="input"></div>
+    <div class="field"><label>Contact email</label><input id="pEmail" class="input"></div>
+    <div class="field"><label>Owner</label><input id="pOwner" class="input" value="Yazeed"></div>
+  </div>
+  <button id="createProspect" class="btn primary" style="margin-top:12px">Create prospect</button>
+</div></div>
+
+<div id="assetModal" class="modal hidden"><div class="modal-card">
+  <div class="modal-top"><h2>Link an asset</h2><button class="close" data-close="assetModal">×</button></div>
+  <div class="grid2">
+    <div class="field"><label>Type</label><select id="aType" class="select"><option>Website</option><option>Proposal</option><option>Images</option><option>Spreadsheet</option><option>Research</option><option>Other</option></select></div>
+    <div class="field"><label>Status</label><select id="aStatus" class="select"><option>Built</option><option>Draft</option><option>Needs QA</option><option>Sent</option></select></div>
+  </div>
+  <div class="field" style="margin-top:8px"><label>Title</label><input id="aTitle" class="input"></div>
+  <div class="field" style="margin-top:8px"><label>URL</label><input id="aUrl" class="input"></div>
+  <div class="field" style="margin-top:8px"><label>Notes</label><textarea id="aNotes" class="textarea" rows="3"></textarea></div>
+  <button id="createAsset" class="btn primary" style="margin-top:12px">Add asset</button>
+</div></div>
+<div id="toast" class="toast hidden"></div>
+
+<script>
+const API='https://viajmvbwpmkiqxjtgshv.supabase.co/rest/v1/rpc/';
+const APIKEY='sb_publishable_gGFZftPonWKNZCdvUSM3yQ_gZvyI6_H';
+const STAGES=['Research','Asset ready','Ready to contact','Contacted','Follow-up','Replied','Qualified','Meeting','Proposal','Negotiation','Won','Lost','Hold'];
+let token='', data={prospects:[],assets:[],activities:[],templates:[]}, selected=null, queue='all', view='list';
+
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+function esc(s=''){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
+function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.remove('hidden');setTimeout(()=>t.classList.add('hidden'),2200)}
+function today(){return new Date().toISOString().slice(0,10)}
+function addDays(n){const d=new Date();d.setDate(d.getDate()+n);return d.toISOString().slice(0,10)}
+async function rpc(fn,payload){
+  const r=await fetch(API+fn,{method:'POST',headers:{'apikey':APIKEY,'Content-Type':'application/json'},body:JSON.stringify(payload)});
+  const txt=await r.text(); if(!r.ok) throw new Error(txt||('HTTP '+r.status)); return txt?JSON.parse(txt):null;
+}
+async function verify(code){return await rpc('sales_os_verify',{p_token:code})}
+async function load(){
+  $('#syncText').textContent='Syncing…';
+  data=await rpc('sales_os_snapshot',{p_token:token});
+  data.prospects=data.prospects||[];data.assets=data.assets||[];data.activities=data.activities||[];data.templates=data.templates||[];
+  $('#syncText').textContent='Synced '+new Date(data.synced_at||Date.now()).toLocaleString();
+  fillFilters(); render(); if(selected){selected=data.prospects.find(p=>p.id===selected.id)||null;if(selected)openDrawer(selected.id)}
+}
+function assetMap(){const m={};for(const a of data.assets){(m[a.prospect_id]??=[]).push(a)}return m}
+function activityMap(){const m={};for(const a of data.activities){(m[a.prospect_id]??=[]).push(a)}return m}
+function hasContacted(p,acts){return acts.some(a=>['Sent','Call','Meeting','Reply'].includes(a.activity_type))||['Contacted','Follow-up','Replied','Qualified','Meeting','Proposal','Negotiation','Won'].includes(p.stage)}
+function isEngaged(p,acts){return acts.some(a=>a.activity_type==='Reply')||['Replied','Qualified','Meeting','Proposal','Negotiation','Won'].includes(p.stage)}
+function isHold(p){return /hold|do not|reserve|lost/i.test((p.stage||'')+' '+(p.status||''))}
+function due(p){return p.next_action_date&&p.next_action_date<=today()&&!['Won','Lost','Hold'].includes(p.stage)}
+function fillFilters(){
+ const cats=[...new Set(data.prospects.map(p=>p.category).filter(Boolean))].sort(); const owners=[...new Set(data.prospects.map(p=>p.owner_assigned).filter(Boolean))].sort();
+ const cat=$('#catFilter').value, owner=$('#ownerFilter').value, stage=$('#stageFilter').value;
+ $('#catFilter').innerHTML='<option value="">All categories</option>'+cats.map(x=>`<option>${esc(x)}</option>`).join('');
+ $('#ownerFilter').innerHTML='<option value="">Everyone</option>'+owners.map(x=>`<option>${esc(x)}</option>`).join('');
+ $('#stageFilter').innerHTML='<option value="">All stages</option>'+STAGES.map(x=>`<option>${x}</option>`).join('');
+ $('#catFilter').value=cat;$('#ownerFilter').value=owner;$('#stageFilter').value=stage;
+}
+function filtered(){
+ const q=$('#search').value.trim().toLowerCase(), cat=$('#catFilter').value, st=$('#stageFilter').value, ow=$('#ownerFilter').value, pr=$('#priorityFilter').value;
+ const am=assetMap(), xm=activityMap();
+ return data.prospects.filter(p=>{
+  const assets=am[p.id]||[], acts=xm[p.id]||[];
+  const blob=[p.company,p.category,p.segment,p.location,p.contact_name,p.contact_email,p.website,p.notes,p.caution,(p.tags||[]).join(' '),(p.source_groups||[]).join(' ')].join(' ').toLowerCase();
+  if(q&&!blob.includes(q))return false;if(cat&&p.category!==cat)return false;if(st&&p.stage!==st)return false;if(ow&&p.owner_assigned!==ow)return false;if(pr&&p.priority!==pr)return false;
+  if(queue==='assets'&&!assets.length)return false;
+  if(queue==='ready'&&!(assets.length&&!hasContacted(p,acts)&&!isHold(p)))return false;
+  if(queue==='followup'&&!due(p))return false;
+  if(queue==='engaged'&&!isEngaged(p,acts))return false;
+  if(queue==='hold'&&!isHold(p))return false;
+  return true;
+ }).sort((a,b)=>((a.next_action_date||'9999').localeCompare(b.next_action_date||'9999'))||((b.score||0)-(a.score||0))||a.company.localeCompare(b.company));
+}
+function renderStats(){
+ const am=assetMap(),xm=activityMap(),ps=data.prospects;
+ const withAssets=ps.filter(p=>(am[p.id]||[]).length).length, contacted=ps.filter(p=>hasContacted(p,xm[p.id]||[])).length, dues=ps.filter(due).length, engaged=ps.filter(p=>isEngaged(p,xm[p.id]||[])).length, won=ps.filter(p=>p.stage==='Won').length;
+ $('#stTotal').textContent=ps.length;$('#stAssets').textContent=withAssets;$('#stContacted').textContent=contacted;$('#stDue').textContent=dues;$('#stReplies').textContent=engaged;$('#stWon').textContent=won;
+ $('#qAll').textContent=ps.length;$('#qAssets').textContent=withAssets;$('#qReady').textContent=ps.filter(p=>(am[p.id]||[]).length&&!hasContacted(p,xm[p.id]||[])&&!isHold(p)).length;$('#qFollow').textContent=dues;$('#qEngaged').textContent=engaged;$('#qHold').textContent=ps.filter(isHold).length;
+}
+function stagePill(s){const c=s==='Won'?'lime':s==='Lost'||s==='Hold'?'red':s==='Follow-up'||s==='Ready to contact'?'amber':s==='Replied'||s==='Qualified'||s==='Meeting'?'blue':'';return `<span class="pill ${c}">${esc(s||'Research')}</span>`}
+function renderList(ps){
+ const am=assetMap(), xm=activityMap();
+ $('#tbody').innerHTML=ps.map(p=>{const as=am[p.id]||[], acts=xm[p.id]||[]; const a=as[0];return `<tr>
+ <td><div class="company">${esc(p.company)}</div><div class="sub">${esc(p.location||'')} ${p.contact_name?'· '+esc(p.contact_name):''}</div></td>
+ <td><span class="pill">${esc(p.category||'General')}</span><div class="sub">${esc(p.segment||'')}</div></td>
+ <td>${as.length?`<span class="pill lime">${as.length} asset${as.length>1?'s':''}</span>${a?.url?`<div class="sub">${esc(a.title)}</div>`:''}`:'<span class="sub">Nothing linked yet</span>'}</td>
+ <td><b>${esc(p.owner_assigned||'Unassigned')}</b><div class="sub">${esc(p.sender_name||'No sender set')}</div></td>
+ <td>${stagePill(p.stage)}<div class="sub">${hasContacted(p,acts)?'Outreach logged':'No verified send'}</div></td>
+ <td>${p.next_action_date?`<span class="pill ${due(p)?'amber':''}">${esc(p.next_action_date)}</span>`:''}<div class="sub">${esc(p.next_action||'')}</div></td>
+ <td><div class="row-actions"><button class="btn small" onclick="openDrawer('${p.id}')">Open</button></div></td>
+ </tr>`}).join('');
+ $('#mobilecards').innerHTML=ps.map(p=>{const as=am[p.id]||[];return `<div class="mcard" onclick="openDrawer('${p.id}')"><div class="eyebrow">${esc(p.category||'General')}</div><h3>${esc(p.company)}</h3><div class="meta">${esc(p.location||'')} ${p.owner_assigned?'· '+esc(p.owner_assigned):''}</div><div style="margin-top:8px">${stagePill(p.stage)} ${as.length?`<span class="pill lime">${as.length} built</span>`:''}</div><div class="mrow"><small>${esc(p.next_action||'No next action')}</small>${p.next_action_date?`<span class="pill ${due(p)?'amber':''}">${esc(p.next_action_date)}</span>`:''}</div></div>`}).join('');
+}
+function renderBoard(ps){
+ const groups=['Research','Asset ready','Ready to contact','Contacted','Follow-up','Replied','Qualified','Meeting','Proposal','Negotiation','Won','Hold'];
+ $('#board').innerHTML=groups.map(s=>{const rows=ps.filter(p=>p.stage===s||(s==='Research'&&!groups.includes(p.stage)));return `<section class="column"><h3>${s}<span>${rows.length}</span></h3>${rows.map(p=>`<div class="deal" onclick="openDrawer('${p.id}')"><b>${esc(p.company)}</b><small>${esc(p.category||'')}</small>${p.next_action_date?`<div style="margin-top:6px"><span class="pill ${due(p)?'amber':''}">${esc(p.next_action_date)}</span></div>`:''}</div>`).join('')}</section>`}).join('');
+}
+function render(){
+ renderStats(); const ps=filtered();$('#shown').textContent=ps.length+' shown';$('#empty').classList.toggle('hidden',!!ps.length);renderList(ps);renderBoard(ps);
+}
+function info(label,val,link){if(!val)return'';let body=esc(val);if(link)body=`<a href="${esc(link)}" target="_blank">${body} ↗</a>`;return `<div class="kv"><label>${label}</label><div>${body}</div></div>`}
+window.openDrawer=function(id){
+ selected=data.prospects.find(p=>p.id===id);if(!selected)return;const p=selected, as=data.assets.filter(a=>a.prospect_id===id), acts=data.activities.filter(a=>a.prospect_id===id).sort((a,b)=>new Date(b.occurred_at)-new Date(a.occurred_at));
+ $('#dEyebrow').textContent=p.category||'Prospect';$('#dCompany').textContent=p.company;$('#dTags').innerHTML=(p.tags||[]).map(x=>`<span class="pill">${esc(x)}</span>`).join('');
+ $('#dInfo').innerHTML=info('Segment',p.segment)+info('Location',p.location)+info('Website',p.website,p.website)+info('Contact',p.contact_name)+info('Email',p.contact_email,p.contact_email?'mailto:'+p.contact_email:null)+info('Phone',p.phone)+info('Source',(p.source_groups||[]).join(', '))+info('Caution',p.caution);
+ $('#dStage').innerHTML=STAGES.map(x=>`<option>${x}</option>`).join('');$('#dStage').value=STAGES.includes(p.stage)?p.stage:'Research';$('#dOwner').value=p.owner_assigned||'';$('#dPriority').value=p.priority||'';$('#dNextAction').value=p.next_action||'';$('#dNextDate').value=p.next_action_date||'';
+ $('#dAssets').innerHTML=as.length?as.map(a=>`<div class="asset"><div><b>${esc(a.title)}</b><div class="sub">${esc(a.asset_type)} · ${esc(a.status)}</div></div>${a.url?`<a href="${esc(a.url)}" target="_blank">Open ↗</a>`:''}</div>`).join(''):'<div class="hint">Nothing linked yet.</div>';
+ $('#templateSelect').innerHTML='<option value="">Start blank</option>'+data.templates.map(t=>`<option value="${t.id}">${esc(t.name)}</option>`).join('');
+ $('#cRecipient').value=p.contact_email||'';$('#cSender').value=p.sender_name||'Robert Gibbons';$('#cSenderEmail').value=p.sender_email||'robert@morpheuspd.io';$('#cSubject').value='';$('#cBody').value='';$('#cFollowDate').value=addDays(4);
+ $('#noteStage').innerHTML='<option value="">Keep current stage</option>'+STAGES.map(x=>`<option>${x}</option>`).join('');
+ $('#dTimeline').innerHTML=acts.length?acts.map(a=>`<div class="event ${(a.activity_type||'').toLowerCase()}"><b>${esc(a.activity_type)}${a.channel?' · '+esc(a.channel):''}</b><small>${new Date(a.occurred_at).toLocaleString()}${a.actor_name?' · '+esc(a.actor_name):''}${a.recipient?' → '+esc(a.recipient):''}</small>${a.subject?`<p><strong>${esc(a.subject)}</strong></p>`:''}${a.message?`<p>${esc(a.message)}</p>`:''}${a.outcome?`<span class="pill">${esc(a.outcome)}</span>`:''}</div>`).join(''):'<div class="hint">No activity logged yet.</div>';
+ $('#drawer').classList.remove('hidden');
+}
+function closeDrawer(){$('#drawer').classList.add('hidden');selected=null}
+function applyTemplate(){
+ const t=data.templates.find(x=>x.id===$('#templateSelect').value);if(!t||!selected)return;const as=data.assets.filter(a=>a.prospect_id===selected.id),asset=as.find(a=>a.url)||as[0];
+ const first=(selected.contact_name||selected.company||'').split(/[\/,–—-]/)[0].trim();
+ const repl=s=>String(s||'').replaceAll('{{company}}',selected.company||'').replaceAll('{{first_name_or_company}}',first||selected.company||'').replaceAll('{{asset_url}}',asset?.url||'').replaceAll('{{original_subject}}',$('#cSubject').value||'Our note');
+ $('#cSender').value=t.sender_name||$('#cSender').value;$('#cSenderEmail').value=t.sender_email||$('#cSenderEmail').value;$('#cSubject').value=repl(t.subject_template);$('#cBody').value=repl(t.body_template);
+}
+async function savePipeline(){
+ if(!selected)return;await rpc('sales_os_save_prospect',{p_token:token,p_payload:{id:selected.id,stage:$('#dStage').value,owner_assigned:$('#dOwner').value,priority:$('#dPriority').value,next_action:$('#dNextAction').value,next_action_date:$('#dNextDate').value}});toast('Pipeline updated');await load();
+}
+async function logCompose(type){
+ if(!selected)return;const follow=$('#cFollowDate').value;const payload={prospect_id:selected.id,activity_type:type,channel:$('#cChannel').value,direction:'Outbound',subject:$('#cSubject').value,message:$('#cBody').value,actor_name:$('#cSender').value,actor_email:$('#cSenderEmail').value,recipient:$('#cRecipient').value,occurred_at:new Date().toISOString(),outcome:type==='Sent'?'Sent / awaiting reply':'Draft saved',follow_up_date:type==='Sent'?follow:null,source:'Morpheus Sales OS',set_stage:type==='Sent'?'Follow-up':selected.stage,set_status:type==='Sent'?'Contacted':'Draft',next_action:type==='Sent'?'Follow up if no reply':selected.next_action};
+ await rpc('sales_os_add_activity',{p_token:token,p_payload:payload});toast(type==='Sent'?'Send logged and follow-up set':'Draft saved');await load();
+}
+async function addNote(){
+ if(!selected||!$('#noteText').value.trim())return;await rpc('sales_os_add_activity',{p_token:token,p_payload:{prospect_id:selected.id,activity_type:'Note',channel:'Internal',direction:'Internal',message:$('#noteText').value.trim(),actor_name:'Sales OS user',occurred_at:new Date().toISOString(),outcome:'Internal note',set_stage:$('#noteStage').value||selected.stage}});$('#noteText').value='';toast('Note added');await load();
+}
+async function createProspect(){
+ const company=$('#pCompany').value.trim();if(!company)return toast('Company is required');await rpc('sales_os_save_prospect',{p_token:token,p_payload:{company,category:$('#pCategory').value||'General',segment:$('#pSegment').value,location:$('#pLocation').value,website:$('#pWebsite').value,contact_name:$('#pContact').value,contact_email:$('#pEmail').value,owner_assigned:$('#pOwner').value||'Yazeed',stage:'Research',status:'Not started',next_action:'Review and qualify'}});$('#prospectModal').classList.add('hidden');toast('Prospect created');await load();
+}
+async function createAsset(){
+ if(!selected)return;await rpc('sales_os_save_asset',{p_token:token,p_payload:{prospect_id:selected.id,asset_type:$('#aType').value,title:$('#aTitle').value||'Linked asset',url:$('#aUrl').value,status:$('#aStatus').value,notes:$('#aNotes').value}});$('#assetModal').classList.add('hidden');toast('Asset linked');await load();
+}
+function exportCSV(){
+ const rows=[['Company','Category','Segment','Location','Website','Contact','Email','Priority','Stage','Owner','Next Action','Next Action Date','Status']];
+ for(const p of filtered())rows.push([p.company,p.category,p.segment,p.location,p.website,p.contact_name,p.contact_email,p.priority,p.stage,p.owner_assigned,p.next_action,p.next_action_date,p.status]);
+ const csv=rows.map(r=>r.map(v=>`"${String(v??'').replaceAll('"','""')}"`).join(',')).join('\n');const b=new Blob([csv],{type:'text/csv'}),u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download='morpheus-sales-os.csv';a.click();URL.revokeObjectURL(u);
+}
+async function doLogin(){
+ const c=$('#accessCode').value.trim();$('#loginError').textContent='';try{const ok=await verify(c);if(!ok)throw new Error('Access denied');token=c;if($('#remember').checked)localStorage.setItem('morpheusSalesToken',c);$('#login').classList.add('hidden');$('#app').classList.remove('hidden');await load()}catch(e){$('#loginError').textContent='Could not open Sales OS. Check the access code and connection.'}
+}
+$('#loginBtn').onclick=doLogin;$('#accessCode').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin()});$('#refreshBtn').onclick=load;$('#closeDrawer').onclick=closeDrawer;$('#drawer').addEventListener('click',e=>{if(e.target.id==='drawer')closeDrawer()});
+$('#templateSelect').onchange=applyTemplate;$('#savePipeline').onclick=savePipeline;$('#saveDraft').onclick=()=>logCompose('Draft');$('#markSent').onclick=()=>logCompose('Sent');$('#addNote').onclick=addNote;
+$('#copyMessage').onclick=async()=>{await navigator.clipboard.writeText($('#cBody').value);toast('Message copied')};$('#openEmail').onclick=()=>{const to=$('#cRecipient').value,sub=encodeURIComponent($('#cSubject').value),body=encodeURIComponent($('#cBody').value);location.href=`mailto:${encodeURIComponent(to)}?subject=${sub}&body=${body}`};
+$('#addProspectBtn').onclick=()=>$('#prospectModal').classList.remove('hidden');$('#createProspect').onclick=createProspect;$('#addAssetBtn').onclick=()=>$('#assetModal').classList.remove('hidden');$('#createAsset').onclick=createAsset;$('#exportBtn').onclick=exportCSV;
+$$('[data-close]').forEach(b=>b.onclick=()=>$('#'+b.dataset.close).classList.add('hidden'));
+['search','catFilter','stageFilter','ownerFilter','priorityFilter'].forEach(id=>$('#'+id).addEventListener(id==='search'?'input':'change',render));
+$$('.navbtn').forEach(b=>b.onclick=()=>{$$('.navbtn').forEach(x=>x.classList.remove('active'));b.classList.add('active');queue=b.dataset.queue;render()});
+$$('.viewtabs button').forEach(b=>b.onclick=()=>{$$('.viewtabs button').forEach(x=>x.classList.remove('active'));b.classList.add('active');view=b.dataset.view;$('#listView').classList.toggle('hidden',view!=='list');$('#boardView').classList.toggle('hidden',view!=='board');render()});
+$('#lockBtn').onclick=()=>{localStorage.removeItem('morpheusSalesToken');token='';location.reload()};
+const saved=localStorage.getItem('morpheusSalesToken');if(saved){$('#accessCode').value=saved;doLogin()}
+</script>
+</body>
+</html>
