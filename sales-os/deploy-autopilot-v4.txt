@@ -1,0 +1,2 @@
+Morpheus Sales OS Autopilot deployment trigger
+Includes sales-os-v2 Sales Inbox, AI Action Queue, opportunity tracking and repaired frontend bundle.
