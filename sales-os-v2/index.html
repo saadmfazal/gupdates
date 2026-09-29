@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#f5f7f4">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<title>Morpheus Sales OS</title>
+<link rel="stylesheet" href="./styles.css?v=1">
+</head>
+<body>
+<section id="login" class="login">
+ <div class="logincard">
+   <div class="loginbrand">Morpheus PD · Private</div>
+   <h1>Sales OS</h1>
+   <p>Your shared operating system for prospects, assets, outreach, follow-ups, reminders, notes and AI-assisted sales work.</p>
+   <div class="field"><label>Team access code</label><input id="accessCode" class="input" type="password" autocomplete="current-password"></div>
+   <label style="font-size:10px;color:var(--muted);display:flex;gap:7px;align-items:center;margin:10px 0 14px"><input id="remember" type="checkbox" checked> Remember this device</label>
+   <button id="loginBtn" class="btn primary" style="width:100%">Open Sales OS</button>
+   <div id="loginError" style="font-size:10px;color:var(--red);margin-top:9px"></div>
+ </div>
+</section>
+
+<div id="app" class="app hidden">
+ <aside class="sidebar">
+   <div class="logo"><div class="logo-mark">M</div><div><strong>MORPHEUS</strong><span>Sales OS</span></div></div>
+   <div class="navgroup">
+     <div class="navlabel">Workspace</div>
+     <button class="navitem active" data-page="dashboard">Dashboard</button>
+     <button class="navitem" data-page="prospects">Prospects <span id="navProspects" class="count">0</span></button>
+     <button class="navitem" data-page="pipeline">Pipeline</button>
+     <button class="navitem" data-page="email">Email <span id="navDrafts" class="count">0</span></button>
+     <button class="navitem" data-page="assets">Assets <span id="navAssets" class="count">0</span></button>
+   </div>
+   <div class="navgroup">
+     <div class="navlabel">Work</div>
+     <button class="navitem" data-page="reminders">Reminders <span id="navReminders" class="count">0</span></button>
+     <button class="navitem" data-page="notes">Notes</button>
+     <button class="navitem" data-page="categories">Categories & Import</button>
+   </div>
+   <div class="navgroup">
+     <div class="navlabel">System</div>
+     <button class="navitem" data-page="connections">Connections</button>
+   </div>
+   <div class="side-bottom"><button class="navitem" id="lockBtn">Lock workspace</button></div>
+ </aside>
+
+ <div class="main">
+  <header class="topbar">
+    <div class="searchwrap"><input id="globalSearch" placeholder="Search prospects, contacts, notes, assets…"></div>
+    <div class="topactions">
+      <button class="btn" id="quickNoteBtn">+ Note</button>
+      <button class="btn primary" id="quickProspectBtn">+ Prospect</button>
+      <button class="iconbtn" id="notificationBtn" aria-label="Notifications">◔<span id="notificationDot" class="dot hidden"></span></button>
+    </div>
+  </header>
+
+  <main>
+   <section class="page" data-page-view="dashboard">
+    <div class="pagehead"><div><h1>Good to see the whole picture.</h1><p id="syncLabel">Syncing the sales workspace…</p></div><div class="pageactions"><button class="btn" id="dashReminderBtn">+ Reminder</button><button class="btn green" id="dashImportBtn">Import prospects</button></div></div>
+    <div class="grid stats">
+      <div class="card stat"><div class="label">Active prospects</div><strong id="statProspects">0</strong><small>Across every market</small></div>
+      <div class="card stat"><div class="label">Needs attention</div><strong id="statDue">0</strong><small>Due or overdue</small></div>
+      <div class="card stat"><div class="label">Email drafts</div><strong id="statDrafts">0</strong><small>Ready to work</small></div>
+      <div class="card stat"><div class="label">Engaged</div><strong id="statEngaged">0</strong><small>Replies through negotiation</small></div>
+    </div>
+    <div class="grid dashboardgrid">
+      <section class="card panel"><div class="panelhead"><h2>Today</h2><small id="todayDate"></small></div><div id="todayFocus" class="focuslist"></div></section>
+      <section class="card panel"><div class="panelhead"><h2>Recent activity</h2><button class="btn" data-go="prospects">All prospects</button></div><div id="recentActivity" class="activitylist"></div></section>
+    </div>
+    <section class="card panel" style="margin-top:14px"><div class="panelhead"><h2>Pipeline</h2><button class="btn" data-go="pipeline">Open pipeline</button></div><div id="pipelineSummary" class="pipelinebar"></div></section>
+   </section>
+
+   <section class="page hidden" data-page-view="prospects">
+    <div class="pagehead"><div><h1>Prospects</h1><p>Every account, what we know, what we made and what happens next.</p></div><div class="pageactions"><button class="btn" id="prospectImportBtn">Import CSV</button><button class="btn primary" id="addProspectBtn">+ Prospect</button></div></div>
+    <section class="card tablecard">
+      <div class="toolbar"><input id="prospectSearch" class="grow" placeholder="Search companies…"><select id="prospectCategory"><option value="">All categories</option></select><select id="prospectStage"><option value="">All stages</option></select><select id="prospectOwner"><option value="">All owners</option></select></div>
+      <table><thead><tr><th>Company</th><th>Category</th><th>Contact</th><th>Assets</th><th>Owner</th><th>Stage</th><th>Next action</th><th></th></tr></thead><tbody id="prospectTable"></tbody></table>
+    </section>
+   </section>
+
+   <section class="page hidden" data-page-view="pipeline">
+    <div class="pagehead"><div><h1>Pipeline</h1><p>A visual view of where every opportunity currently sits.</p></div></div>
+    <div id="kanban" class="kanban"></div>
+   </section>
+
+   <section class="page hidden" data-page-view="email">
+    <div class="pagehead"><div><h1>Email workspace</h1><p>Draft, refine and keep prospect communication attached to the account.</p></div><div class="pageactions"><button class="btn" id="newEmailBtn">+ New draft</button></div></div>
+    <div class="split"><div class="listpanel"><div id="draftList"></div></div><div id="emailEditor" class="editor"><div class="empty">Select a draft or start a new one.</div></div></div>
+   </section>
+
+   <section class="page hidden" data-page-view="assets">
+    <div class="pagehead"><div><h1>Assets</h1><p>Websites, proposals, concepts, imagery, research and supporting material.</p></div><div class="pageactions"><button class="btn primary" id="newAssetBtn">+ Asset</button></div></div>
+    <div id="assetGrid" class="assetgrid"></div>
+   </section>
+
+   <section class="page hidden" data-page-view="reminders">
+    <div class="pagehead"><div><h1>Reminders</h1><p>What needs to happen, when, and for which account.</p></div><div class="pageactions"><button class="btn" id="browserNotifyBtn">Browser notifications</button><button class="btn primary" id="newReminderBtn">+ Reminder</button></div></div>
+    <div class="grid dashboardgrid"><section class="card panel"><div class="panelhead"><h2>Open</h2></div><div id="openReminders" class="reminderlist"></div></section><section class="card panel"><div class="panelhead"><h2>Completed</h2></div><div id="doneReminders" class="reminderlist"></div></section></div>
+   </section>
+
+   <section class="page hidden" data-page-view="notes">
+    <div class="pagehead"><div><h1>Notes</h1><p>Account context, thinking, call notes and anything worth remembering.</p></div><div class="pageactions"><button class="btn primary" id="newNoteBtn">+ Note</button></div></div>
+    <div id="notesGrid" class="notesgrid"></div>
+   </section>
+
+   <section class="page hidden" data-page-view="categories">
+    <div class="pagehead"><div><h1>Categories & import</h1><p>Structure new markets, then move prospect research from ChatGPT into Sales OS in one clean step.</p></div><div class="pageactions"><button class="btn" id="categoryManagerBtn">Manage categories</button><button class="btn primary" id="openImportBtn">Import CSV</button></div></div>
+    <div class="grid dashboardgrid"><section class="card panel"><div class="panelhead"><h2>Categories</h2></div><div id="categoriesOverview"></div></section><section class="card panel"><div class="panelhead"><h2>ChatGPT prospect workflow</h2></div><div class="ai-box"><h3>Research → CSV → Sales OS</h3><p>Pick a category, copy the exact research prompt, run it in any ChatGPT conversation, download the CSV, and import it here.</p><button class="btn green" id="categoryImportBtn">Open importer</button></div></section></div>
+   </section>
+
+   <section class="page hidden" data-page-view="connections">
+    <div class="pagehead"><div><h1>Connections</h1><p>Turn Sales OS into a connected working system instead of a database you have to babysit.</p></div></div>
+    <div id="connectionsGrid" class="connections"></div>
+    <section class="card panel" style="margin-top:14px"><div class="panelhead"><h2>Connected intelligence</h2></div><p style="font-size:11px;color:var(--muted);line-height:1.65;margin:0">Sales OS is being prepared as a private ChatGPT MCP app. Once connected, ChatGPT can search accounts, read assets and notes, add reminders, update the pipeline and save drafts back into Sales OS. Gmail can then handle sending alongside ChatGPT while the CRM stays synchronized.</p></section>
+   </section>
+  </main>
+ </div>
+
+ <nav class="mobile-nav">
+  <button class="active" data-mobile-page="dashboard">Home</button><button data-mobile-page="prospects">Prospects</button><button data-mobile-page="pipeline">Pipeline</button><button data-mobile-page="email">Email</button><button data-mobile-page="reminders">Reminders</button>
+ </nav>
+</div>
+
+<div id="noticeMenu" class="notice-menu hidden"><h3>Notifications</h3><div id="noticeList"></div></div>
+
+<div id="prospectDrawer" class="drawer hidden"><div class="drawerpanel">
+ <div class="drawerhead"><div><span id="pdCategory" class="pill"></span><h2 id="pdCompany"></h2><div id="pdMeta" class="meta"></div></div><button class="close" data-close="prospectDrawer">×</button></div>
+ <div class="section"><h3>Account</h3><div class="formgrid2"><div class="field"><label>Category</label><select id="pdCategorySelect" class="select"></select></div><div class="field"><label>Stage</label><select id="pdStage" class="select"></select></div><div class="field"><label>Owner</label><input id="pdOwner" class="input"></div><div class="field"><label>Priority</label><input id="pdPriority" class="input"></div><div class="field"><label>Contact</label><input id="pdContact" class="input"></div><div class="field"><label>Email</label><input id="pdEmail" class="input"></div><div class="field"><label>Website</label><input id="pdWebsite" class="input"></div><div class="field"><label>Location</label><input id="pdLocation" class="input"></div></div><div class="field"><label>Next action</label><input id="pdNextAction" class="input"></div><div class="field"><label>Next action date</label><input id="pdNextDate" class="input" type="date"></div><button id="saveProspect" class="btn primary">Save account</button></div>
+ <div class="section"><h3>Assets</h3><div id="pdAssets"></div><button id="pdNewAsset" class="btn" style="margin-top:8px">+ Asset</button></div>
+ <div class="section"><h3>Notes</h3><div id="pdNotes"></div><button id="pdNewNote" class="btn" style="margin-top:8px">+ Note</button></div>
+ <div class="section"><h3>Reminders</h3><div id="pdReminders"></div><button id="pdNewReminder" class="btn" style="margin-top:8px">+ Reminder</button></div>
+ <div class="section"><h3>Activity</h3><div id="pdActivity" class="activitylist"></div></div>
+</div></div>
+
+<div id="genericModal" class="modal hidden"><div id="genericModalCard" class="modalcard"></div></div>
+<div id="toast" class="toast hidden"></div>
+
+<script src="./app.js?v=1"></script>
+</body>
+</html>
