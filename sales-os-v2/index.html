@@ -29,7 +29,9 @@
      <button class="navitem active" data-page="dashboard">Dashboard</button>
      <button class="navitem" data-page="prospects">Prospects <span id="navProspects" class="count">0</span></button>
      <button class="navitem" data-page="pipeline">Pipeline</button>
-     <button class="navitem" data-page="email">Email <span id="navDrafts" class="count">0</span></button>
+     <button class="navitem" data-page="inbox">Sales Inbox <span id="navInbox" class="count">0</span></button>
+     <button class="navitem" data-page="ai">AI Action Queue <span id="navAI" class="count">0</span></button>
+     <button class="navitem" data-page="email">Email Drafts <span id="navDrafts" class="count">0</span></button>
      <button class="navitem" data-page="assets">Assets <span id="navAssets" class="count">0</span></button>
    </div>
    <div class="navgroup">
@@ -61,8 +63,10 @@
     <div class="grid stats">
       <div class="card stat"><div class="label">Active prospects</div><strong id="statProspects">0</strong><small>Across every market</small></div>
       <div class="card stat"><div class="label">Needs attention</div><strong id="statDue">0</strong><small>Due or overdue</small></div>
+      <div class="card stat"><div class="label">Inbox actions</div><strong id="statInbox">0</strong><small>Messages needing action</small></div>
+      <div class="card stat"><div class="label">AI actions</div><strong id="statAI">0</strong><small>Recommended next moves</small></div>
       <div class="card stat"><div class="label">Email drafts</div><strong id="statDrafts">0</strong><small>Ready to work</small></div>
-      <div class="card stat"><div class="label">Engaged</div><strong id="statEngaged">0</strong><small>Replies through negotiation</small></div>
+      <div class="card stat"><div class="label">Pipeline value</div><strong id="statValue">$0</strong><small>Active opportunity value</small></div>
     </div>
     <div class="grid dashboardgrid">
       <section class="card panel"><div class="panelhead"><h2>Today</h2><small id="todayDate"></small></div><div id="todayFocus" class="focuslist"></div></section>
@@ -82,6 +86,17 @@
    <section class="page hidden" data-page-view="pipeline">
     <div class="pagehead"><div><h1>Pipeline</h1><p>A visual view of where every opportunity currently sits.</p></div></div>
     <div id="kanban" class="kanban"></div>
+   </section>
+
+
+   <section class="page hidden" data-page-view="inbox">
+    <div class="pagehead"><div><h1>Sales Inbox</h1><p>Prospect email threads synchronized into the CRM, with reply classification and action state.</p></div><div class="pageactions"><button class="btn" id="syncInboxGuideBtn">Sync with ChatGPT</button></div></div>
+    <section class="card panel"><div class="panelhead"><h2>Messages</h2><small id="inboxSummary"></small></div><div id="salesInbox" class="activitylist"></div></section>
+   </section>
+
+   <section class="page hidden" data-page-view="ai">
+    <div class="pagehead"><div><h1>AI Action Queue</h1><p>The next best actions generated from outreach, replies, reminders and account context.</p></div><div class="pageactions"><button class="btn" id="aiQueueGuideBtn">Run Autopilot in ChatGPT</button></div></div>
+    <div id="aiActionQueue" class="focuslist"></div>
    </section>
 
    <section class="page hidden" data-page-view="email">
@@ -130,6 +145,15 @@
  <div class="section"><h3>Assets</h3><div id="pdAssets"></div><button id="pdNewAsset" class="btn" style="margin-top:8px">+ Asset</button></div>
  <div class="section"><h3>Notes</h3><div id="pdNotes"></div><button id="pdNewNote" class="btn" style="margin-top:8px">+ Note</button></div>
  <div class="section"><h3>Reminders</h3><div id="pdReminders"></div><button id="pdNewReminder" class="btn" style="margin-top:8px">+ Reminder</button></div>
+ <div class="section"><h3>Commercial opportunity</h3>
+   <div class="formgrid3">
+    <div class="field"><label>Estimated value</label><input id="pdOppValue" class="input" type="number" step="0.01"></div>
+    <div class="field"><label>Monthly kg</label><input id="pdOppKg" class="input" type="number" step="0.01"></div>
+    <div class="field"><label>Probability %</label><input id="pdOppProb" class="input" type="number" min="0" max="100"></div>
+   </div>
+   <div class="field"><label>Commercial notes</label><textarea id="pdOppNotes" class="textarea" rows="3"></textarea></div>
+   <button id="saveOpportunity" class="btn">Save opportunity</button>
+  </div>
  <div class="section"><h3>Activity</h3><div id="pdActivity" class="activitylist"></div></div>
 </div></div>
 
