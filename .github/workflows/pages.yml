@@ -6,6 +6,7 @@ on:
     paths:
       - "morpheus-george/**"
       - "apex/**"
+      - "sales-os/**"
       - ".github/workflows/pages.yml"
   workflow_dispatch:
 
