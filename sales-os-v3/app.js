@@ -188,7 +188,7 @@ function filteredProspects(){
 }
 function renderProspects(){
   if(!$('#prospectGrid'))return;syncFilters();const rows=filteredProspects();
-  $('#prospectGrid').innerHTML=rows.map(p=>'<article class="prospect-card" onclick="route(\'#/prospect/'+p.id+'\')"><div class="prospect-card-head"><div><span class="eyebrow">'+esc(p.category||'General')+'</span><h3>'+esc(p.company)+'</h3><p>'+esc([p.segment,p.location].filter(Boolean).join(' · '))+'</p></div><span class="status-chip '+statusClass(p.stage)+'">'+esc(p.stage)+'</span></div><div class="card-mid"><span class="status-chip">'+pAssets(p.id).length+' assets</span><span class="status-chip">'+esc(p.owner_assigned||'Unassigned')+'</span></div><div class="prospect-card-footer"><small>'+(p.next_action?esc(p.next_action):'No next action')+'</small><button class="round-go">→</button></div></article>').join('')||'<div class="empty">No prospects found.</div>';
+  $('#prospectGrid').innerHTML=rows.map(p=>'<article class="prospect-card" onclick="route(\'#/prospect/'+p.id+'\')"><div class="prospect-card-head"><div><span class="eyebrow">'+esc(p.category||'General')+'</span><h3>'+esc(p.company)+'</h3><p>'+esc([p.segment,p.location].filter(Boolean).join(' · '))+'</p></div><span class="status-chip '+statusClass(p.stage)+'">'+esc(p.stage)+'</span></div><div class="card-mid"><span class="status-chip">'+pAssets(p.id).length+' assets</span><span class="status-chip">'+esc(p.owner_assigned||'Unassigned')+'</span></div><div class="prospect-card-footer"><small>'+esc(workflowFor(p.id)?.recommended_action||p.next_action||'No next action')+'</small><button class="round-go">→</button></div></article>').join('')||'<div class="empty">No prospects found.</div>';
 }
 
 function researchExists(p){return pResearch(p.id).length>0||pNotes(p.id).some(n=>String(n.title||'').toLowerCase().startsWith('research'))}
@@ -282,7 +282,7 @@ function renderProspectDetail(id){
     '</section>'+
     '<section class="detail-right"><div class="copilot-insight"><div class="eyebrow">MORPHEUS SUGGESTS</div><b>'+esc((reports[0]?.structured?.asset_recommendation?.concept||'Lead with the clearest commercial opportunity.').slice(0,110))+'</b><p>'+esc(insight.slice(0,260))+'</p></div>'+
       '<section class="panel detail-card outreach-draft-card"><div class="panel-head"><h2>Outreach draft</h2><button class="text-link" onclick="aiWrite(\''+p.id+'\')">✦ Refine</button></div><textarea id="prospectDraftBody" placeholder="No draft yet. Use AI Write to prepare one.">'+esc(draft?.body||'')+'</textarea><div class="editor-actions"><button class="btn lime" onclick="saveProspectDraft(\''+p.id+'\')">Save draft</button><button class="btn" onclick="openCopilot(\''+p.id+'\')">Ask Morpheus</button></div></section>'+
-      '<section class="panel detail-card next-action-card"><div class="eyebrow">NEXT ACTION</div><h2>'+esc(p.next_action||'Define the next move')+'</h2><p class="quiet">'+esc(p.owner_assigned||'Unassigned')+(p.next_action_date?' · '+p.next_action_date:'')+'</p><div class="editor-actions"><button class="btn" onclick="addProspectNote(\''+p.id+'\')">Add note</button><button class="btn" onclick="addProspectReminder(\''+p.id+'\')">Reminder</button></div></section>'+
+      '<section class="panel detail-card next-action-card"><div class="eyebrow">NEXT ACTION</div><h2>'+esc(workflowFor(p.id)?.recommended_action||p.next_action||'Define the next move')+'</h2><p class="quiet">'+esc(workflowFor(p.id)?.reason||'')+'</p><p class="quiet">'+esc(p.owner_assigned||'Unassigned')+(p.next_action_date?' · '+p.next_action_date:'')+'</p><div class="editor-actions"><button class="btn lime" onclick="runProspectNextMove(\''+p.id+'\')">Do next move</button><button class="btn" onclick="addProspectNote(\''+p.id+'\')">Add note</button><button class="btn" onclick="addProspectReminder(\''+p.id+'\')">Reminder</button></div></section>'+
     '</section>'+
   '</div>'+
   '<div class="timeline-bar">'+timeline('Research added',state.research)+timeline('Asset requested',jobs.length>0)+timeline('Draft ready',!!draft)+timeline('Outreach',state.outreach)+'</div>';
@@ -316,6 +316,17 @@ async function saveProspectDraft(id){
 }
 window.saveProspectDraft=saveProspectDraft;
 
+window.runProspectNextMove=id=>{
+  const p=data.prospects.find(x=>x.id===id),w=workflowFor(id);if(!p)return;
+  const phase=w?.phase||'research';
+  if(phase==='research'){startResearch(id);return}
+  if(phase==='research_ready'){assignAhamed(id);return}
+  if(phase==='asset_build'){const j=pJobs(id).find(j=>['queued','in_progress','ready_for_review'].includes(j.status));if(j){openAssetJob(j.id);return}route('#/assets');return}
+  if(phase==='asset_review'){const j=pJobs(id).find(j=>j.status==='ready_for_review');if(j){openAssetJob(j.id);return}route('#/assets');return}
+  if(phase==='draft_ready'){const d=pDrafts(id).find(d=>d.status==='draft');if(d){currentDraft=d;route('#/outreach');renderOutreach();return}aiWrite(id);return}
+  if(phase==='asset_ready'||phase==='waiting'||phase==='reply'){aiWrite(id);return}
+  route('#/prospect/'+id);
+};
 function openEditProspect(id){
   const p=data.prospects.find(x=>x.id===id);if(!p)return;modal('Edit '+p.company,'<div class="field"><label>Contact</label><input id="epContact" class="control" value="'+esc(p.contact_name||'')+'"></div><div class="field"><label>Email</label><input id="epEmail" class="control" value="'+esc(p.contact_email||'')+'"></div><div class="field"><label>Website</label><input id="epWebsite" class="control" value="'+esc(p.website||'')+'"></div><div class="field"><label>Assigned to</label><input id="epAssignee" class="control" value="'+esc(p.owner_assigned||'')+'"></div><div class="field"><label>Next action</label><input id="epNext" class="control" value="'+esc(p.next_action||'')+'"></div><button id="saveProspectEdit" class="btn lime wide">Save changes</button>');$('#saveProspectEdit').onclick=async()=>{await rpc('sales_os_save_prospect',{p_token:token||null,p_payload:{id:p.id,contact_name:$('#epContact').value,contact_email:$('#epEmail').value,website:$('#epWebsite').value,owner_assigned:$('#epAssignee').value,next_action:$('#epNext').value}});closeModal();await load();renderProspectDetail(id);toast('Account updated')}}
 window.openEditProspect=openEditProspect;
