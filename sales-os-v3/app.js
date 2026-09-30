@@ -338,7 +338,28 @@ function addProspectReminder(id){
 window.addProspectReminder=addProspectReminder;
 function manageCategories(){
   const cats=[...new Set(data.prospects.map(p=>p.category).filter(Boolean))].sort();modal('Categories','<div id="catList">'+cats.map(c=>'<div class="stack-item"><div class="main"><b>'+esc(c)+'</b><span>'+data.prospects.filter(p=>p.category===c).length+' prospects</span></div></div>').join('')+'</div><div class="field" style="margin-top:12px"><label>New category</label><input id="newCat" class="control"></div><button id="addCat" class="btn lime">Add category</button>');$('#addCat').onclick=async()=>{const name=$('#newCat').value.trim();if(!name)return;await rpc('sales_os_save_category',{p_token:token||null,p_payload:{name,active:true}});closeModal();await load();toast('Category added')}}
-function importCsv(){modal('Import prospects','<p class="brief-text">The existing V2 CSV importer remains available during V3 migration.</p><a class="btn lime" href="../sales-os-v2/?v=28" target="_blank">Open CSV importer ↗</a>')}
+const CSV_HEADER_ALIASES={'company name':'company','business':'company','business name':'company','prospect':'company','market':'category','industry':'category','contact':'contact_name','contact person':'contact_name','decision maker':'contact_name','role':'contact_role','title':'contact_role','email':'contact_email','url':'website','site':'website','owner':'owner_assigned','assigned to':'owner_assigned','asset link':'asset_url','subject':'outreach_subject','message':'outreach_message'};
+function cleanCsvHeader(x){return String(x||'').replace(/^\uFEFF/,'').trim().toLowerCase().replace(/[\\/\-]+/g,' ').replace(/[^a-z0-9 ]+/g,' ').replace(/\s+/g,' ').trim()}
+function parseCsv(text){
+  text=String(text||'').replace(/^\uFEFF/,'');const rows=[];let row=[],cell='',quoted=false;
+  for(let i=0;i<text.length;i++){const ch=text[i];if(quoted){if(ch==='"'&&text[i+1]==='"'){cell+='"';i++}else if(ch==='"')quoted=false;else cell+=ch}else if(ch==='"')quoted=true;else if(ch===','){row.push(cell);cell=''}else if(ch==='\n'){row.push(cell);rows.push(row);row=[];cell=''}else if(ch!=='\r')cell+=ch}
+  if(cell.length||row.length){row.push(cell);rows.push(row)}if(!rows.length)return[];
+  const headers=rows.shift().map(h=>CSV_HEADER_ALIASES[cleanCsvHeader(h)]||cleanCsvHeader(h).replaceAll(' ','_'));
+  return rows.filter(r=>r.some(c=>String(c).trim())).map(r=>{const o={};headers.forEach((h,i)=>o[h]=String(r[i]??'').trim());return o});
+}
+function importCsv(){
+  const cats=[...new Set(data.prospects.map(p=>p.category).filter(Boolean))].sort();
+  modal('Import prospects','<div class="field"><label>Default category</label><select id="csvCategory" class="control"><option value="">Use CSV category</option>'+cats.map(c=>'<option>'+esc(c)+'</option>').join('')+'</select></div><div class="field"><label>Import mode</label><select id="csvMode" class="control"><option value="smart">Smart merge</option><option value="new_only">New companies only</option><option value="overwrite">Update existing</option></select></div><div class="field"><label>CSV file</label><input id="csvFile" class="control" type="file" accept=".csv,text/csv"></div><div id="csvPreview" class="quiet"></div>');
+  $('#csvFile').onchange=async e=>{
+    if(!e.target.files?.[0])return;const rows=parseCsv(await e.target.files[0].text()).filter(r=>r.company);
+    $('#csvPreview').innerHTML='<p>'+rows.length+' valid company rows ready.</p><button id="runCsvImport" class="btn lime">Import '+rows.length+'</button>';
+    $('#runCsvImport').onclick=async()=>{
+      const normalized=rows.map(r=>({...r,tags:String(r.tags||'').split(/[|;]/).filter(Boolean),source_groups:String(r.source_groups||'').split(/[|;]/).filter(Boolean),source_notes:String(r.source_notes||'').split(/[|;]/).filter(Boolean)}));
+      const res=await rpc('sales_os_bulk_import',{p_token:token||null,p_rows:normalized,p_mode:$('#csvMode').value,p_defaults:{category:$('#csvCategory').value,owner_assigned:'Yazeed',stage:'Research',status:'Not started',sender_name:'Robert Gibbons',sender_email:'robert@morpheuspd.io'}});
+      closeModal();await load();route('#/prospects');toast((res.inserted||0)+' new · '+(res.updated||0)+' merged');
+    };
+  };
+}
 function requestNotifications(){if(!('Notification'in window))return toast('Notifications are not supported');Notification.requestPermission().then(p=>toast(p==='granted'?'Notifications enabled':'Permission not granted'))}
 
 $$('[data-route]').forEach(b=>b.onclick=()=>route('#/'+b.dataset.route));
