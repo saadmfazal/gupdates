@@ -287,6 +287,149 @@ function renderCategories(){
  const counts={};data.prospects.forEach(p=>counts[p.category]=(counts[p.category]||0)+1);
  $('#categoriesOverview').innerHTML=categoryNames().map(c=>`<div class="focusrow"><div class="maincopy"><div class="title">${esc(c)}</div><div class="meta">${counts[c]||0} prospects</div></div></div>`).join('')||'<div class="empty">No categories.</div>';
 }
+const COPILOT_URL=SUPABASE_URL+'/functions/v1/sales-os-copilot';
+async function copilotFetch(payload={}){
+ const headers={'Content-Type':'application/json',apikey:APIKEY};
+ if(sessionAccessToken)headers.Authorization='Bearer '+sessionAccessToken;
+ else if(token)headers['x-sales-os-access-code']=token;
+ const r=await fetch(COPILOT_URL,{method:'POST',headers,body:JSON.stringify(payload)});
+ const d=await r.json().catch(()=>({}));
+ if(!r.ok)throw Object.assign(new Error(d.detail||d.error||'Copilot request failed'),{payload:d,status:r.status});
+ return d;
+}
+async function refreshAIStatus(){
+ try{
+  const d=await copilotFetch({action:'status'});
+  providerStatus.ai=!!(d.connected&&d.api_ok);
+  return d;
+ }catch(e){providerStatus.ai=false;return {connected:false,api_ok:false}}
+}
+function copilotQuickPrompts(){
+ return copilotProspectId?[
+  'Summarize this account and tell me what matters.',
+  'Draft the best next follow-up email.',
+  'What should happen next on this account?',
+  'What risks or missing information should I notice?'
+ ]:[
+  'What needs my attention today?',
+  'Which prospects are stalled and why?',
+  'Find high-priority prospects with assets but no recent outreach.',
+  'Give me a concise sales command brief.'
+ ];
+}
+async function openCopilot(prospectId=null,preset=''){
+ copilotProspectId=prospectId||null;copilotLocal=[];
+ const existing=data.copilot_threads.filter(t=>(t.prospect_id||null)===(copilotProspectId||null)).sort((a,b)=>new Date(b.updated_at)-new Date(a.updated_at))[0];
+ copilotThreadId=existing?.id||null;
+ const p=data.prospects.find(x=>x.id===copilotProspectId);
+ $('#copilotTitle').textContent=p?('Copilot · '+p.company):'Sales Copilot';
+ $('#copilotContext').textContent=p?([p.category,p.stage,p.owner_assigned].filter(Boolean).join(' · ')):'Live Sales OS workspace';
+ $('#copilotQuick').innerHTML=copilotQuickPrompts().map(q=>`<button data-copilot-prompt="${esc(q)}">${esc(q)}</button>`).join('');
+ document.querySelectorAll('[data-copilot-prompt]').forEach(b=>b.onclick=()=>{ $('#copilotInput').value=b.dataset.copilotPrompt; sendCopilot(); });
+ $('#copilotDrawer').classList.remove('hidden');document.body.classList.add('modal-open');
+ const status=await refreshAIStatus();
+ renderCopilotProvider(status);
+ if(copilotThreadId&&providerStatus.ai){
+  try{
+   const hist=await copilotFetch({action:'history',thread_id:copilotThreadId});
+   copilotLocal=(hist.messages||[]).map(m=>({role:m.role,content:m.content,structured:m.structured||{}}));
+  }catch(e){}
+ }
+ renderCopilotMessages();
+ if(preset){$('#copilotInput').value=preset;if(providerStatus.ai)setTimeout(sendCopilot,50)}
+}
+window.openCopilot=openCopilot;
+function closeCopilot(){
+ $('#copilotDrawer').classList.add('hidden');
+ if($('#genericModal').classList.contains('hidden')&&$('#prospectDrawer').classList.contains('hidden'))document.body.classList.remove('modal-open');
+}
+function renderCopilotProvider(status={connected:providerStatus.ai,api_ok:providerStatus.ai}){
+ const el=$('#copilotProviderBanner');if(!el)return;
+ if(status.connected&&status.api_ok){el.classList.add('hidden');return}
+ el.classList.remove('hidden');
+ if(actor?.role==='owner'){
+  el.innerHTML=`<b>Morpheus AI needs one provider connection.</b><br>The Copilot UI and context engine are ready. Connect an OpenAI API key once; it will be stored server-side in Supabase Vault.<div style="margin-top:8px"><button class="btn primary" id="connectAiFromCopilot">Connect AI provider</button></div>`;
+  $('#connectAiFromCopilot').onclick=openAIProviderSetup;
+ }else{
+  el.innerHTML='<b>AI provider not connected.</b><br>An Owner needs to connect the OpenAI API provider from Connections. No API key is stored in this browser.';
+ }
+}
+function renderCopilotMessages(){
+ const box=$('#copilotMessages');if(!box)return;
+ box.innerHTML=copilotLocal.length?copilotLocal.map((m,i)=>{
+  let suggestions='';
+  if(m.role==='assistant'&&m.structured){
+    const st=m.structured;
+    if(st.draft)suggestions+=`<div class="copilot-suggestion"><b>Email draft</b><p>${esc(st.draft.subject||'')}<br>${esc((st.draft.body||'').slice(0,260))}${(st.draft.body||'').length>260?'…':''}</p><button class="btn" onclick="saveCopilotSuggestion(${i},'draft')">Save draft</button></div>`;
+    if(st.next_action)suggestions+=`<div class="copilot-suggestion"><b>Next action</b><p>${esc(st.next_action.text||'')}${st.next_action.date?' · '+esc(st.next_action.date):''}</p><button class="btn" onclick="saveCopilotSuggestion(${i},'next_action')">Set next action</button></div>`;
+    if(st.reminder)suggestions+=`<div class="copilot-suggestion"><b>Reminder</b><p>${esc(st.reminder.title||'')}${st.reminder.due_at?' · '+esc(st.reminder.due_at):''}</p><button class="btn" onclick="saveCopilotSuggestion(${i},'reminder')">Create reminder</button></div>`;
+    if(st.note)suggestions+=`<div class="copilot-suggestion"><b>Note</b><p>${esc(st.note.title||'')} · ${esc((st.note.body||'').slice(0,220))}</p><button class="btn" onclick="saveCopilotSuggestion(${i},'note')">Save note</button></div>`;
+  }
+  return `<div class="copilot-msg ${m.role==='user'?'user':'assistant'}">${esc(m.content||'')}${suggestions}</div>`;
+ }).join(''):'<div class="empty">Ask something about the live CRM. Copilot uses the account, assets, email history, notes, reminders and opportunity context.</div>';
+ box.scrollTop=box.scrollHeight;
+}
+async function sendCopilot(){
+ const input=$('#copilotInput');const message=input.value.trim();if(!message)return;
+ if(!providerStatus.ai){renderCopilotProvider({connected:false,api_ok:false});return toast('Connect the AI provider first')}
+ input.value='';copilotLocal.push({role:'user',content:message,structured:{}});renderCopilotMessages();
+ $('#copilotSend').disabled=true;$('#copilotSend').textContent='Thinking…';
+ try{
+  const d=await copilotFetch({message,prospect_id:copilotProspectId,thread_id:copilotThreadId});
+  copilotThreadId=d.thread_id||copilotThreadId;
+  copilotLocal.push({role:'assistant',content:d.answer||'',structured:d.structured||{}});
+  renderCopilotMessages();
+  if(!data.copilot_threads.some(t=>t.id===copilotThreadId))data.copilot_threads.unshift({id:copilotThreadId,prospect_id:copilotProspectId,updated_at:new Date().toISOString()});
+ }catch(e){
+  copilotLocal.push({role:'assistant',content:'Copilot error: '+String(e.message||e),structured:{}});
+  renderCopilotMessages();
+ }finally{$('#copilotSend').disabled=false;$('#copilotSend').textContent='Ask Copilot'}
+}
+window.sendCopilot=sendCopilot;
+window.saveCopilotSuggestion=async(i,type)=>{
+ const st=copilotLocal[i]?.structured||{},p=data.prospects.find(x=>x.id===copilotProspectId);
+ if(!p&&['draft','next_action','reminder','note'].includes(type))return toast('Open Copilot from a prospect account for this action');
+ try{
+  if(type==='draft'&&st.draft){
+    await rpc('sales_os_save_email_draft',{p_token:token||null,p_payload:{
+      prospect_id:p.id,recipient:p.contact_email||'',sender_name:p.sender_name||actor?.display_name||'',
+      sender_email:p.sender_email||actor?.email||'',subject:st.draft.subject||'',body:st.draft.body||'',status:'draft',
+      ai_assisted:true,provider:'native_copilot',created_by:actor?.display_name||'Sales Copilot'
+    }});toast('AI draft saved to Email workspace')
+  }
+  if(type==='next_action'&&st.next_action){
+    await rpc('sales_os_save_prospect',{p_token:token||null,p_payload:{id:p.id,next_action:st.next_action.text||'',next_action_date:st.next_action.date||null}});
+    toast('Next action updated')
+  }
+  if(type==='reminder'&&st.reminder){
+    const due=st.reminder.due_at||new Date(Date.now()+86400000).toISOString();
+    await rpc('sales_os_save_reminder',{p_token:token||null,p_payload:{prospect_id:p.id,title:st.reminder.title||'Sales follow-up',due_at:due,owner_assigned:p.owner_assigned||actor?.display_name||'',priority:'normal',status:'open',notify_in_app:true,created_by:actor?.display_name||'Sales Copilot'}});
+    toast('Reminder created')
+  }
+  if(type==='note'&&st.note){
+    await rpc('sales_os_save_note',{p_token:token||null,p_payload:{prospect_id:p.id,title:st.note.title||'Copilot note',body:st.note.body||'',pinned:false,created_by:actor?.display_name||'Sales Copilot'}});
+    toast('Note saved')
+  }
+  await load();
+ }catch(e){toast('Could not save suggestion: '+String(e.message||e))}
+};
+function openAIProviderSetup(){
+ if(actor?.role!=='owner')return toast('Owner sign-in required to connect an AI provider');
+ modal('Connect Morpheus AI',`<div class="ai-box"><h3>OpenAI API provider</h3><p>The API key is sent directly to Supabase and stored encrypted in Vault. It is never written into the website source or local storage.</p></div><div class="provider-connect"><div class="field"><label>OpenAI API key</label><input id="openaiKeyInput" type="password" class="input" autocomplete="off" placeholder="sk-…"></div><button id="saveOpenAIKey" class="btn primary">Connect & verify</button><div id="openaiKeyStatus" class="meta"></div></div>`);
+ $('#saveOpenAIKey').onclick=async()=>{
+  const key=$('#openaiKeyInput').value.trim();if(key.length<20)return toast('Paste the complete API key');
+  $('#saveOpenAIKey').disabled=true;$('#openaiKeyStatus').textContent='Saving securely…';
+  try{
+   await rpc('sales_os_store_secret',{p_token:token||null,p_name:'sales_os_openai_api_key',p_secret:key});
+   $('#openaiKeyInput').value='';
+   const status=await refreshAIStatus();
+   if(!status.api_ok)throw new Error('The key was stored but OpenAI rejected it. Check the key/billing.');
+   await rpc('sales_os_update_connection',{p_token:token||null,p_key:'ai',p_payload:{status:'connected',account_label:'OpenAI API',metadata:{model:status.model||'gpt-5.6-luna'}}}).catch(()=>{});
+   providerStatus.ai=true;closeModal();toast('Morpheus AI connected');await load();if(!$('#copilotDrawer').classList.contains('hidden'))renderCopilotProvider(status);
+  }catch(e){$('#openaiKeyStatus').textContent=String(e.message||e)}
+  finally{$('#saveOpenAIKey').disabled=false}
+ };
+}
 function renderConnections(){
  $('#connectionsGrid').innerHTML=data.connections.map(c=>`<article class="connection"><div class="panelhead"><h3>${esc(c.label)}</h3><span class="pill ${c.status==='connected'?'green':'amber'}">${esc(c.status.replaceAll('_',' '))}</span></div><p>${c.key==='chatgpt'?'Connect Sales OS to ChatGPT as a private MCP app so ChatGPT can read and update CRM data conversationally.':'Connect Gmail for direct send, reply tracking and thread-aware follow-ups.'}</p><button class="btn ${c.status==='connected'?'':'primary'}" onclick="openConnection('${c.key}')">${c.status==='connected'?'Manage':'Set up'}</button></article>`).join('');
 }
