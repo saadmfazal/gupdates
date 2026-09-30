@@ -14,6 +14,9 @@ let selectedInboxThread=null,copilotThreadId=null,copilotProspectId=null,copilot
 let providerStatus={ai:false};
 
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const isPhone=()=>window.matchMedia('(max-width:760px)').matches;
+const lockPage=()=>{if(!isPhone())lockPage()};
+const unlockPage=()=>{document.body.classList.remove('modal-open')};
 const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
 const todayISO=()=>new Date().toISOString().slice(0,10);
 const dateTimeLocal=x=>{if(!x)return'';const d=new Date(x),p=n=>String(n).padStart(2,'0');return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`};
@@ -75,6 +78,7 @@ async function signOutWorkspace(){
  sessionAccessToken='';token='';location.reload();
 }
 async function load(){
+ if(isPhone())unlockPage();
  data=await rpc('sales_os_snapshot',{p_token:token||null});norm();actor=data.actor||actor;
  try{const ai=await refreshAIStatus();providerStatus.ai=!!(ai.connected&&ai.api_ok)}catch(e){providerStatus.ai=false}
  renderAll();renderIdentity();
@@ -98,7 +102,7 @@ function renderCounts(){
  const drafts=data.email_drafts.filter(d=>d.status==='draft').length,openR=data.reminders.filter(r=>r.status==='open').length;
  const pendingApprovals=data.approvals.filter(a=>a.status==='pending').length;
  const due=data.reminders.filter(dueReminder).length+data.prospects.filter(followupDue).length+(actor?.role==='owner'?pendingApprovals:0);
- const inboxActions=data.inbox_threads.filter(t=>t.status==='open').length||data.email_messages.filter(m=>m.requires_action).length;
+ const inboxActions=data.inbox_threads.length?data.inbox_threads.filter(t=>t.status==='open').length:data.email_messages.filter(m=>m.requires_action).length;
  const aiActions=data.recommendations.filter(r=>r.status==='open').length;
  const activeValue=data.opportunities.filter(o=>!['Won','Lost'].includes(data.prospects.find(p=>p.id===o.prospect_id)?.stage)).reduce((sum,o)=>sum+Number(o.estimated_value||0),0);
  $('#navProspects').textContent=data.prospects.length;$('#navAssets').textContent=data.assets.length;$('#navDrafts').textContent=drafts;$('#navReminders').textContent=openR;
@@ -180,7 +184,7 @@ function renderInbox(){
  }).filter(t=>(!status||t.status===status)&&(!cls||t.classification===cls))
    .sort((a,b)=>new Date(b.date||0)-new Date(a.date||0));
 
- const actionCount=threads.filter(t=>t.status==='open'||t.latest?.requires_action).length;
+ const actionCount=threads.filter(t=>t.status==='open').length;
  $('#inboxSummary').textContent=`${threads.length} threads · ${actionCount} need attention`;
  if($('#syncInboxGuideBtn'))$('#syncInboxGuideBtn').textContent=myGmailConnection()?'Sync Gmail now':'Sync with ChatGPT';
  $('#inboxThreadList').innerHTML=threads.length?threads.map(t=>`<div class="inbox-thread-row ${selectedInboxThread===t.id?'active':''}" onclick="openInboxThread('${esc(t.id)}')">
@@ -327,7 +331,7 @@ async function openCopilot(prospectId=null,preset=''){
  $('#copilotContext').textContent=p?([p.category,p.stage,p.owner_assigned].filter(Boolean).join(' · ')):'Live Sales OS workspace';
  $('#copilotQuick').innerHTML=copilotQuickPrompts().map(q=>`<button data-copilot-prompt="${esc(q)}">${esc(q)}</button>`).join('');
  document.querySelectorAll('[data-copilot-prompt]').forEach(b=>b.onclick=()=>{ $('#copilotInput').value=b.dataset.copilotPrompt; sendCopilot(); });
- $('#copilotDrawer').classList.remove('hidden');document.body.classList.add('modal-open');
+ $('#copilotDrawer').classList.remove('hidden');lockPage();
  const status=await refreshAIStatus();
  renderCopilotProvider(status);
  if(copilotThreadId&&providerStatus.ai){
@@ -342,7 +346,7 @@ async function openCopilot(prospectId=null,preset=''){
 window.openCopilot=openCopilot;
 function closeCopilot(){
  $('#copilotDrawer').classList.add('hidden');
- if($('#genericModal').classList.contains('hidden')&&$('#prospectDrawer').classList.contains('hidden'))document.body.classList.remove('modal-open');
+ if(isPhone()||($('#genericModal').classList.contains('hidden')&&$('#prospectDrawer').classList.contains('hidden')))unlockPage();
 }
 function renderCopilotProvider(status={connected:providerStatus.ai,api_ok:providerStatus.ai}){
  const el=$('#copilotProviderBanner');if(!el)return;
@@ -509,9 +513,9 @@ function renderNotifications(){
  const ns=data.notifications.filter(n=>!n.dismissed_at);$('#noticeList').innerHTML=ns.length?ns.slice(0,20).map(n=>`<div class="noticeitem ${n.read_at?'':'unread'}"><b>${esc(n.title)}</b><p>${esc(n.body||'')}</p><button class="btn" onclick="markNotice('${n.id}','read')">Read</button> <button class="btn" onclick="markNotice('${n.id}','dismiss')">Dismiss</button></div>`).join(''):'<div class="empty">You’re all caught up.</div>';
 }
 
-function go(page){currentPage=page;document.querySelectorAll('[data-page-view]').forEach(s=>s.classList.toggle('hidden',s.dataset.pageView!==page));document.querySelectorAll('.navitem[data-page]').forEach(b=>b.classList.toggle('active',b.dataset.page===page));document.querySelectorAll('[data-mobile-page]').forEach(b=>b.classList.toggle('active',b.dataset.mobilePage===page));if($('#mobileMoreBtn'))$('#mobileMoreBtn').classList.toggle('active',['pipeline','email','reminders','assets','notes','categories','approvals','connections'].includes(page));$('#noticeMenu').classList.add('hidden');closeMobileMore();if(page==='prospects')renderProspects();if(page==='inbox')renderInbox();if(page==='email')renderEmail();if(window.matchMedia('(max-width:760px)').matches)window.scrollTo({top:0,behavior:'auto'})}
-function modal(title,body){$('#genericModalCard').innerHTML=`<div class="modalhead"><h2>${esc(title)}</h2><button class="close" onclick="closeModal()">×</button></div>${body}`;$('#genericModal').classList.remove('hidden');document.body.classList.add('modal-open')}
-window.closeModal=()=>{$('#genericModal').classList.add('hidden');document.body.classList.remove('modal-open')};
+function go(page){currentPage=page;if(isPhone())unlockPage();document.querySelectorAll('[data-page-view]').forEach(s=>s.classList.toggle('hidden',s.dataset.pageView!==page));document.querySelectorAll('.navitem[data-page]').forEach(b=>b.classList.toggle('active',b.dataset.page===page));document.querySelectorAll('[data-mobile-page]').forEach(b=>b.classList.toggle('active',b.dataset.mobilePage===page));if($('#mobileMoreBtn'))$('#mobileMoreBtn').classList.toggle('active',['pipeline','email','reminders','assets','notes','categories','approvals','connections'].includes(page));$('#noticeMenu').classList.add('hidden');closeMobileMore();if(page==='prospects')renderProspects();if(page==='inbox')renderInbox();if(page==='email')renderEmail();if(isPhone())requestAnimationFrame(()=>window.scrollTo(0,0))}
+function modal(title,body){$('#genericModalCard').innerHTML=`<div class="modalhead"><h2>${esc(title)}</h2><button class="close" onclick="closeModal()">×</button></div>${body}`;$('#genericModal').classList.remove('hidden');lockPage()}
+window.closeModal=()=>{$('#genericModal').classList.add('hidden');unlockPage()};
 
 window.openProspect=id=>{
  selectedProspect=data.prospects.find(p=>p.id===id);if(!selectedProspect)return;const p=selectedProspect;
@@ -523,7 +527,7 @@ window.openProspect=id=>{
  $('#pdReminders').innerHTML=pReminders(id).filter(r=>r.status==='open').map(r=>`<div class="reminderrow"><div class="maincopy"><div class="title">${esc(r.title)}</div><div class="meta">${new Date(r.due_at).toLocaleString()}</div></div></div>`).join('')||'<div class="meta">No open reminders.</div>';
  const opp=pOpportunity(id);if($('#pdOppValue'))$('#pdOppValue').value=opp?.estimated_value||'';if($('#pdOppKg'))$('#pdOppKg').value=opp?.monthly_volume_kg||'';if($('#pdOppProb'))$('#pdOppProb').value=opp?.probability_pct||'';if($('#pdOppNotes'))$('#pdOppNotes').value=opp?.commercial_notes||'';
  $('#pdActivity').innerHTML=pActivities(id).slice(0,20).map(a=>`<div class="activityrow"><div class="maincopy"><div class="title">${esc(a.activity_type||'Activity')}</div><div class="meta">${esc(a.subject||a.outcome||'')} · ${new Date(a.occurred_at).toLocaleDateString()}</div></div></div>`).join('')||'<div class="meta">No activity yet.</div>';
- $('#prospectDrawer').classList.remove('hidden');document.body.classList.add('modal-open');
+ $('#prospectDrawer').classList.remove('hidden');lockPage();
 };
 async function saveProspect(){const p=selectedProspect;if(!p)return;await rpc('sales_os_save_prospect',{p_token:token,p_payload:{id:p.id,category:$('#pdCategorySelect').value,stage:$('#pdStage').value,owner_assigned:$('#pdOwner').value,priority:$('#pdPriority').value,contact_name:$('#pdContact').value,contact_email:$('#pdEmail').value,website:$('#pdWebsite').value,location:$('#pdLocation').value,next_action:$('#pdNextAction').value,next_action_date:$('#pdNextDate').value}});toast('Account updated');await load();openProspect(p.id)}
 async function saveOpportunity(){
@@ -686,8 +690,8 @@ function openImporter(){const cats=categoryNames();modal('Import prospects',`<di
 async function requestBrowserNotifications(){if(!('Notification'in window)){toast('Browser notifications are not supported here');return}const p=await Notification.requestPermission();toast(p==='granted'?'Browser notifications enabled':'Notification permission not granted');if(p==='granted')showDueBrowserNotifications()}
 function showDueBrowserNotifications(){if(!('Notification'in window)||Notification.permission!=='granted')return;data.reminders.filter(dueReminder).slice(0,3).forEach(r=>new Notification('Morpheus Sales OS',{body:r.title+(prospectName(r.prospect_id)?' · '+prospectName(r.prospect_id):'')}))}
 
-function openMobileMore(){$('#mobileMoreSheet')?.classList.remove('hidden');document.body.classList.add('modal-open')}
-function closeMobileMore(){$('#mobileMoreSheet')?.classList.add('hidden');if($('#genericModal')?.classList.contains('hidden')&&$('#prospectDrawer')?.classList.contains('hidden'))document.body.classList.remove('modal-open')}
+function openMobileMore(){$('#mobileMoreSheet')?.classList.remove('hidden');lockPage()}
+function closeMobileMore(){$('#mobileMoreSheet')?.classList.add('hidden');if(isPhone()||($('#genericModal')?.classList.contains('hidden')&&$('#prospectDrawer')?.classList.contains('hidden')))unlockPage()}
 document.querySelectorAll('[data-page]').forEach(b=>b.onclick=()=>go(b.dataset.page));document.querySelectorAll('[data-mobile-page]').forEach(b=>b.onclick=()=>go(b.dataset.mobilePage));document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>go(b.dataset.go));
 document.querySelectorAll('[data-more-page]').forEach(b=>b.onclick=()=>go(b.dataset.morePage));
 if($('#mobileMoreBtn'))$('#mobileMoreBtn').onclick=openMobileMore;
@@ -731,7 +735,7 @@ function openChatGPTAutopilot(mode){
 $('#quickProspectBtn').onclick=openProspectForm;$('#addProspectBtn').onclick=openProspectForm;$('#quickNoteBtn').onclick=()=>openNoteForm();$('#newNoteBtn').onclick=()=>openNoteForm();$('#newReminderBtn').onclick=()=>openReminderForm();$('#dashReminderBtn').onclick=()=>openReminderForm();$('#browserNotifyBtn').onclick=requestBrowserNotifications;
 $('#newAssetBtn').onclick=()=>openAssetForm();$('#newEmailBtn').onclick=()=>openNewDraft();$('#categoryManagerBtn').onclick=openCategoryManager;$('#openImportBtn').onclick=openImporter;$('#categoryImportBtn').onclick=openImporter;$('#dashImportBtn').onclick=openImporter;$('#prospectImportBtn').onclick=openImporter;
 $('#saveProspect').onclick=saveProspect;if($('#saveOpportunity'))$('#saveOpportunity').onclick=saveOpportunity;$('#pdNewAsset').onclick=()=>openAssetForm(selectedProspect?.id);$('#pdNewNote').onclick=()=>openNoteForm(selectedProspect?.id);$('#pdNewReminder').onclick=()=>openReminderForm(selectedProspect?.id);
-document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>{const el=$('#'+b.dataset.close);el?.classList.add('hidden');if(b.dataset.close==='prospectDrawer')document.body.classList.remove('modal-open')});$('#genericModal').addEventListener('click',e=>{if(e.target.id==='genericModal')closeModal()});$('#prospectDrawer').addEventListener('click',e=>{if(e.target.id==='prospectDrawer'){e.currentTarget.classList.add('hidden');document.body.classList.remove('modal-open')}});
+document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>{const el=$('#'+b.dataset.close);el?.classList.add('hidden');if(b.dataset.close==='prospectDrawer')unlockPage()});$('#genericModal').addEventListener('click',e=>{if(e.target.id==='genericModal')closeModal()});$('#prospectDrawer').addEventListener('click',e=>{if(e.target.id==='prospectDrawer'){e.currentTarget.classList.add('hidden');unlockPage()}});
 (async()=>{
  const lastEmail=localStorage.getItem('salesOsMemberEmail');
  if(lastEmail&&$('#memberEmail'))$('#memberEmail').value=lastEmail;
@@ -749,4 +753,6 @@ if(gmailResult==='connected'){
   history.replaceState({},'',location.pathname);
   setTimeout(()=>toast('Gmail: '+detail),700);
 }
+window.addEventListener('orientationchange',()=>{if(isPhone())unlockPage()});
+window.addEventListener('pageshow',()=>{if(isPhone())unlockPage()});
 if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
