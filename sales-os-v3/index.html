@@ -9,10 +9,10 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Morpheus Sales">
-<link rel="manifest" href="./manifest.webmanifest?v=2">
+<link rel="manifest" href="./manifest.webmanifest?v=3">
 <link rel="icon" href="./icon.svg" type="image/svg+xml">
 <title>Morpheus Sales OS</title>
-<link rel="stylesheet" href="./styles.css?v=2">
+<link rel="stylesheet" href="./styles.css?v=3">
 </head>
 <body>
 <section id="login" class="login-screen">
@@ -95,7 +95,7 @@
             </div>
 
             <section class="panel priority-panel">
-              <div class="panel-head"><h2>Today’s priorities</h2><button data-route="prospects" class="text-link">See all →</button></div>
+              <div class="panel-head"><div><div class="eyebrow">ADAPTIVE TODAY</div><h2>Your next move</h2></div><button data-route="prospects" class="text-link">See all →</button></div>
               <div id="todayPriorities" class="priority-list"></div>
             </section>
           </section>
@@ -120,7 +120,17 @@
           <div id="priorityProspects" class="prospect-showcase"></div>
         </section>
 
-        <button id="commandBar" class="command-bar"><span class="spark">✦</span><span>Ask Morpheus to research, prepare or prioritise…</span><i>⌁</i></button>
+        <form id="commandBar" class="command-bar universal-command">
+  <span class="spark">✦</span>
+  <input id="universalCommandInput" autocomplete="off" placeholder="Ask Morpheus to research, prepare, assign, remind or prioritise…">
+  <button id="universalCommandRun" type="submit">⌁</button>
+</form>
+<div id="commandQuick" class="command-quick">
+  <button data-command="What needs my attention today?">What needs attention?</button>
+  <button data-command="Show me prospects with assets ready but no outreach.">Assets → outreach</button>
+  <button data-command="Show me prospects that need follow-up now.">Follow-ups</button>
+  <button data-command="Which prospects should we research next?">Research next</button>
+</div>
       </section>
 
       <section id="page-prospects" class="page route-page hidden">
@@ -238,6 +248,6 @@
 </div>
 
 <div id="toast" class="toast hidden"></div>
-<script src="./app.js?v=2"></script>
+<script src="./app.js?v=3"></script>
 </body>
 </html>
