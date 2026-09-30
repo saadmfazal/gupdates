@@ -76,7 +76,7 @@ async function signOutWorkspace(){
 }
 async function load(){
  data=await rpc('sales_os_snapshot',{p_token:token||null});norm();actor=data.actor||actor;
- try{providerStatus.ai=!!(await rpc('sales_os_secret_status',{p_token:token||null,p_name:'sales_os_openai_api_key'}))}catch(e){providerStatus.ai=false}
+ try{const ai=await refreshAIStatus();providerStatus.ai=!!(ai.connected&&ai.api_ok)}catch(e){providerStatus.ai=false}
  renderAll();renderIdentity();
  $('#syncLabel').textContent='Last synced '+new Date(data.synced_at||Date.now()).toLocaleString();showDueBrowserNotifications()
 }
