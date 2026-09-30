@@ -182,6 +182,7 @@ function renderInbox(){
 
  const actionCount=threads.filter(t=>t.status==='open'||t.latest?.requires_action).length;
  $('#inboxSummary').textContent=`${threads.length} threads · ${actionCount} need attention`;
+ if($('#syncInboxGuideBtn'))$('#syncInboxGuideBtn').textContent=myGmailConnection()?'Sync Gmail now':'Sync with ChatGPT';
  $('#inboxThreadList').innerHTML=threads.length?threads.map(t=>`<div class="inbox-thread-row ${selectedInboxThread===t.id?'active':''}" onclick="openInboxThread('${esc(t.id)}')">
    <div class="inbox-thread-top"><div><h3>${esc(prospectName(t.pid)||'Unknown prospect')}</h3><p>${esc(t.latest?.subject||'(No subject)')}</p></div><span class="pill ${t.status==='open'?'amber':t.status==='done'?'green':''}">${esc(t.status)}</span></div>
    <p>${esc(t.state?.summary||t.latest?.snippet||'')}</p>
@@ -272,7 +273,7 @@ function showDraftEditor(d){
  $('#emailEditor').innerHTML=`<div class="panelhead"><div><h2>${esc(p?.company||'Email draft')}</h2><small>${esc(d.status)}</small></div><button class="btn" id="aiDraftBtn">AI writing</button></div>
  <div class="formgrid2"><div class="field"><label>To</label><input id="edTo" class="input" value="${esc(d.recipient||'')}"></div><div class="field"><label>From</label><input id="edFrom" class="input" value="${esc(d.sender_email||'')}"></div></div>
  <div class="field"><label>Subject</label><input id="edSubject" class="input" value="${esc(d.subject||'')}"></div><div class="field"><label>Message</label><textarea id="edBody" class="textarea" rows="16">${esc(d.body||'')}</textarea></div>
- <div class="pageactions"><button class="btn" id="saveDraftBtn">Save</button><button class="btn" id="copyDraftBtn">Copy</button><button class="btn green" id="directSendBtn">${actor?.role==='owner'?'Send with ChatGPT':'Request approval'}</button></div><p class="meta" style="margin-top:10px">${actor?.role==='owner'?'Owner session: protected send is allowed after your own review.':'The exact recipient, subject and body must be approved by the Sales OS owner before sending.'}</p>`;
+ ${(()=>{const a=approvalForDraft(d.id,'approved');const approved=a&&approvalMatchesDraft(a,d);const native=!!myGmailConnection()&&!!actor?.authenticated;const label=actor?.role==='owner'?(native?'Send via Gmail':'Send with ChatGPT'):(approved?(native?'Send approved':'Send approved with ChatGPT'):'Request approval');const help=actor?.role==='owner'?(native?'This will send through your connected Gmail and write the real Gmail message ID back to Sales OS.':'Gmail is not connected directly; the approved send will use the ChatGPT/Gmail fallback.'):(approved?'Owner approval matches this exact draft.':'The exact recipient, subject and body must be approved by the Sales OS owner before sending.');return `<div class="pageactions"><button class="btn" id="saveDraftBtn">Save</button><button class="btn" id="copyDraftBtn">Copy</button><button class="btn green" id="directSendBtn">${label}</button></div><p class="meta" style="margin-top:10px">${help}</p>`})()}`;
  $('#saveDraftBtn').onclick=saveCurrentDraft;$('#copyDraftBtn').onclick=async()=>{await navigator.clipboard.writeText($('#edBody').value);toast('Copied')};$('#aiDraftBtn').onclick=()=>openAIWriter(d.prospect_id);$('#directSendBtn').onclick=()=>handleDirectSend(d.id);
 }
 window.openDraft=id=>{currentDraft=data.email_drafts.find(d=>d.id===id);renderEmail();if(window.matchMedia('(max-width:760px)').matches)setTimeout(()=>$('#emailEditor')?.scrollIntoView({behavior:'smooth',block:'start'}),60)};
@@ -548,6 +549,14 @@ async function saveCurrentDraft(){const d=currentDraft;if(!d)return;await rpc('s
 function openAIWriter(prospectId){
  openCopilot(prospectId,'Draft the best concise next sales email for this prospect using the live account context. Do not invent facts. Return a subject and body.');
 }
+async function sendDraftNative(d){
+ if(!sessionAccessToken||!myGmailConnection())throw new Error('Direct Gmail connection required');
+ const r=await fetch(SUPABASE_URL+'/functions/v1/sales-os-gmail-send',{method:'POST',headers:{'Content-Type':'application/json',apikey:APIKEY,Authorization:'Bearer '+sessionAccessToken},body:JSON.stringify({draft_id:d.id})});
+ const out=await r.json().catch(()=>({}));
+ if(!r.ok)throw new Error(out.error||out.detail||'Gmail send failed');
+ await load();go('inbox');selectedInboxThread=out.thread_id||d.provider_thread_id||selectedInboxThread;renderInbox();toast('Email sent through Gmail');
+ return out;
+}
 async function launchApprovedSend(d,approval=null){
  const p=data.prospects.find(x=>x.id===d.prospect_id);
  const approvalLine=approval?` This draft has Sales OS approval ID ${approval.id}; verify that approval before sending.`:' This send is initiated from an authenticated Sales OS Owner session.';
@@ -561,9 +570,16 @@ async function handleDirectSend(){
  const d=currentDraft;if(!d)return;
  await saveCurrentDraft();
  const fresh=data.email_drafts.find(x=>x.id===d.id)||d;
- if(actor?.role==='owner'){await launchApprovedSend(fresh,null);return}
+ const native=!!myGmailConnection()&&!!actor?.authenticated;
+ if(actor?.role==='owner'){
+   try{if(native)await sendDraftNative(fresh);else await launchApprovedSend(fresh,null)}catch(e){toast('Send failed: '+String(e.message||e))}
+   return;
+ }
  const approved=approvalForDraft(fresh.id,'approved');
- if(approved&&approvalMatchesDraft(approved,fresh)){await launchApprovedSend(fresh,approved);return}
+ if(approved&&approvalMatchesDraft(approved,fresh)){
+   try{if(native)await sendDraftNative(fresh);else await launchApprovedSend(fresh,approved)}catch(e){toast('Send failed: '+String(e.message||e))}
+   return;
+ }
  const pending=approvalForDraft(fresh.id,'pending');
  if(pending&&approvalMatchesDraft(pending,fresh)){go('approvals');toast('Already waiting for owner approval');return}
  try{
