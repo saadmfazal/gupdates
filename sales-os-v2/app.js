@@ -166,7 +166,7 @@ function renderProspects(){
       <div class="mobile-prospect-next">${p.next_action?`<b>Next:</b> ${esc(p.next_action)}`:''}${p.next_action_date?` · ${esc(p.next_action_date)}`:''}</div>
       <span class="pill">${pAssets(p.id).length} assets</span>
     </div>
-    <div class="mobile-prospect-row"><div class="mobile-prospect-meta">Owner · ${esc(p.owner_assigned||'Unassigned')}</div><button class="btn" onclick="event.stopPropagation();openProspect('${p.id}')">Open</button></div>
+    <div class="mobile-prospect-row"><div class="mobile-prospect-meta">Assigned · ${esc(p.owner_assigned||'Unassigned')}</div><button class="btn" onclick="event.stopPropagation();openProspect('${p.id}')">Open</button></div>
   </article>`).join(''):'<div class="empty">No prospects match these filters.</div>';
  }
 }
