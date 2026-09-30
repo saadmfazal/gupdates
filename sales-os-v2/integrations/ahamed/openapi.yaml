@@ -1,0 +1,195 @@
+openapi: 3.1.0
+info:
+  title: Morpheus Asset Exchange API
+  version: "1.0"
+  description: Scoped production API for Ahamed's asset-building platform.
+servers:
+  - url: https://viajmvbwpmkiqxjtgshv.supabase.co/functions/v1/sales-os-asset-exchange
+security:
+  - bearerAuth: []
+paths:
+  /me:
+    get:
+      summary: Get the authenticated asset builder profile
+      responses:
+        "200":
+          description: Builder identity and scopes
+  /jobs:
+    get:
+      summary: List asset jobs assigned to the authenticated builder
+      parameters:
+        - in: query
+          name: status
+          schema:
+            type: string
+          description: Comma-separated statuses, e.g. queued,in_progress,ready_for_review
+        - in: query
+          name: updated_since
+          schema:
+            type: string
+            format: date-time
+      responses:
+        "200":
+          description: Assigned jobs
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  jobs:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/JobSummary"
+                  poll_after_seconds:
+                    type: integer
+  /jobs/{jobId}:
+    get:
+      summary: Get a complete assigned job
+      parameters:
+        - $ref: "#/components/parameters/JobId"
+      responses:
+        "200":
+          description: Job, deliverables, notes and linked asset
+  /jobs/{jobId}/status:
+    post:
+      summary: Update builder-controlled job status
+      parameters:
+        - $ref: "#/components/parameters/JobId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status:
+                  type: string
+                  enum: [queued, in_progress, ready_for_review]
+      responses:
+        "200":
+          description: Updated job
+  /jobs/{jobId}/notes:
+    post:
+      summary: Add a builder note to the job conversation
+      parameters:
+        - $ref: "#/components/parameters/JobId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [body]
+              properties:
+                body:
+                  type: string
+      responses:
+        "200":
+          description: Created note
+  /jobs/{jobId}/deliverables:
+    post:
+      summary: Submit a deliverable and move job to ready for review
+      parameters:
+        - $ref: "#/components/parameters/JobId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DeliverableInput"
+      responses:
+        "200":
+          description: Submitted deliverable and linked Sales OS asset
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: MorpheusAssetKey
+  parameters:
+    JobId:
+      in: path
+      name: jobId
+      required: true
+      schema:
+        type: string
+        format: uuid
+  schemas:
+    JobSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        work_type:
+          type: string
+        status:
+          type: string
+          enum: [queued, in_progress, ready_for_review, approved, deployed, cancelled]
+        priority:
+          type: string
+        request_text:
+          type: string
+        brief:
+          type: object
+          additionalProperties: true
+        research:
+          type: object
+          additionalProperties: true
+        deliverable_types:
+          type: array
+          items:
+            type: string
+        due_at:
+          type: [string, "null"]
+          format: date-time
+        output_url:
+          type: [string, "null"]
+        deployment_url:
+          type: [string, "null"]
+        repository_commit:
+          type: [string, "null"]
+        review_notes:
+          type: [string, "null"]
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    DeliverableInput:
+      type: object
+      required: [title, url]
+      properties:
+        title:
+          type: string
+        url:
+          type: string
+          format: uri
+        deployment_url:
+          type: string
+          format: uri
+        repository_url:
+          type: string
+          format: uri
+        repository_commit:
+          type: string
+        version_label:
+          type: string
+        notes:
+          type: string
+        asset_type:
+          type: string
+          example: Website
+        kind:
+          type: string
+          example: preview
+        is_primary:
+          type: boolean
+          default: true
+        metadata:
+          type: object
+          additionalProperties: true
