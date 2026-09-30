@@ -8,12 +8,12 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Sales OS">
-<link rel="manifest" href="./manifest.webmanifest?v=19">
+<link rel="manifest" href="./manifest.webmanifest?v=21">
 <link rel="icon" href="./icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="./icon.svg">
 <meta name="robots" content="noindex,nofollow,noarchive">
 <title>Morpheus Sales OS</title>
-<link rel="stylesheet" href="./styles.css?v=19">
+<link rel="stylesheet" href="./styles.css?v=21">
 </head>
 <body>
 <section id="login" class="login">
@@ -78,20 +78,20 @@
 
   <main>
    <section class="page" data-page-view="dashboard">
-    <div class="pagehead"><div><h1>Good to see the whole picture.</h1><p id="syncLabel">Syncing the sales workspace…</p></div><div class="pageactions"><button class="btn" id="dashReminderBtn">+ Reminder</button><button class="btn green" id="dashImportBtn">Import prospects</button></div></div>
+    <div class="pagehead home-head"><div><h1>Sales today</h1><p id="syncLabel">Syncing the sales workspace…</p></div><div class="pageactions"><button class="btn" id="dashReminderBtn">+ Reminder</button><button class="btn green" id="dashImportBtn">Import prospects</button></div></div>
     <div class="grid stats">
-      <div class="card stat"><div class="label">Active prospects</div><strong id="statProspects">0</strong><small>Across every market</small></div>
-      <div class="card stat"><div class="label">Needs attention</div><strong id="statDue">0</strong><small>Due or overdue</small></div>
-      <div class="card stat"><div class="label">Inbox actions</div><strong id="statInbox">0</strong><small>Messages needing action</small></div>
-      <div class="card stat"><div class="label">AI actions</div><strong id="statAI">0</strong><small>Recommended next moves</small></div>
-      <div class="card stat"><div class="label">Email drafts</div><strong id="statDrafts">0</strong><small>Ready to work</small></div>
-      <div class="card stat"><div class="label">Pipeline value</div><strong id="statValue">$0</strong><small>Active opportunity value</small></div>
+      <div class="card stat stat-active"><div class="label">Active prospects</div><strong id="statProspects">0</strong><small>Across every market</small></div>
+      <div class="card stat stat-attention"><div class="label">Needs attention</div><strong id="statDue">0</strong><small>Due or overdue</small></div>
+      <div class="card stat stat-inbox"><div class="label">Inbox actions</div><strong id="statInbox">0</strong><small>Messages needing action</small></div>
+      <div class="card stat stat-ai"><div class="label">AI actions</div><strong id="statAI">0</strong><small>Recommended next moves</small></div>
+      <div class="card stat stat-drafts"><div class="label">Email drafts</div><strong id="statDrafts">0</strong><small>Ready to work</small></div>
+      <div class="card stat stat-pipeline"><div class="label">Pipeline value</div><strong id="statValue">$0</strong><small>Active opportunity value</small></div>
     </div>
     <div class="grid dashboardgrid">
       <section class="card panel"><div class="panelhead"><h2>Today</h2><small id="todayDate"></small></div><div id="todayFocus" class="focuslist"></div></section>
-      <section class="card panel"><div class="panelhead"><h2>Recent activity</h2><button class="btn" data-go="prospects">All prospects</button></div><div id="recentActivity" class="activitylist"></div></section>
+      <section class="card panel home-recent"><div class="panelhead"><h2>Recent activity</h2><button class="btn" data-go="prospects">All prospects</button></div><div id="recentActivity" class="activitylist"></div></section>
     </div>
-    <section class="card panel" style="margin-top:14px"><div class="panelhead"><h2>Pipeline</h2><button class="btn" data-go="pipeline">Open pipeline</button></div><div id="pipelineSummary" class="pipelinebar"></div></section>
+    <section class="card panel home-pipeline" style="margin-top:14px"><div class="panelhead"><h2>Pipeline</h2><button class="btn" data-go="pipeline">Open pipeline</button></div><div id="pipelineSummary" class="pipelinebar"></div></section>
    </section>
 
    <section class="page hidden" data-page-view="prospects">
@@ -240,6 +240,6 @@
 <div id="genericModal" class="modal hidden"><div id="genericModalCard" class="modalcard"></div></div>
 <div id="toast" class="toast hidden"></div>
 
-<script src="./app.js?v=19"></script>
+<script src="./app.js?v=21"></script>
 </body>
 </html>
