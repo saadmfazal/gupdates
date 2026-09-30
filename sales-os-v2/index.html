@@ -8,12 +8,12 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Sales OS">
-<link rel="manifest" href="./manifest.webmanifest?v=26">
+<link rel="manifest" href="./manifest.webmanifest?v=27">
 <link rel="icon" href="./icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="./icon.svg">
 <meta name="robots" content="noindex,nofollow,noarchive">
 <title>Morpheus Sales OS</title>
-<link rel="stylesheet" href="./styles.css?v=26">
+<link rel="stylesheet" href="./styles.css?v=27">
 </head>
 <body>
 <section id="login" class="login">
@@ -21,7 +21,7 @@
    <div class="loginbrand">Morpheus PD · Private</div>
    <h1>Sales OS</h1>
    <p>Choose your profile, enter the team code, and continue.</p>
-   <div class="field"><label>Profile</label><select id="memberEmail" class="select"><option value="">Choose profile</option><option value="saadmfazal@gmail.com">Saad · Owner</option><option value="yazeedmorsath@gmail.com">Yazeed · Editor</option></select></div>
+   <div class="field"><label>Profile</label><select id="memberEmail" class="select"><option value="">Choose profile</option><option value="saadmfazal@gmail.com">Saad</option><option value="yazeedmorsath@gmail.com">Yazeed</option></select></div>
    <div class="field"><label>Team access code</label><input id="accessCode" class="input" type="password" autocomplete="current-password"></div>
    <button id="memberLoginBtn" class="btn primary" style="width:100%">Open Sales OS</button>
    <details style="margin-top:12px">
@@ -95,7 +95,7 @@
    </section>
 
    <section class="page hidden" data-page-view="prospects">
-    <div class="pagehead"><div><h1>Prospects</h1><p>Every account, what we know, what we made and what happens next.</p></div><div class="pageactions"><button class="btn" id="prospectImportBtn">Import CSV</button><button class="btn primary" id="addProspectBtn">+ Prospect</button></div></div>
+    <div class="pagehead"><div><h1>Prospects</h1><p>Every account, what we know, what we made and what happens next.</p></div><div class="pageactions"><button class="btn" id="findProspectsBtn">✦ Find prospects</button><button class="btn" id="prospectImportBtn">Import CSV</button><button class="btn primary" id="addProspectBtn">+ Prospect</button></div></div>
     <section class="card tablecard">
       <div class="toolbar"><input id="prospectSearch" class="grow" placeholder="Search companies…"><select id="prospectCategory"><option value="">All categories</option></select><select id="prospectStage"><option value="">All stages</option></select><select id="prospectOwner"><option value="">All owners</option></select></div>
       <table><thead><tr><th>Company</th><th>Category</th><th>Contact</th><th>Assets</th><th>Owner</th><th>Stage</th><th>Next action</th><th></th></tr></thead><tbody id="prospectTable"></tbody></table>
@@ -208,7 +208,8 @@
 
 <div id="prospectDrawer" class="drawer hidden"><div class="drawerpanel">
  <div class="drawerhead"><div><span id="pdCategory" class="pill"></span><h2 id="pdCompany"></h2><div id="pdMeta" class="meta"></div></div><div class="drawerhead-actions"><button id="pdCopilot" class="btn">✦ Copilot</button><button class="close" data-close="prospectDrawer">×</button></div></div>
- <div class="section"><h3>Account</h3><div class="formgrid2"><div class="field"><label>Category</label><select id="pdCategorySelect" class="select"></select></div><div class="field"><label>Stage</label><select id="pdStage" class="select"></select></div><div class="field"><label>Owner</label><input id="pdOwner" class="input"></div><div class="field"><label>Priority</label><input id="pdPriority" class="input"></div><div class="field"><label>Contact</label><input id="pdContact" class="input"></div><div class="field"><label>Email</label><input id="pdEmail" class="input"></div><div class="field"><label>Website</label><input id="pdWebsite" class="input"></div><div class="field"><label>Location</label><input id="pdLocation" class="input"></div></div><div class="field"><label>Next action</label><input id="pdNextAction" class="input"></div><div class="field"><label>Next action date</label><input id="pdNextDate" class="input" type="date"></div><button id="saveProspect" class="btn primary">Save account</button></div>
+ <div class="section"><h3>Account</h3><div class="formgrid2"><div class="field"><label>Category</label><select id="pdCategorySelect" class="select"></select></div><div class="field"><label>Stage</label><select id="pdStage" class="select"></select></div><div class="field"><label>Assigned to</label><input id="pdOwner" class="input"></div><div class="field"><label>Priority</label><input id="pdPriority" class="input"></div><div class="field"><label>Contact</label><input id="pdContact" class="input"></div><div class="field"><label>Email</label><input id="pdEmail" class="input"></div><div class="field"><label>Website</label><input id="pdWebsite" class="input"></div><div class="field"><label>Location</label><input id="pdLocation" class="input"></div></div><div class="field"><label>Next action</label><input id="pdNextAction" class="input"></div><div class="field"><label>Next action date</label><input id="pdNextDate" class="input" type="date"></div><button id="saveProspect" class="btn primary">Save account</button></div>
+ <div class="section"><h3>AI actions</h3><div class="pageactions"><button id="pdResearch" class="btn primary">✦ Start research</button><button id="pdAIWrite" class="btn">AI write</button><button id="pdAskAI" class="btn">Ask Copilot</button></div><div id="pdResearchStatus" class="meta" style="margin-top:7px"></div></div>
  <div class="section"><h3>Assets</h3><div id="pdAssets"></div><button id="pdNewAsset" class="btn" style="margin-top:8px">+ Asset</button></div>
  <div class="section"><h3>Ahamed asset build</h3><div id="pdAssetJobs"></div><button id="pdAssignAhamed" class="btn primary" style="margin-top:8px">Send asset request to Ahamed</button></div>
  <div class="section"><h3>Notes</h3><div id="pdNotes"></div><button id="pdNewNote" class="btn" style="margin-top:8px">+ Note</button></div>
@@ -245,6 +246,6 @@
 <div id="genericModal" class="modal hidden"><div id="genericModalCard" class="modalcard"></div></div>
 <div id="toast" class="toast hidden"></div>
 
-<script src="./app.js?v=26"></script>
+<script src="./app.js?v=27"></script>
 </body>
 </html>
