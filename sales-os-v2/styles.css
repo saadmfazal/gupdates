@@ -587,3 +587,19 @@ table{width:100%;border-collapse:collapse;min-width:1050px}th{text-align:left;pa
   .asset-build-row{padding:12px;border-radius:12px}
   .asset-build-row .pill{flex:0 0 auto}
 }
+
+/* AI RESEARCH ACTIONS V28 */
+.discovery-candidates{display:grid;gap:8px}
+.discovery-card{border:1px solid var(--line);border-radius:13px;padding:12px;background:#fff}
+.discovery-top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.discovery-card h3{margin:0;font-size:13px}
+.discovery-card p{font-size:10px;color:var(--muted);line-height:1.5;margin:7px 0}
+.discovery-meta,.source-links,.discovery-actions{display:flex;gap:6px;flex-wrap:wrap}
+.source-links{margin-top:8px}
+.source-links a{font-size:9px;color:var(--blue);text-decoration:none;border-bottom:1px solid #b9cbed}
+.discovery-actions{margin-top:10px}
+@media(max-width:760px){
+  .discovery-card{padding:12px;border-radius:12px}
+  .discovery-actions{display:grid;grid-template-columns:1fr 1fr}
+  .discovery-actions .btn{width:100%}
+}
