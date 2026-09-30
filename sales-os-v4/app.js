@@ -15,7 +15,7 @@ let copilotThreadId=null,copilotProspectId=null,copilotLocal=[];
 
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
-const safeUrl=u=>/^https?:\/\//i.test(String(u||''))?String(u):'';
+const safeUrl=u=>{try{const parsed=new URL(String(u||'').trim());return ['http:','https:'].includes(parsed.protocol)?parsed.href:''}catch{return ''}};
 const today=()=>new Date().toISOString().slice(0,10);
 const prospectName=id=>data.prospects.find(p=>p.id===id)?.company||'';
 const pAssets=id=>data.assets.filter(a=>a.prospect_id===id);
