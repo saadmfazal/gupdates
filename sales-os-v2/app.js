@@ -15,7 +15,7 @@ let providerStatus={ai:false};
 
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const isPhone=()=>window.matchMedia('(max-width:760px)').matches;
-const lockPage=()=>{if(!isPhone())lockPage()};
+const lockPage=()=>{if(!isPhone())document.body.classList.add('modal-open')};
 const unlockPage=()=>{document.body.classList.remove('modal-open')};
 const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
 const todayISO=()=>new Date().toISOString().slice(0,10);
