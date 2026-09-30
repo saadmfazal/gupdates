@@ -8,22 +8,22 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Sales OS">
-<link rel="manifest" href="./manifest.webmanifest?v=21">
+<link rel="manifest" href="./manifest.webmanifest?v=22">
 <link rel="icon" href="./icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="./icon.svg">
 <meta name="robots" content="noindex,nofollow,noarchive">
 <title>Morpheus Sales OS</title>
-<link rel="stylesheet" href="./styles.css?v=21">
+<link rel="stylesheet" href="./styles.css?v=22">
 </head>
 <body>
 <section id="login" class="login">
  <div class="logincard">
    <div class="loginbrand">Morpheus PD · Private</div>
    <h1>Sales OS</h1>
-   <p>Sign in as yourself so Sales OS can track who changed what and route approvals correctly.</p>
-   <div class="field"><label>Your Sales OS email</label><input id="memberEmail" class="input" type="email" autocomplete="email" placeholder="you@example.com"></div>
+   <p>Choose your profile, enter the team code, and continue.</p>
+   <div class="field"><label>Profile</label><select id="memberEmail" class="select"><option value="">Choose profile</option><option value="saadmfazal@gmail.com">Saad · Owner</option><option value="yazeedmorsath@gmail.com">Yazeed · Editor</option></select></div>
    <div class="field"><label>Team access code</label><input id="accessCode" class="input" type="password" autocomplete="current-password"></div>
-   <button id="memberLoginBtn" class="btn primary" style="width:100%">Continue as team member</button>
+   <button id="memberLoginBtn" class="btn primary" style="width:100%">Open Sales OS</button>
    <details style="margin-top:12px">
      <summary style="font-size:10px;color:var(--muted);cursor:pointer">Emergency shared-code access</summary>
      <p style="font-size:10px;color:var(--muted);line-height:1.5">Use only if personal sign-in is unavailable. Shared access can work in the CRM but cannot approve protected actions.</p>
@@ -240,6 +240,6 @@
 <div id="genericModal" class="modal hidden"><div id="genericModalCard" class="modalcard"></div></div>
 <div id="toast" class="toast hidden"></div>
 
-<script src="./app.js?v=21"></script>
+<script src="./app.js?v=22"></script>
 </body>
 </html>
