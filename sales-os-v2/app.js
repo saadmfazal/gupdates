@@ -630,9 +630,195 @@ window.editAsset=id=>{const a=data.assets.find(x=>x.id===id);if(a)openAssetForm(
 function openNewDraft(prospectId=null){modal('New email draft',`<div class="field"><label>Prospect</label><select id="draftProspect" class="select">${data.prospects.map(p=>`<option value="${p.id}">${esc(p.company)}</option>`).join('')}</select></div><div class="field"><label>Subject</label><input id="draftSubject" class="input"></div><div class="field"><label>Message</label><textarea id="draftBody" class="textarea" rows="10"></textarea></div><div class="pageactions"><button id="draftAI" class="btn">AI writing</button><button id="createDraftConfirm" class="btn primary">Save draft</button></div>`);if(prospectId)$('#draftProspect').value=prospectId;$('#draftAI').onclick=()=>openAIWriter($('#draftProspect').value);$('#createDraftConfirm').onclick=async()=>{const p=data.prospects.find(x=>x.id===$('#draftProspect').value);await rpc('sales_os_save_email_draft',{p_token:token,p_payload:{prospect_id:p.id,recipient:p.contact_email||'',sender_name:p.sender_name||'Robert Gibbons',sender_email:p.sender_email||'robert@morpheuspd.io',subject:$('#draftSubject').value,body:$('#draftBody').value,status:'draft',created_by:'Sales OS'}});closeModal();toast('Draft saved');await load();go('email')}}
 async function saveCurrentDraft(){const d=currentDraft;if(!d)return;await rpc('sales_os_save_email_draft',{p_token:token,p_payload:{id:d.id,recipient:$('#edTo').value,sender_email:$('#edFrom').value,subject:$('#edSubject').value,body:$('#edBody').value,status:'draft'}});toast('Draft saved');await load()}
 
-function openAIWriter(prospectId){
- openCopilot(prospectId,'Draft the best concise next sales email for this prospect using the live account context. Do not invent facts. Return a subject and body.');
+function prospectResearchPrompt(p){
+ const notes=pNotes(p.id).slice(0,8).map(n=>'- '+(n.title||'Note')+': '+(n.body||'')).join('\n');
+ return `Research this real company for Morpheus Sales OS using current public web sources.
+
+COMPANY: ${p.company}
+CATEGORY: ${p.category||''}
+SEGMENT: ${p.segment||''}
+LOCATION IN CRM: ${p.location||''}
+WEBSITE IN CRM: ${p.website||''}
+KNOWN CONTACT: ${[p.contact_name,p.contact_role,p.contact_email].filter(Boolean).join(' · ')}
+CURRENT NOTES:
+${notes||p.notes||'None'}
+
+Find and verify:
+1. What the company does and who it serves.
+2. Relevant products/services and positioning.
+3. Public decision makers/contact routes only when actually verified.
+4. Why this company may fit Morpheus commercially.
+5. The strongest personalized asset we should create for them.
+6. 3 useful outreach angles.
+7. Any cautions or reasons not to pursue.
+8. Source URLs for every important factual claim.
+
+Do not invent names, emails, scale, revenue, buying intent, volumes or claims.
+Return a concise research brief I can save into Sales OS.`;
 }
+
+function aiWritingPrompt(p){
+ const assets=pAssets(p.id).map(a=>'- '+a.asset_type+': '+a.title+(a.url?' — '+a.url:'')).join('\n');
+ const notes=pNotes(p.id).slice(0,8).map(n=>'- '+(n.title||'Note')+': '+(n.body||'')).join('\n');
+ const emails=pMessages(p.id).slice(-8).map(m=>'- '+m.direction+' · '+(m.subject||'')+': '+(m.snippet||m.body||'')).join('\n');
+ return `Write the best concise B2B sales email for this Morpheus Sales OS prospect.
+
+Company: ${p.company}
+Category: ${p.category||''}
+Contact: ${p.contact_name||''} ${p.contact_role||''}
+Stage: ${p.stage||''}
+Next action: ${p.next_action||''}
+
+Assets:
+${assets||'- None'}
+
+Research / notes:
+${notes||p.notes||'- None'}
+
+Recent email context:
+${emails||'- None'}
+
+Use only verified context above. Do not invent facts. Keep it natural and short.
+Return:
+SUBJECT:
+BODY:`;
+}
+
+async function startProspectResearch(prospectId){
+ const p=data.prospects.find(x=>x.id===prospectId);if(!p)return;
+ const status=$('#pdResearchStatus');
+ if(!providerStatus.ai){
+   const prompt=prospectResearchPrompt(p);
+   try{await navigator.clipboard.writeText(prompt)}catch(e){}
+   window.open('https://chatgpt.com/','_blank');
+   if(status)status.textContent='Native AI is not connected. Research prompt copied and ChatGPT opened.';
+   toast('Research prompt copied');
+   return;
+ }
+ if(status)status.textContent='Researching current public sources…';
+ try{
+   const headers={'Content-Type':'application/json',apikey:APIKEY};
+   if(sessionAccessToken)headers.Authorization='Bearer '+sessionAccessToken;
+   else if(token)headers['x-sales-os-access-code']=token;
+   const r=await fetch(SUPABASE_URL+'/functions/v1/sales-os-prospect-research',{method:'POST',headers,body:JSON.stringify({prospect_id:p.id})});
+   const out=await r.json().catch(()=>({}));
+   if(!r.ok)throw new Error(out.detail||out.error||'Research failed');
+   await load();
+   const result=out.result||{};
+   const sources=Array.isArray(result.source_urls)?result.source_urls:[];
+   modal('Research · '+p.company,`<div class="ai-box"><h3>Research saved to Sales OS</h3><p>${esc(result.summary||'Research complete.')}</p></div>
+     ${result.fit?`<div class="section"><h3>Why it fits</h3><p class="meta" style="font-size:11px;line-height:1.6">${esc(result.fit)}</p></div>`:''}
+     ${result.asset_recommendation?.concept?`<div class="section"><h3>Suggested asset</h3><div class="title">${esc(result.asset_recommendation.type||'Asset')}</div><p class="meta" style="font-size:11px;line-height:1.6">${esc(result.asset_recommendation.concept)}</p></div>`:''}
+     ${Array.isArray(result.outreach_angles)&&result.outreach_angles.length?`<div class="section"><h3>Outreach angles</h3>${result.outreach_angles.map(x=>`<div class="focusrow"><div class="title">${esc(x)}</div></div>`).join('')}</div>`:''}
+     ${sources.length?`<div class="section"><h3>Sources</h3><div class="source-links">${sources.map(u=>`<a href="${esc(u)}" target="_blank">Source ↗</a>`).join('')}</div></div>`:''}
+     <div class="pageactions" style="margin-top:14px"><button id="researchWriteEmail" class="btn primary">AI write email</button><button id="researchSendAhamed" class="btn">Send to Ahamed</button></div>`);
+   if($('#researchWriteEmail'))$('#researchWriteEmail').onclick=()=>{closeModal();openAIWriter(p.id)};
+   if($('#researchSendAhamed'))$('#researchSendAhamed').onclick=()=>{closeModal();openAhamedRequest(p.id)};
+   if(status)status.textContent='Research saved.';
+ }catch(e){
+   if(status)status.textContent='Research failed: '+String(e.message||e);
+   toast('Research failed');
+ }
+}
+window.startProspectResearch=startProspectResearch;
+
+function openAIWriter(prospectId){
+ const p=data.prospects.find(x=>x.id===prospectId);if(!p)return;
+ if(providerStatus.ai){
+   openCopilot(prospectId,'Draft the best concise next sales email for this prospect using the live account context and saved research. Do not invent facts. Return a subject and body.');
+ }else{
+   const prompt=aiWritingPrompt(p);
+   navigator.clipboard.writeText(prompt).catch(()=>{});
+   window.open('https://chatgpt.com/','_blank');
+   toast('AI writing prompt copied');
+ }
+}
+
+function discoveryChatGPTPrompt(category,geography,count,criteria){
+ return `Find ${count} strong NEW B2B prospects for Morpheus Sales OS.
+
+CATEGORY / MARKET: ${category}
+GEOGRAPHY: ${geography||'No restriction'}
+EXTRA CRITERIA: ${criteria||'None'}
+
+Research current real companies using public web sources.
+For each company provide:
+- company
+- website
+- segment
+- location
+- public contact name/role/email only if verified
+- why it fits
+- suggested priority A+, A, B or C
+- research score 0-100
+- source URLs
+
+Do not invent contacts, emails, revenue, volumes, scale or buying intent.
+Deduplicate the results.
+Return the final list as a downloadable CSV suitable for Morpheus Sales OS.`;
+}
+
+function renderDiscoveryResults(runData){
+ const run=runData.run||{},candidates=runData.candidates||[];
+ $('#discoveryModalBody').innerHTML=`<div class="panelhead"><div><h2 style="margin:0">${esc(run.category||'Research results')}</h2><small>${candidates.length} candidates</small></div></div>
+   <div class="discovery-candidates">${candidates.map(c=>`<article class="discovery-card" data-candidate="${c.id}">
+     <div class="discovery-top"><div><h3>${esc(c.company)}</h3><div class="meta">${esc([c.segment,c.location].filter(Boolean).join(' · '))}</div></div><span class="pill ${c.review_status==='duplicate'?'red':''}">${esc(c.review_status)}</span></div>
+     <p>${esc(c.why_fit||'')}</p>
+     <div class="discovery-meta">${c.suggested_priority?`<span class="pill">${esc(c.suggested_priority)}</span>`:''}${c.score!=null?`<span class="pill blue">Score ${esc(c.score)}</span>`:''}${c.confidence?`<span class="pill">${esc(c.confidence)}</span>`:''}</div>
+     <div class="source-links">${(c.source_urls||[]).slice(0,4).map(u=>`<a href="${esc(u)}" target="_blank">Source ↗</a>`).join('')}</div>
+     ${c.review_status==='pending'?`<div class="discovery-actions"><button class="btn green" onclick="reviewDiscoveryCandidate('${c.id}','approved','${run.id}')">Add to Sales OS</button><button class="btn" onclick="reviewDiscoveryCandidate('${c.id}','rejected','${run.id}')">Reject</button></div>`:''}
+   </article>`).join('')||'<div class="empty">No candidates returned.</div>'}</div>`;
+}
+
+async function reviewDiscoveryCandidate(id,decision,runId){
+ try{
+   await rpc('sales_os_review_discovery_candidate',{p_token:token||null,p_candidate_id:id,p_decision:decision});
+   const fresh=await rpc('sales_os_get_discovery_run',{p_token:token||null,p_run_id:runId});
+   renderDiscoveryResults(fresh);
+   if(decision==='approved')await load();
+ }catch(e){toast('Could not review candidate: '+String(e.message||e))}
+}
+window.reviewDiscoveryCandidate=reviewDiscoveryCandidate;
+
+function openFindProspects(){
+ modal('Find new prospects',`<div class="formgrid2"><div class="field"><label>Category / market</label><input id="fpCategory" class="input" placeholder="e.g. Dog Food · Independent Retail"></div><div class="field"><label>Geography</label><input id="fpGeography" class="input" placeholder="e.g. Northeast USA"></div></div>
+ <div class="formgrid2"><div class="field"><label>How many</label><select id="fpCount" class="select"><option>10</option><option selected>20</option><option>25</option></select></div><div></div></div>
+ <div class="field"><label>Extra criteria</label><textarea id="fpCriteria" class="textarea" rows="4" placeholder="Independent retailers, strong livestock business, avoid national chains…"></textarea></div>
+ <div class="pageactions"><button id="fpRun" class="btn primary">✦ Start research</button><button id="fpChatGPT" class="btn">Use ChatGPT instead</button></div>
+ <div id="fpStatus" class="meta" style="margin-top:10px"></div>
+ <div id="discoveryModalBody" style="margin-top:14px"></div>`);
+ const run=async()=>{
+   const category=$('#fpCategory').value.trim(),geography=$('#fpGeography').value.trim(),count=Number($('#fpCount').value||20),criteria=$('#fpCriteria').value.trim();
+   if(!category)return toast('Enter a category or market');
+   if(!providerStatus.ai){
+     const prompt=discoveryChatGPTPrompt(category,geography,count,criteria);
+     navigator.clipboard.writeText(prompt).catch(()=>{});
+     window.open('https://chatgpt.com/','_blank');
+     $('#fpStatus').textContent='Native AI is not connected. Prompt copied and ChatGPT opened.';
+     return;
+   }
+   $('#fpRun').disabled=true;$('#fpRun').textContent='Researching…';$('#fpStatus').textContent='Searching current public sources and deduplicating against Sales OS…';
+   try{
+     const headers={'Content-Type':'application/json',apikey:APIKEY};
+     if(sessionAccessToken)headers.Authorization='Bearer '+sessionAccessToken; else if(token)headers['x-sales-os-access-code']=token;
+     const r=await fetch(SUPABASE_URL+'/functions/v1/sales-os-discovery',{method:'POST',headers,body:JSON.stringify({category,geography,target_count:count,criteria})});
+     const out=await r.json().catch(()=>({}));
+     if(!r.ok)throw new Error(out.detail||out.error||'Discovery failed');
+     const result=await rpc('sales_os_get_discovery_run',{p_token:token||null,p_run_id:out.run_id});
+     $('#fpStatus').textContent='Research complete. Review before adding.';
+     renderDiscoveryResults(result);
+   }catch(e){$('#fpStatus').textContent='Research failed: '+String(e.message||e)}
+   finally{$('#fpRun').disabled=false;$('#fpRun').textContent='✦ Start research'}
+ };
+ $('#fpRun').onclick=run;
+ $('#fpChatGPT').onclick=()=>{
+   const category=$('#fpCategory').value.trim(),geography=$('#fpGeography').value.trim(),count=Number($('#fpCount').value||20),criteria=$('#fpCriteria').value.trim();
+   if(!category)return toast('Enter a category or market');
+   navigator.clipboard.writeText(discoveryChatGPTPrompt(category,geography,count,criteria)).catch(()=>{});
+   window.open('https://chatgpt.com/','_blank');toast('Prospect research prompt copied');
+ };
+}
+
 async function sendDraftNative(d){
  if(!sessionAccessToken||!myGmailConnection())throw new Error('Direct Gmail connection required');
  const r=await fetch(SUPABASE_URL+'/functions/v1/sales-os-gmail-send',{method:'POST',headers:{'Content-Type':'application/json',apikey:APIKEY,Authorization:'Bearer '+sessionAccessToken},body:JSON.stringify({draft_id:d.id})});
@@ -793,6 +979,10 @@ if($('#mobileInstallApp'))$('#mobileInstallApp').onclick=async()=>{
 $('#loginBtn').onclick=login;if($('#memberLoginBtn'))$('#memberLoginBtn').onclick=memberLogin;$('#accessCode').addEventListener('keydown',e=>{if(e.key==='Enter'){if($('#memberEmail')?.value.trim())memberLogin();else login()}});$('#lockBtn').onclick=signOutWorkspace;if($('#identityBtn'))$('#identityBtn').onclick=()=>go('approvals');if($('#approvalRefreshBtn'))$('#approvalRefreshBtn').onclick=load;
 $('#notificationBtn').onclick=()=>$('#noticeMenu').classList.toggle('hidden');$('#globalSearch').oninput=()=>{renderProspects();if($('#globalSearch').value)go('prospects')};
 if($('#copilotBtn'))$('#copilotBtn').onclick=()=>openCopilot();
+if($('#pdResearch'))$('#pdResearch').onclick=()=>startProspectResearch(selectedProspect?.id);
+if($('#pdAIWrite'))$('#pdAIWrite').onclick=()=>openAIWriter(selectedProspect?.id);
+if($('#pdAskAI'))$('#pdAskAI').onclick=()=>openCopilot(selectedProspect?.id||null);
+if($('#findProspectsBtn'))$('#findProspectsBtn').onclick=openFindProspects;
 if($('#pdCopilot'))$('#pdCopilot').onclick=()=>openCopilot(selectedProspect?.id||null);
 if($('#aiAskCopilotBtn'))$('#aiAskCopilotBtn').onclick=()=>openCopilot();
 if($('#inboxCopilotBtn'))$('#inboxCopilotBtn').onclick=()=>selectedInboxThread?openInboxCopilot(selectedInboxThread):openCopilot();
