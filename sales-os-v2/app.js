@@ -2,8 +2,8 @@ const API='https://viajmvbwpmkiqxjtgshv.supabase.co/rest/v1/rpc/';
 const APIKEY='sb_publishable_gGFZftPonWKNZCdvUSM3yQ_gZvyI6_H';
 const SUPABASE_URL='https://viajmvbwpmkiqxjtgshv.supabase.co';
 const AUTH_BOOTSTRAP=SUPABASE_URL+'/functions/v1/sales-os-auth-bootstrap';
-const STAGES=['Research','Asset ready','Ready to contact','Contacted','Follow-up','Replied','Qualified','Meeting','Proposal','Negotiation','Won','Lost','Hold'];
-const PIPELINE_STAGES=['Research','Ready to contact','Follow-up','Replied','Qualified','Proposal'];
+const STAGES=['Research','Asset ready','Ready to contact','Contacted','Follow-up','Replied','Qualified','Meeting','Proposal','Negotiation','Won','Lost','Disqualified','Hold'];
+const PIPELINE_STAGES=['Research','Ready to contact','Contacted','Follow-up','Replied','Qualified','Proposal','Negotiation'];
 const CSV_COLUMNS=['company','category','segment','location','website','contact_name','contact_role','contact_email','phone','priority','score','owner_assigned','sender_name','sender_email','stage','status','next_action','next_action_date','caution','notes','tags','source_groups','source_notes','asset_type','asset_title','asset_url','asset_status','outreach_subject','outreach_message'];
 
 let token='';
@@ -96,7 +96,7 @@ const pOpportunity=id=>data.opportunities.find(o=>o.prospect_id===id)||null;
 const pMessages=id=>data.email_messages.filter(m=>m.prospect_id===id).sort((a,b)=>new Date(b.sent_at)-new Date(a.sent_at));
 const isEngaged=p=>['Replied','Qualified','Meeting','Proposal','Negotiation','Won'].includes(p.stage);
 const dueReminder=r=>r.status==='open'&&new Date(r.due_at)<=new Date();
-const followupDue=p=>p.next_action_date&&p.next_action_date<=todayISO()&&!['Won','Lost','Hold'].includes(p.stage);
+const followupDue=p=>p.next_action_date&&p.next_action_date<=todayISO()&&!['Won','Lost','Disqualified','Hold'].includes(p.stage);
 
 function renderCounts(){
  const drafts=data.email_drafts.filter(d=>d.status==='draft').length,openR=data.reminders.filter(r=>r.status==='open').length;
@@ -104,10 +104,10 @@ function renderCounts(){
  const due=data.reminders.filter(dueReminder).length+data.prospects.filter(followupDue).length+(actor?.role==='owner'?pendingApprovals:0);
  const inboxActions=data.inbox_threads.length?data.inbox_threads.filter(t=>t.status==='open').length:data.email_messages.filter(m=>m.requires_action).length;
  const aiActions=data.recommendations.filter(r=>r.status==='open').length;
- const activeValue=data.opportunities.filter(o=>!['Won','Lost'].includes(data.prospects.find(p=>p.id===o.prospect_id)?.stage)).reduce((sum,o)=>sum+Number(o.estimated_value||0),0);
+ const activeValue=data.opportunities.filter(o=>!['Won','Lost','Disqualified','Hold'].includes(data.prospects.find(p=>p.id===o.prospect_id)?.stage)).reduce((sum,o)=>sum+Number(o.estimated_value||0),0);
  $('#navProspects').textContent=data.prospects.length;$('#navAssets').textContent=data.assets.length;$('#navDrafts').textContent=drafts;$('#navReminders').textContent=openR;
  if($('#navInbox'))$('#navInbox').textContent=inboxActions;if($('#navAI'))$('#navAI').textContent=aiActions;if($('#navApprovals'))$('#navApprovals').textContent=pendingApprovals;
- $('#statProspects').textContent=data.prospects.filter(p=>!['Won','Lost'].includes(p.stage)).length;$('#statDue').textContent=due;$('#statDrafts').textContent=drafts;
+ $('#statProspects').textContent=data.prospects.filter(p=>!['Won','Lost','Disqualified','Hold'].includes(p.stage)).length;$('#statDue').textContent=due;$('#statDrafts').textContent=drafts;
  if($('#statInbox'))$('#statInbox').textContent=inboxActions;if($('#statAI'))$('#statAI').textContent=aiActions;if($('#statValue'))$('#statValue').textContent='$'+activeValue.toLocaleString(undefined,{maximumFractionDigits:0});
  $('#notificationDot').classList.toggle('hidden',!data.notifications.some(n=>!n.read_at&&!n.dismissed_at));$('#todayDate').textContent=new Date().toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'});
 }
