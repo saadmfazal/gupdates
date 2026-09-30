@@ -122,7 +122,7 @@ const followupDue=p=>p.next_action_date&&p.next_action_date<=todayISO()&&!['Won'
 function renderCounts(){
  const drafts=data.email_drafts.filter(d=>d.status==='draft').length,openR=data.reminders.filter(r=>r.status==='open').length;
  const pendingApprovals=data.approvals.filter(a=>a.status==='pending').length;
- const due=data.reminders.filter(dueReminder).length+data.prospects.filter(followupDue).length+(actor?.role==='owner'?pendingApprovals:0);
+ const due=data.reminders.filter(dueReminder).length+data.prospects.filter(followupDue).length+(actor?.authenticated===true?pendingApprovals:0);
  const inboxActions=data.inbox_threads.length?data.inbox_threads.filter(t=>t.status==='open').length:data.email_messages.filter(m=>m.requires_action).length;
  const aiActions=data.recommendations.filter(r=>r.status==='open').length;
  const activeValue=data.opportunities.filter(o=>!['Won','Lost','Disqualified','Hold'].includes(data.prospects.find(p=>p.id===o.prospect_id)?.stage)).reduce((sum,o)=>sum+Number(o.estimated_value||0),0);
@@ -136,7 +136,7 @@ function renderDashboard(){
  const focus=[];
  data.reminders.filter(r=>r.status==='open').forEach(r=>focus.push({title:r.title,meta:(prospectName(r.prospect_id)||'General')+' · '+new Date(r.due_at).toLocaleString(),kind:'Reminder',due:new Date(r.due_at),pid:r.prospect_id}));
  data.prospects.filter(followupDue).forEach(p=>focus.push({title:p.next_action||'Follow up',meta:p.company+' · '+p.next_action_date,kind:'Follow-up',due:new Date(p.next_action_date),pid:p.id}));
- if(actor?.role==='owner')data.approvals.filter(a=>a.status==='pending').forEach(a=>focus.push({title:a.title,meta:'Approval requested by '+(a.requested_by_name||a.requested_by_email||'team member'),kind:'Approval',due:new Date(a.requested_at),pid:a.prospect_id}));
+ if(actor?.authenticated===true)data.approvals.filter(a=>a.status==='pending').forEach(a=>focus.push({title:a.title,meta:'Approval requested by '+(a.requested_by_name||a.requested_by_email||'team member'),kind:'Approval',due:new Date(a.requested_at),pid:a.prospect_id}));
  focus.sort((a,b)=>a.due-b.due);
  $('#todayFocus').innerHTML=focus.length?focus.slice(0,8).map(x=>`<div class="focusrow" ${x.pid?`onclick="openProspect('${x.pid}')"`:''}><div class="maincopy"><div class="title">${esc(x.title)}</div><div class="meta">${esc(x.meta)}</div></div><span class="pill ${x.due<new Date()?'red':'amber'}">${esc(x.kind)}</span></div>`).join(''):'<div class="empty">Nothing urgent right now.</div>';
  $('#recentActivity').innerHTML=data.activities.slice(0,8).map(a=>`<div class="activityrow" onclick="openProspect('${a.prospect_id}')"><div class="maincopy"><div class="title">${esc(a.activity_type||'Activity')} · ${esc(prospectName(a.prospect_id))}</div><div class="meta">${esc(a.subject||a.outcome||'')}${a.occurred_at?' · '+new Date(a.occurred_at).toLocaleDateString():''}</div></div></div>`).join('')||'<div class="empty">No activity yet.</div>';
@@ -146,7 +146,7 @@ function syncFilters(){
  const c=$('#prospectCategory').value,s=$('#prospectStage').value,o=$('#prospectOwner').value;
  $('#prospectCategory').innerHTML='<option value="">All categories</option>'+categoryNames().map(x=>`<option>${esc(x)}</option>`).join('');
  $('#prospectStage').innerHTML='<option value="">All stages</option>'+STAGES.map(x=>`<option>${x}</option>`).join('');
- $('#prospectOwner').innerHTML='<option value="">All owners</option>'+owners().map(x=>`<option>${esc(x)}</option>`).join('');
+ $('#prospectOwner').innerHTML='<option value="">All assignees</option>'+owners().map(x=>`<option>${esc(x)}</option>`).join('');
  $('#prospectCategory').value=c;$('#prospectStage').value=s;$('#prospectOwner').value=o;
 }
 function filteredProspects(){
@@ -298,7 +298,7 @@ function showDraftEditor(d){
  $('#emailEditor').innerHTML=`<div class="panelhead"><div><h2>${esc(p?.company||'Email draft')}</h2><small>${esc(d.status)}</small></div><button class="btn" id="aiDraftBtn">AI writing</button></div>
  <div class="formgrid2"><div class="field"><label>To</label><input id="edTo" class="input" value="${esc(d.recipient||'')}"></div><div class="field"><label>From</label><input id="edFrom" class="input" value="${esc(d.sender_email||'')}"></div></div>
  <div class="field"><label>Subject</label><input id="edSubject" class="input" value="${esc(d.subject||'')}"></div><div class="field"><label>Message</label><textarea id="edBody" class="textarea" rows="16">${esc(d.body||'')}</textarea></div>
- ${(()=>{const a=approvalForDraft(d.id,'approved');const approved=a&&approvalMatchesDraft(a,d);const native=!!myGmailConnection()&&!!actor?.authenticated;const label=actor?.role==='owner'?(native?'Send via Gmail':'Send with ChatGPT'):(approved?(native?'Send approved':'Send approved with ChatGPT'):'Request approval');const help=actor?.role==='owner'?(native?'This will send through your connected Gmail and write the real Gmail message ID back to Sales OS.':'Gmail is not connected directly; the approved send will use the ChatGPT/Gmail fallback.'):(approved?'Owner approval matches this exact draft.':'The exact recipient, subject and body must be approved by the Sales OS owner before sending.');return `<div class="pageactions"><button class="btn" id="saveDraftBtn">Save</button><button class="btn" id="copyDraftBtn">Copy</button><button class="btn green" id="directSendBtn">${label}</button></div><p class="meta" style="margin-top:10px">${help}</p>`})()}`;
+ ${(()=>{const a=approvalForDraft(d.id,'approved');const approved=a&&approvalMatchesDraft(a,d);const native=!!myGmailConnection()&&!!actor?.authenticated;const label=actor?.authenticated===true?(native?'Send via Gmail':'Send with ChatGPT'):(approved?(native?'Send approved':'Send approved with ChatGPT'):'Request approval');const help=actor?.authenticated===true?(native?'This will send through your connected Gmail and write the real Gmail message ID back to Sales OS.':'Gmail is not connected directly; the approved send will use the ChatGPT/Gmail fallback.'):(approved?'A named Sales OS member approved this exact draft.':'Shared access cannot send protected email without approval from a named Sales OS member.');return `<div class="pageactions"><button class="btn" id="saveDraftBtn">Save</button><button class="btn" id="copyDraftBtn">Copy</button><button class="btn green" id="directSendBtn">${label}</button></div><p class="meta" style="margin-top:10px">${help}</p>`})()}`;
  $('#saveDraftBtn').onclick=saveCurrentDraft;$('#copyDraftBtn').onclick=async()=>{await navigator.clipboard.writeText($('#edBody').value);toast('Copied')};$('#aiDraftBtn').onclick=()=>openAIWriter(d.prospect_id);$('#directSendBtn').onclick=()=>handleDirectSend(d.id);
 }
 window.openDraft=id=>{currentDraft=data.email_drafts.find(d=>d.id===id);renderEmail();if(window.matchMedia('(max-width:760px)').matches)setTimeout(()=>$('#emailEditor')?.scrollIntoView({behavior:'smooth',block:'start'}),60)};
@@ -432,11 +432,11 @@ function renderCopilotProvider(status={connected:providerStatus.ai,api_ok:provid
  const el=$('#copilotProviderBanner');if(!el)return;
  if(status.connected&&status.api_ok){el.classList.add('hidden');return}
  el.classList.remove('hidden');
- if(actor?.role==='owner'){
+ if(actor?.authenticated===true){
   el.innerHTML=`<b>Morpheus AI needs one provider connection.</b><br>The Copilot UI and context engine are ready. Connect an OpenAI API key once; it will be stored server-side in Supabase Vault.<div style="margin-top:8px"><button class="btn primary" id="connectAiFromCopilot">Connect AI provider</button></div>`;
   $('#connectAiFromCopilot').onclick=openAIProviderSetup;
  }else{
-  el.innerHTML='<b>AI provider not connected.</b><br>An Owner needs to connect the OpenAI API provider from Connections. No API key is stored in this browser.';
+  el.innerHTML='<b>AI provider not connected.</b><br>A named Sales OS member needs to connect the OpenAI API provider from Connections. No API key is stored in this browser.';
  }
 }
 function renderCopilotMessages(){
@@ -499,7 +499,7 @@ window.saveCopilotSuggestion=async(i,type)=>{
  }catch(e){toast('Could not save suggestion: '+String(e.message||e))}
 };
 function openAIProviderSetup(){
- if(actor?.role!=='owner')return toast('Owner sign-in required to connect an AI provider');
+ if(!actor?.authenticated)return toast('Named member sign-in required to connect an AI provider');
  modal('Connect Morpheus AI',`<div class="ai-box"><h3>OpenAI API provider</h3><p>The API key is sent directly to Supabase and stored encrypted in Vault. It is never written into the website source or local storage.</p></div><div class="provider-connect"><div class="field"><label>OpenAI API key</label><input id="openaiKeyInput" type="password" class="input" autocomplete="off" placeholder="sk-…"></div><button id="saveOpenAIKey" class="btn primary">Connect & verify</button><div id="openaiKeyStatus" class="meta"></div></div>`);
  $('#saveOpenAIKey').onclick=async()=>{
   const key=$('#openaiKeyInput').value.trim();if(key.length<20)return toast('Paste the complete API key');
@@ -545,13 +545,12 @@ function renderConnections(){
  }).join('');
 }
 function renderIdentity(){
- const a=actor||data.actor||{display_name:'Shared',role:'shared'};
+ const a=actor||data.actor||{display_name:'Shared'};
  const name=a.display_name||a.email||'Shared';
- const role=a.role||'shared';
  if($('#identityName'))$('#identityName').textContent=name;
- if($('#identityRole'))$('#identityRole').textContent=role==='owner'?'Owner':role==='editor'?'Editor':'Shared access';
+ if($('#identityRole'))$('#identityRole').textContent=a.authenticated?'Sales OS member':'Shared access';
  if($('#identityInitial'))$('#identityInitial').textContent=(name.trim().charAt(0)||'?').toUpperCase();
- if($('#sideIdentity'))$('#sideIdentity').innerHTML=`<b>${esc(name)}</b><span>${esc(role==='owner'?'Owner · approvals enabled':role==='editor'?'Editor · protected sends require approval':'Shared fallback · cannot approve')}</span>`;
+ if($('#sideIdentity'))$('#sideIdentity').innerHTML=`<b>${esc(name)}</b><span>${esc(a.authenticated?'Sales OS member · full access':'Shared fallback · protected actions require member review')}</span>`;
 }
 function approvalForDraft(draftId,status=null){
  const rows=data.approvals.filter(a=>a.item_type==='email_send'&&a.source_id===draftId);
@@ -567,7 +566,7 @@ function renderApprovals(){
  const pending=data.approvals.filter(a=>a.status==='pending').sort((a,b)=>new Date(b.requested_at)-new Date(a.requested_at));
  const history=data.approvals.filter(a=>a.status!=='pending').sort((a,b)=>new Date(b.reviewed_at||b.updated_at)-new Date(a.reviewed_at||a.updated_at)).slice(0,20);
  if($('#approvalSummary'))$('#approvalSummary').textContent=pending.length+' pending';
- const owner=(actor?.role==='owner');
+ const owner=(actor?.authenticated===true);
  $('#approvalList').innerHTML=pending.length?pending.map(a=>`<div class="approval-card">
    <div class="approval-main">
     <div class="title">${esc(a.title)}</div>
@@ -575,13 +574,13 @@ function renderApprovals(){
     ${a.description?`<p>${esc(a.description)}</p>`:''}
     ${a.item_type==='email_send'?`<div class="approval-email"><b>To:</b> ${esc(a.payload?.recipient||'')}<br><b>Subject:</b> ${esc(a.payload?.subject||'')}<div class="approval-body">${esc(a.payload?.body||'')}</div></div>`:''}
    </div>
-   <div class="approval-actions">${owner?`<button class="btn green" onclick="reviewApproval('${a.id}','approved')">Approve</button><button class="btn" onclick="reviewApproval('${a.id}','changes_requested')">Changes</button><button class="btn danger" onclick="reviewApproval('${a.id}','rejected')">Reject</button>`:'<span class="pill amber">Waiting for owner</span>'}</div>
+   <div class="approval-actions">${owner?`<button class="btn green" onclick="reviewApproval('${a.id}','approved')">Approve</button><button class="btn" onclick="reviewApproval('${a.id}','changes_requested')">Changes</button><button class="btn danger" onclick="reviewApproval('${a.id}','rejected')">Reject</button>`:'<span class="pill amber">Waiting for member review</span>'}</div>
   </div>`).join(''):'<div class="empty">No pending approvals.</div>';
  $('#approvalHistory').innerHTML=history.length?history.map(a=>`<div class="activityrow"><div class="maincopy"><div class="title">${esc(a.title)}</div><div class="meta">${esc(a.status.replaceAll('_',' '))} · ${esc(a.reviewer_name||a.requested_by_name||'')} · ${new Date(a.reviewed_at||a.updated_at).toLocaleString()}</div>${a.review_note?`<div class="sub">${esc(a.review_note)}</div>`:''}</div></div>`).join(''):'<div class="empty">No approval history yet.</div>';
  $('#auditList').innerHTML=data.audit_log.slice(0,50).map(x=>`<div class="activityrow"><div class="maincopy"><div class="title">${esc(x.summary||x.action)}</div><div class="meta">${esc(x.actor_name||'System')} · ${esc(x.actor_role||'system')} · ${new Date(x.created_at).toLocaleString()}</div></div></div>`).join('')||'<div class="empty">No audit entries yet.</div>';
 }
 window.reviewApproval=async(id,decision)=>{
- if(actor?.role!=='owner'){toast('Owner sign-in required');return}
+ if(!actor?.authenticated){toast('Named member sign-in required');return}
  let note='';
  if(decision!=='approved')note=prompt(decision==='rejected'?'Reason for rejection (optional)':'What needs changing?')||'';
  try{
@@ -617,12 +616,12 @@ async function saveOpportunity(){
  toast('Opportunity updated');await load();openProspect(p.id);
 }
 
-function openProspectForm(){modal('Add prospect',`<div class="formgrid2"><div class="field"><label>Company</label><input id="npCompany" class="input"></div><div class="field"><label>Category</label><select id="npCategory" class="select">${categoryNames().map(x=>`<option>${esc(x)}</option>`).join('')}</select></div><div class="field"><label>Contact</label><input id="npContact" class="input"></div><div class="field"><label>Email</label><input id="npEmail" class="input"></div><div class="field"><label>Website</label><input id="npWebsite" class="input"></div><div class="field"><label>Owner</label><input id="npOwner" class="input" value="Yazeed"></div></div><button id="createProspectConfirm" class="btn primary">Create prospect</button>`);$('#createProspectConfirm').onclick=async()=>{const company=$('#npCompany').value.trim();if(!company)return toast('Company required');await rpc('sales_os_save_prospect',{p_token:token,p_payload:{company,category:$('#npCategory').value||'General',contact_name:$('#npContact').value,contact_email:$('#npEmail').value,website:$('#npWebsite').value,owner_assigned:$('#npOwner').value||'Yazeed',stage:'Research',status:'Not started',next_action:'Review and qualify'}});closeModal();toast('Prospect added');await load()}}
+function openProspectForm(){modal('Add prospect',`<div class="formgrid2"><div class="field"><label>Company</label><input id="npCompany" class="input"></div><div class="field"><label>Category</label><select id="npCategory" class="select">${categoryNames().map(x=>`<option>${esc(x)}</option>`).join('')}</select></div><div class="field"><label>Contact</label><input id="npContact" class="input"></div><div class="field"><label>Email</label><input id="npEmail" class="input"></div><div class="field"><label>Website</label><input id="npWebsite" class="input"></div><div class="field"><label>Assigned to</label><input id="npOwner" class="input" value="Yazeed"></div></div><button id="createProspectConfirm" class="btn primary">Create prospect</button>`);$('#createProspectConfirm').onclick=async()=>{const company=$('#npCompany').value.trim();if(!company)return toast('Company required');await rpc('sales_os_save_prospect',{p_token:token,p_payload:{company,category:$('#npCategory').value||'General',contact_name:$('#npContact').value,contact_email:$('#npEmail').value,website:$('#npWebsite').value,owner_assigned:$('#npOwner').value||'Yazeed',stage:'Research',status:'Not started',next_action:'Review and qualify'}});closeModal();toast('Prospect added');await load()}}
 
 function openNoteForm(prospectId=null,note=null){modal(note?'Edit note':'New note',`<div class="field"><label>Title</label><input id="noteTitle" class="input" value="${esc(note?.title||'')}"></div><div class="field"><label>Note</label><textarea id="noteBody" class="textarea" rows="9">${esc(note?.body||'')}</textarea></div><label style="font-size:10px"><input id="notePinned" type="checkbox" ${note?.pinned?'checked':''}> Pin note</label><div style="margin-top:12px"><button id="saveNoteConfirm" class="btn primary">Save note</button></div>`);$('#saveNoteConfirm').onclick=async()=>{await rpc('sales_os_save_note',{p_token:token,p_payload:{id:note?.id,prospect_id:prospectId||note?.prospect_id,title:$('#noteTitle').value,body:$('#noteBody').value,pinned:$('#notePinned').checked,created_by:'Sales OS'}});closeModal();toast('Note saved');await load();if(prospectId)openProspect(prospectId)}}
 window.editNote=id=>{const n=data.notes.find(x=>x.id===id);if(n)openNoteForm(n.prospect_id,n)};
 
-function openReminderForm(prospectId=null,r=null){modal(r?'Edit reminder':'New reminder',`<div class="field"><label>Reminder</label><input id="remTitle" class="input" value="${esc(r?.title||'')}"></div><div class="field"><label>When</label><input id="remDue" type="datetime-local" class="input" value="${esc(dateTimeLocal(r?.due_at)||dateTimeLocal(new Date(Date.now()+86400000)))}"></div><div class="formgrid2"><div class="field"><label>Owner</label><input id="remOwner" class="input" value="${esc(r?.owner_assigned||'Yazeed')}"></div><div class="field"><label>Priority</label><select id="remPriority" class="select"><option>normal</option><option>high</option><option>low</option></select></div></div><div class="field"><label>Details</label><textarea id="remBody" class="textarea">${esc(r?.body||'')}</textarea></div><button id="saveReminderConfirm" class="btn primary">Save reminder</button>`);$('#saveReminderConfirm').onclick=async()=>{await rpc('sales_os_save_reminder',{p_token:token,p_payload:{id:r?.id,prospect_id:prospectId||r?.prospect_id,title:$('#remTitle').value,due_at:new Date($('#remDue').value).toISOString(),owner_assigned:$('#remOwner').value,priority:$('#remPriority').value,body:$('#remBody').value,status:r?.status||'open',notify_in_app:true,created_by:'Sales OS'}});closeModal();toast('Reminder saved');await load();if(prospectId)openProspect(prospectId)}}
+function openReminderForm(prospectId=null,r=null){modal(r?'Edit reminder':'New reminder',`<div class="field"><label>Reminder</label><input id="remTitle" class="input" value="${esc(r?.title||'')}"></div><div class="field"><label>When</label><input id="remDue" type="datetime-local" class="input" value="${esc(dateTimeLocal(r?.due_at)||dateTimeLocal(new Date(Date.now()+86400000)))}"></div><div class="formgrid2"><div class="field"><label>Assigned to</label><input id="remOwner" class="input" value="${esc(r?.owner_assigned||'Yazeed')}"></div><div class="field"><label>Priority</label><select id="remPriority" class="select"><option>normal</option><option>high</option><option>low</option></select></div></div><div class="field"><label>Details</label><textarea id="remBody" class="textarea">${esc(r?.body||'')}</textarea></div><button id="saveReminderConfirm" class="btn primary">Save reminder</button>`);$('#saveReminderConfirm').onclick=async()=>{await rpc('sales_os_save_reminder',{p_token:token,p_payload:{id:r?.id,prospect_id:prospectId||r?.prospect_id,title:$('#remTitle').value,due_at:new Date($('#remDue').value).toISOString(),owner_assigned:$('#remOwner').value,priority:$('#remPriority').value,body:$('#remBody').value,status:r?.status||'open',notify_in_app:true,created_by:'Sales OS'}});closeModal();toast('Reminder saved');await load();if(prospectId)openProspect(prospectId)}}
 window.completeReminder=async id=>{await rpc('sales_os_save_reminder',{p_token:token,p_payload:{id,status:'completed'}});toast('Reminder completed');await load()};
 
 function openAssetForm(prospectId=null,a=null){modal(a?'Edit asset':'New asset',`<div class="field"><label>Prospect</label><select id="assetProspect" class="select">${data.prospects.map(p=>`<option value="${p.id}">${esc(p.company)}</option>`).join('')}</select></div><div class="formgrid2"><div class="field"><label>Type</label><select id="assetType" class="select"><option>Website</option><option>Proposal</option><option>Images</option><option>Spreadsheet</option><option>Research</option><option>Other</option></select></div><div class="field"><label>Status</label><select id="assetStatus" class="select"><option>Built</option><option>Draft</option><option>Needs QA</option><option>Sent</option></select></div></div><div class="field"><label>Title</label><input id="assetTitle" class="input" value="${esc(a?.title||'')}"></div><div class="field"><label>URL</label><input id="assetUrl" class="input" value="${esc(a?.url||'')}"></div><div class="field"><label>Notes</label><textarea id="assetNotes" class="textarea">${esc(a?.notes||'')}</textarea></div><button id="saveAssetConfirm" class="btn primary">Save asset</button>`);$('#assetProspect').value=prospectId||a?.prospect_id||data.prospects[0]?.id||'';if(a){$('#assetType').value=a.asset_type||'Other';$('#assetStatus').value=a.status||'Built'}$('#saveAssetConfirm').onclick=async()=>{await rpc('sales_os_save_asset',{p_token:token,p_payload:{id:a?.id,prospect_id:$('#assetProspect').value,asset_type:$('#assetType').value,status:$('#assetStatus').value,title:$('#assetTitle').value,url:$('#assetUrl').value,notes:$('#assetNotes').value}});closeModal();toast('Asset saved');await load();if(prospectId)openProspect(prospectId)}}
@@ -644,7 +643,7 @@ async function sendDraftNative(d){
 }
 async function launchApprovedSend(d,approval=null){
  const p=data.prospects.find(x=>x.id===d.prospect_id);
- const approvalLine=approval?` This draft has Sales OS approval ID ${approval.id}; verify that approval before sending.`:' This send is initiated from an authenticated Sales OS Owner session.';
+ const approvalLine=approval?` This draft has Sales OS approval ID ${approval.id}; verify that approval before sending.`:' This send is initiated from an authenticated named Sales OS member session.';
  const prompt=`Use my connected Morpheus Sales OS and Gmail apps.
 
 Open the Sales OS prospect "${p?.company||''}" and find email draft ID ${d.id}.${approvalLine}
@@ -656,7 +655,7 @@ async function handleDirectSend(){
  await saveCurrentDraft();
  const fresh=data.email_drafts.find(x=>x.id===d.id)||d;
  const native=!!myGmailConnection()&&!!actor?.authenticated;
- if(actor?.role==='owner'){
+ if(actor?.authenticated===true){
    try{if(native)await sendDraftNative(fresh);else await launchApprovedSend(fresh,null)}catch(e){toast('Send failed: '+String(e.message||e))}
    return;
  }
@@ -666,7 +665,7 @@ async function handleDirectSend(){
    return;
  }
  const pending=approvalForDraft(fresh.id,'pending');
- if(pending&&approvalMatchesDraft(pending,fresh)){go('approvals');toast('Already waiting for owner approval');return}
+ if(pending&&approvalMatchesDraft(pending,fresh)){go('approvals');toast('Already waiting for member approval');return}
  try{
   await rpc('sales_os_request_approval',{p_token:token||null,p_payload:{
     prospect_id:fresh.prospect_id,item_type:'email_send',source_table:'sales_os_email_drafts',source_id:fresh.id,
