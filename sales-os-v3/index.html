@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#07100b">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Morpheus Sales">
+<link rel="manifest" href="./manifest.webmanifest?v=1">
+<link rel="icon" href="./icon.svg" type="image/svg+xml">
+<title>Morpheus Sales OS</title>
+<link rel="stylesheet" href="./styles.css?v=1">
+</head>
+<body>
+<section id="login" class="login-screen">
+  <div class="login-aura"></div>
+  <div class="login-card">
+    <div class="brand-lockup">
+      <div class="brand-mark">M</div>
+      <div><b>MORPHEUS</b><span>SALES OS</span></div>
+    </div>
+    <div class="login-copy">
+      <div class="eyebrow">PRIVATE SALES INTELLIGENCE</div>
+      <h1>Make the next <span>move.</span></h1>
+      <p>Research. Create. Reach. Close. With AI at your side.</p>
+    </div>
+    <div class="field">
+      <label>Profile</label>
+      <select id="memberEmail" class="control">
+        <option value="">Choose profile</option>
+        <option value="saadmfazal@gmail.com">Saad</option>
+        <option value="yazeedmorsath@gmail.com">Yazeed</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Team access code</label>
+      <input id="accessCode" class="control" type="password" autocomplete="current-password" placeholder="Enter access code">
+    </div>
+    <button id="memberLoginBtn" class="btn primary wide">Open Sales OS</button>
+    <details class="fallback-login">
+      <summary>Emergency shared access</summary>
+      <p>Use only if named sign-in is unavailable.</p>
+      <button id="sharedLoginBtn" class="btn wide">Open with shared code</button>
+    </details>
+    <div id="loginError" class="form-error"></div>
+  </div>
+</section>
+
+<div id="app" class="app hidden">
+  <aside class="sidebar">
+    <div class="side-brand">
+      <div class="brand-mark small">M</div>
+      <div><b>MORPHEUS</b><span>SALES OS</span></div>
+    </div>
+    <nav class="side-nav">
+      <button data-route="command" class="nav-link active"><span>⌂</span>Command</button>
+      <button data-route="prospects" class="nav-link"><span>♙</span>Prospects</button>
+      <button data-route="research" class="nav-link"><span>⌕</span>Research</button>
+      <button data-route="assets" class="nav-link"><span>▣</span>Assets</button>
+      <button data-route="outreach" class="nav-link"><span>➤</span>Outreach</button>
+      <button data-route="pipeline" class="nav-link"><span>▥</span>Pipeline</button>
+      <button data-route="settings" class="nav-link"><span>⚙</span>Settings</button>
+    </nav>
+    <div class="side-footer">
+      <div id="sideIdentity" class="member-chip"><span class="avatar">?</span><div><b>Shared</b><small>Sales OS</small></div></div>
+      <button id="signOutBtn" class="nav-link subtle"><span>↗</span>Sign out</button>
+    </div>
+  </aside>
+
+  <div class="workspace">
+    <header class="topbar">
+      <button class="mobile-brand" data-route="command" aria-label="Home"><span class="brand-mark tiny">M</span></button>
+      <div class="team-pill"><span id="teamAvatarA">S</span><span id="teamAvatarB">Y</span><b>Saad + Yazeed</b></div>
+      <div class="global-search">
+        <span>⌕</span><input id="globalSearch" placeholder="Search prospects, assets, research…">
+      </div>
+      <button id="newProspectTop" class="btn lime">＋ Prospect</button>
+      <button id="topIdentity" class="identity-circle">?</button>
+    </header>
+
+    <main class="main">
+      <section id="page-command" class="page route-page">
+        <div class="command-grid">
+          <section class="command-main">
+            <div class="hero-copy">
+              <div>
+                <div class="eyebrow">MORPHEUS SALES INTELLIGENCE</div>
+                <h1>MAKE THE NEXT <span>MOVE.</span></h1>
+                <p>Your sales intelligence, in one place.</p>
+              </div>
+              <button id="commandNewProspect" class="btn lime desktop-only">＋ Prospect</button>
+            </div>
+
+            <section class="panel priority-panel">
+              <div class="panel-head"><h2>Today’s priorities</h2><button data-route="prospects" class="text-link">See all →</button></div>
+              <div id="todayPriorities" class="priority-list"></div>
+            </section>
+          </section>
+
+          <section class="panel intelligence-panel">
+            <div class="panel-head compact"><div><div class="eyebrow">MORPHEUS INTELLIGENCE</div><h2>What should we move forward today?</h2></div><span class="wave">⌁⌁⌁</span></div>
+            <div class="orb-wrap"><div class="orb"><div class="orb-core"></div><i></i><i></i><i></i></div></div>
+            <div class="intelligence-actions">
+              <button id="commandAskAI" class="mini-card"><b id="priorityCount">0 priority accounts</b><span>Ready for next step</span></button>
+              <button data-route="assets" class="mini-card"><b>Review assets</b><span>Before outreach</span></button>
+            </div>
+          </section>
+
+          <section class="panel team-panel">
+            <div class="panel-head"><h2>Team activity</h2><button data-route="prospects" class="text-link">View all →</button></div>
+            <div id="teamActivity" class="activity-stack"></div>
+          </section>
+        </div>
+
+        <section class="priority-prospects-wrap">
+          <div class="panel-head"><h2>Priority prospects</h2><span id="commandCounts" class="quiet"></span></div>
+          <div id="priorityProspects" class="prospect-showcase"></div>
+        </section>
+
+        <button id="commandBar" class="command-bar"><span class="spark">✦</span><span>Ask Morpheus to research, prepare or prioritise…</span><i>⌁</i></button>
+      </section>
+
+      <section id="page-prospects" class="page route-page hidden">
+        <div class="page-head">
+          <div><div class="eyebrow">PROSPECTS</div><h1>Every opportunity. One place.</h1><p>Research, assets, outreach and next actions stay attached to the account.</p></div>
+          <div class="head-actions"><button id="findProspectsBtn" class="btn">✦ Find prospects</button><button id="addProspectBtn" class="btn lime">＋ Prospect</button></div>
+        </div>
+        <div class="filter-bar panel">
+          <input id="prospectSearch" class="control search" placeholder="Search companies…">
+          <select id="prospectCategory" class="control"><option value="">All markets</option></select>
+          <select id="prospectStage" class="control"><option value="">All stages</option></select>
+          <select id="prospectAssignee" class="control"><option value="">All assignees</option></select>
+        </div>
+        <div id="prospectGrid" class="prospect-grid"></div>
+      </section>
+
+      <section id="page-research" class="page route-page hidden">
+        <div class="page-head">
+          <div><div class="eyebrow">RESEARCH</div><h1>Know the prospect before we move.</h1><p>Current public research, saved sources and the next asset opportunity.</p></div>
+          <div class="head-actions"><button id="researchFindNew" class="btn lime">✦ Find new prospects</button></div>
+        </div>
+        <div class="two-col">
+          <section class="panel"><div class="panel-head"><h2>Research queue</h2><span id="researchQueueCount" class="quiet"></span></div><div id="researchQueue" class="stack-list"></div></section>
+          <section class="panel"><div class="panel-head"><h2>Recent research</h2></div><div id="recentResearch" class="stack-list"></div></section>
+        </div>
+      </section>
+
+      <section id="page-assets" class="page route-page hidden">
+        <div class="page-head">
+          <div><div class="eyebrow">ASSET STUDIO</div><h1>Build something worth opening.</h1><p>Ahamed’s queue, submissions, review status and live prospect assets.</p></div>
+        </div>
+        <section class="panel asset-queue-panel">
+          <div class="panel-head"><h2>Ahamed’s asset queue</h2><span id="assetQueueCount" class="quiet"></span></div>
+          <div id="assetQueue" class="asset-job-grid"></div>
+        </section>
+        <section class="assets-library"><div class="panel-head"><h2>Asset library</h2><span id="assetLibraryCount" class="quiet"></span></div><div id="assetLibrary" class="asset-grid"></div></section>
+      </section>
+
+      <section id="page-outreach" class="page route-page hidden">
+        <div class="page-head">
+          <div><div class="eyebrow">OUTREACH</div><h1>Prepared, reviewed, sent.</h1><p>Draft from live prospect context, refine with AI, then send through the connected mailbox.</p></div>
+          <div class="head-actions"><button id="newDraftBtn" class="btn lime">＋ Draft</button></div>
+        </div>
+        <div class="outreach-layout">
+          <section class="panel draft-list-panel"><div class="panel-head"><h2>Email drafts</h2><span id="draftCount" class="quiet"></span></div><div id="draftList"></div></section>
+          <section id="draftEditor" class="panel draft-editor"><div class="empty">Choose a draft to begin.</div></section>
+        </div>
+      </section>
+
+      <section id="page-pipeline" class="page route-page hidden">
+        <div class="page-head"><div><div class="eyebrow">PIPELINE</div><h1>Move the right accounts forward.</h1><p>See what is researching, ready, contacted, replied and closing.</p></div></div>
+        <div id="pipelineBoard" class="pipeline-board"></div>
+      </section>
+
+      <section id="page-settings" class="page route-page hidden">
+        <div class="page-head"><div><div class="eyebrow">SETTINGS</div><h1>Connections & workspace.</h1><p>AI, Gmail, ChatGPT, import tools and team identity.</p></div></div>
+        <div id="connectionsGrid" class="connection-grid"></div>
+        <section class="panel settings-panel">
+          <div class="panel-head"><h2>Workspace tools</h2></div>
+          <div class="settings-actions">
+            <button id="importCsvBtn" class="btn">Import CSV</button>
+            <button id="manageCategoriesBtn" class="btn">Categories</button>
+            <button id="notificationsBtn" class="btn">Browser notifications</button>
+          </div>
+        </section>
+      </section>
+
+      <section id="page-prospect" class="page route-page hidden prospect-page">
+        <div id="prospectDetail"></div>
+      </section>
+    </main>
+  </div>
+
+  <nav class="mobile-nav">
+    <button data-route="command" class="active"><span>⌂</span>Today</button>
+    <button data-route="prospects"><span>♙</span>Prospects</button>
+    <button data-route="assets"><span>▣</span>Assets</button>
+    <button id="mobileAI"><span>◌</span>AI</button>
+    <button id="mobileMore"><span>•••</span>More</button>
+  </nav>
+</div>
+
+<div id="moreSheet" class="sheet hidden">
+  <div class="sheet-backdrop" data-close-sheet></div>
+  <div class="sheet-panel">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head"><div><b>More</b><span>Morpheus Sales OS</span></div><button data-close-sheet class="icon-btn">×</button></div>
+    <div class="sheet-list">
+      <button data-route="research"><span>⌕</span><div><b>Research</b><small>Research prospects</small></div></button>
+      <button data-route="outreach"><span>➤</span><div><b>Outreach</b><small>Drafts and sending</small></div></button>
+      <button data-route="pipeline"><span>▥</span><div><b>Pipeline</b><small>Stages and next moves</small></div></button>
+      <button data-route="settings"><span>⚙</span><div><b>Settings</b><small>Connections and tools</small></div></button>
+      <button id="sheetSignOut"><span>↗</span><div><b>Sign out</b><small>Close workspace</small></div></button>
+    </div>
+  </div>
+</div>
+
+<div id="copilot" class="copilot hidden">
+  <div class="copilot-backdrop" data-close-copilot></div>
+  <aside class="copilot-panel">
+    <div class="copilot-head">
+      <div><div class="eyebrow">MORPHEUS COPILOT</div><h2 id="copilotTitle">Ask Morpheus</h2><p id="copilotContext"></p></div>
+      <button data-close-copilot class="icon-btn">×</button>
+    </div>
+    <div id="copilotProvider" class="provider-banner hidden"></div>
+    <div id="copilotQuick" class="quick-prompts"></div>
+    <div id="copilotMessages" class="copilot-messages"></div>
+    <div class="copilot-compose"><textarea id="copilotInput" placeholder="What shall we move forward?"></textarea><button id="copilotSend" class="btn lime">Ask</button></div>
+  </aside>
+</div>
+
+<div id="modal" class="modal hidden">
+  <div class="modal-backdrop" data-close-modal></div>
+  <div id="modalCard" class="modal-card"></div>
+</div>
+
+<div id="toast" class="toast hidden"></div>
+<script src="./app.js?v=1"></script>
+</body>
+</html>
