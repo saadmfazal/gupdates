@@ -114,16 +114,61 @@ function priorityProspects(){
 }
 function renderCommand(){
   if(!$('#todayPriorities'))return;
-  const priorities=[];
-  data.asset_work_requests.filter(j=>j.status==='ready_for_review').slice(0,3).forEach(j=>priorities.push({kind:'Asset review',title:'Review '+(prospectName(j.prospect_id)||'asset'),sub:'Assets · Ahamed',action:'Review assets',route:'assets',pid:j.prospect_id}));
-  data.email_drafts.filter(d=>d.status==='draft').slice(0,3).forEach(d=>priorities.push({kind:'Draft ready',title:'Prepare '+(prospectName(d.prospect_id)||'outreach'),sub:'Draft ready',action:'View draft',route:'outreach',pid:d.prospect_id}));
-  data.prospects.filter(p=>p.stage==='Research').sort((a,b)=>(b.score||0)-(a.score||0)).slice(0,3).forEach(p=>priorities.push({kind:'Research',title:'Research '+p.company,sub:'Research · '+(p.owner_assigned||''),action:'Start research',route:'prospect',pid:p.id}));
-  $('#todayPriorities').innerHTML=priorities.slice(0,3).map(x=>'<div class="priority-row"><div class="priority-art"></div><div><h3>'+esc(x.title)+'</h3><p>'+esc(x.sub)+'</p></div><button class="btn" onclick="routeToPriority(\''+x.route+'\',\''+(x.pid||'')+'\')">'+esc(x.action)+' →</button></div>').join('')||'<div class="empty">Nothing urgent right now.</div>';
+  const priorities=todayQueue.slice(0,5);
+  $('#todayPriorities').innerHTML=priorities.length?priorities.map((x,i)=>{
+    const company=x.title||prospectName(x.prospect_id)||'Sales task';
+    const sub=[x.category,x.assigned_to,'Urgency '+x.score].filter(Boolean).join(' · ');
+    return '<div class="priority-row" data-urgency="'+esc(x.score)+'"><div class="priority-art"></div><div><h3>'+esc(x.action_label||company)+'</h3><p>'+esc(company)+' · '+esc(x.reason||'')+'</p><div class="priority-score">'+esc(sub)+'</div></div><button class="btn" onclick="runTodayItem('+i+')">'+esc(x.action_label||'Open')+' →</button></div>';
+  }).join(''):'<div class="empty">Nothing urgent right now.</div>';
+
   const activity=[...data.activities].sort((a,b)=>new Date(b.occurred_at)-new Date(a.occurred_at)).slice(0,4);
   $('#teamActivity').innerHTML=activity.map(a=>'<div class="activity-row"><span class="activity-icon">'+(a.activity_type==='Sent'?'➤':a.activity_type==='Reply'?'✦':'▣')+'</span><div><b>'+esc(a.actor_name||a.activity_type||'Activity')+'</b><span>'+esc((a.subject||a.outcome||prospectName(a.prospect_id)||'').slice(0,76))+'</span></div><time>'+new Date(a.occurred_at).toLocaleDateString()+'</time></div>').join('')||'<div class="empty">No activity yet.</div>';
-  const pp=priorityProspects();$('#priorityCount').textContent=pp.length+' priority accounts';$('#priorityProspects').innerHTML=pp.map(p=>showcaseCard(p)).join('');
-  $('#commandCounts').textContent=data.prospects.length+' prospects  |  '+data.assets.length+' assets';
+
+  const pp=priorityProspects();
+  const actionable=todayQueue.filter(x=>x.score>=70).length;
+  $('#priorityCount').textContent=actionable+' active moves';
+  $('#priorityProspects').innerHTML=pp.map(p=>showcaseCard(p)).join('');
+  $('#commandCounts').textContent=data.prospects.length+' prospects  |  '+data.assets.length+' assets  |  '+todayQueue.length+' ranked actions';
+
+  const reviewCount=data.asset_work_requests.filter(j=>j.status==='ready_for_review').length;
+  const replyCount=data.inbox_threads.filter(t=>t.status==='open'&&t.last_direction==='inbound').length;
+  const followCount=data.workflow_state.filter(w=>w.recommended_action==='Follow up').length;
+  const ai=$('#commandAskAI');
+  if(ai)ai.innerHTML='<b>'+replyCount+' replies · '+reviewCount+' reviews · '+followCount+' follow-ups</b><span>Morpheus has ranked the next moves</span>';
 }
+window.runTodayItem=async i=>{
+  const x=todayQueue[i];if(!x)return;
+  if(x.item_type==='reminder'){
+    modal('Reminder','<div class="command-plan-answer">'+esc(x.reason||x.title)+'</div><div class="editor-actions"><button id="completeTodayReminder" class="btn lime">Complete reminder</button></div>');
+    $('#completeTodayReminder').onclick=async()=>{await rpc('sales_os_complete_reminder',{p_token:token||null,p_id:x.entity_id}).catch(async()=>{await rpc('sales_os_save_reminder',{p_token:token||null,p_payload:{id:x.entity_id,status:'completed'}})});closeModal();await load();toast('Reminder completed')};
+    return;
+  }
+  if(x.item_type==='approval'){
+    openApprovalItem(x.entity_id);return;
+  }
+  const p=data.prospects.find(v=>v.id===x.prospect_id);if(!p)return;
+  if(x.action_kind==='reply'){route('#/prospect/'+p.id);return}
+  if(x.action_kind==='asset_review'){
+    const j=pJobs(p.id).find(j=>j.status==='ready_for_review');if(j){openAssetJob(j.id);return}
+    route('#/assets');return;
+  }
+  if(x.action_kind==='draft_ready'){const d=pDrafts(p.id).find(d=>d.status==='draft');if(d){currentDraft=d;route('#/outreach');renderOutreach();return}}
+  if(x.action_kind==='asset_ready'){aiWrite(p.id);return}
+  if(x.action_kind==='waiting'){aiWrite(p.id);return}
+  if(x.action_kind==='research'||x.action_kind==='research_ready'){if(x.action_kind==='research')startResearch(p.id);else route('#/prospect/'+p.id);return}
+  route('#/prospect/'+p.id);
+};
+function openApprovalItem(id){
+  const a=data.approvals.find(x=>x.id===id);if(!a)return toast('Approval not found');
+  modal('Review approval','<div class="command-plan-answer"><b>'+esc(a.title)+'</b><br>'+esc(a.description||'Protected action awaiting review.')+'</div><div class="editor-actions"><button id="approveTodayItem" class="btn lime">Approve</button><button id="rejectTodayItem" class="btn">Reject</button></div>');
+  $('#approveTodayItem').onclick=()=>reviewTodayApproval(id,'approved');
+  $('#rejectTodayItem').onclick=()=>reviewTodayApproval(id,'rejected');
+}
+async function reviewTodayApproval(id,decision){
+  if(!actor?.authenticated)return toast('Sign in as Saad or Yazeed');
+  await rpc('sales_os_review_approval',{p_token:token||null,p_id:id,p_decision:decision,p_note:''});closeModal();await load();toast(decision==='approved'?'Approved':'Rejected');
+}
+
 window.routeToPriority=(routeName,pid)=>{if(routeName==='prospect'&&pid)route('#/prospect/'+pid);else route('#/'+routeName)};
 function showcaseCard(p){
   const f=favicon(p),tag=p.stage==='Ready to contact'?'Draft ready':p.stage==='Research'?'Research ready':p.stage;
