@@ -98,7 +98,7 @@ function renderCounts(){
  const drafts=data.email_drafts.filter(d=>d.status==='draft').length,openR=data.reminders.filter(r=>r.status==='open').length;
  const pendingApprovals=data.approvals.filter(a=>a.status==='pending').length;
  const due=data.reminders.filter(dueReminder).length+data.prospects.filter(followupDue).length+(actor?.role==='owner'?pendingApprovals:0);
- const inboxActions=data.email_messages.filter(m=>m.requires_action).length;
+ const inboxActions=data.inbox_threads.filter(t=>t.status==='open').length||data.email_messages.filter(m=>m.requires_action).length;
  const aiActions=data.recommendations.filter(r=>r.status==='open').length;
  const activeValue=data.opportunities.filter(o=>!['Won','Lost'].includes(data.prospects.find(p=>p.id===o.prospect_id)?.stage)).reduce((sum,o)=>sum+Number(o.estimated_value||0),0);
  $('#navProspects').textContent=data.prospects.length;$('#navAssets').textContent=data.assets.length;$('#navDrafts').textContent=drafts;$('#navReminders').textContent=openR;
@@ -431,7 +431,20 @@ function openAIProviderSetup(){
  };
 }
 function renderConnections(){
- $('#connectionsGrid').innerHTML=data.connections.map(c=>`<article class="connection"><div class="panelhead"><h3>${esc(c.label)}</h3><span class="pill ${c.status==='connected'?'green':'amber'}">${esc(c.status.replaceAll('_',' '))}</span></div><p>${c.key==='chatgpt'?'Connect Sales OS to ChatGPT as a private MCP app so ChatGPT can read and update CRM data conversationally.':'Connect Gmail for direct send, reply tracking and thread-aware follow-ups.'}</p><button class="btn ${c.status==='connected'?'':'primary'}" onclick="openConnection('${c.key}')">${c.status==='connected'?'Manage':'Set up'}</button></article>`).join('');
+ if(!$('#connectionsGrid'))return;
+ $('#connectionsGrid').innerHTML=data.connections.map(c=>{
+   let status=c.status||'setup_required',desc='',button='Set up';
+   if(c.key==='ai'){
+     status=providerStatus.ai?'connected':'provider_required';
+     desc=providerStatus.ai?'Native Morpheus Sales Copilot is connected to the OpenAI API and runs with live CRM context.':'Connect an OpenAI API key once to activate the native in-dashboard Copilot. The key is stored server-side in Supabase Vault.';
+     button=providerStatus.ai?'Manage AI':'Connect AI';
+   }else if(c.key==='chatgpt'){
+     desc='Connect Sales OS to ChatGPT as a private MCP app so ChatGPT can work directly with prospects, assets, reminders, approvals and inbox state.';
+   }else{
+     desc='Gmail remains the external mailbox source. Sales OS stores synchronized prospect threads and follow-up state without storing Gmail credentials in the browser.';
+   }
+   return `<article class="connection"><div class="panelhead"><h3>${esc(c.label)}</h3><span class="pill ${status==='connected'?'green':'amber'}">${esc(status.replaceAll('_',' '))}</span></div><p>${esc(desc)}</p><button class="btn ${status==='connected'?'':'primary'}" onclick="openConnection('${c.key}')">${esc(button)}</button></article>`;
+ }).join('');
 }
 function renderIdentity(){
  const a=actor||data.actor||{display_name:'Shared',role:'shared'};
@@ -482,7 +495,7 @@ function renderNotifications(){
  const ns=data.notifications.filter(n=>!n.dismissed_at);$('#noticeList').innerHTML=ns.length?ns.slice(0,20).map(n=>`<div class="noticeitem ${n.read_at?'':'unread'}"><b>${esc(n.title)}</b><p>${esc(n.body||'')}</p><button class="btn" onclick="markNotice('${n.id}','read')">Read</button> <button class="btn" onclick="markNotice('${n.id}','dismiss')">Dismiss</button></div>`).join(''):'<div class="empty">You’re all caught up.</div>';
 }
 
-function go(page){currentPage=page;document.querySelectorAll('[data-page-view]').forEach(s=>s.classList.toggle('hidden',s.dataset.pageView!==page));document.querySelectorAll('.navitem[data-page]').forEach(b=>b.classList.toggle('active',b.dataset.page===page));document.querySelectorAll('[data-mobile-page]').forEach(b=>b.classList.toggle('active',b.dataset.mobilePage===page));if($('#mobileMoreBtn'))$('#mobileMoreBtn').classList.toggle('active',['pipeline','email','reminders','assets','notes','categories','approvals','connections'].includes(page));$('#noticeMenu').classList.add('hidden');closeMobileMore();if(page==='prospects')renderProspects();if(page==='email')renderEmail();if(window.matchMedia('(max-width:760px)').matches)window.scrollTo({top:0,behavior:'auto'})}
+function go(page){currentPage=page;document.querySelectorAll('[data-page-view]').forEach(s=>s.classList.toggle('hidden',s.dataset.pageView!==page));document.querySelectorAll('.navitem[data-page]').forEach(b=>b.classList.toggle('active',b.dataset.page===page));document.querySelectorAll('[data-mobile-page]').forEach(b=>b.classList.toggle('active',b.dataset.mobilePage===page));if($('#mobileMoreBtn'))$('#mobileMoreBtn').classList.toggle('active',['pipeline','email','reminders','assets','notes','categories','approvals','connections'].includes(page));$('#noticeMenu').classList.add('hidden');closeMobileMore();if(page==='prospects')renderProspects();if(page==='inbox')renderInbox();if(page==='email')renderEmail();if(window.matchMedia('(max-width:760px)').matches)window.scrollTo({top:0,behavior:'auto'})}
 function modal(title,body){$('#genericModalCard').innerHTML=`<div class="modalhead"><h2>${esc(title)}</h2><button class="close" onclick="closeModal()">×</button></div>${body}`;$('#genericModal').classList.remove('hidden');document.body.classList.add('modal-open')}
 window.closeModal=()=>{$('#genericModal').classList.add('hidden');document.body.classList.remove('modal-open')};
 
@@ -520,26 +533,7 @@ function openNewDraft(prospectId=null){modal('New email draft',`<div class="fiel
 async function saveCurrentDraft(){const d=currentDraft;if(!d)return;await rpc('sales_os_save_email_draft',{p_token:token,p_payload:{id:d.id,recipient:$('#edTo').value,sender_email:$('#edFrom').value,subject:$('#edSubject').value,body:$('#edBody').value,status:'draft'}});toast('Draft saved');await load()}
 
 function openAIWriter(prospectId){
- const p=data.prospects.find(x=>x.id===prospectId),as=pAssets(prospectId),acts=pActivities(prospectId).slice(0,8);
- const prompt=`You are helping write a concise B2B sales email for Morpheus Sales OS.
-
-PROSPECT
-Company: ${p?.company||''}
-Category: ${p?.category||''}
-Contact: ${p?.contact_name||''}
-Current stage: ${p?.stage||''}
-Next action: ${p?.next_action||''}
-
-ASSETS WE HAVE MADE
-${as.map(a=>'- '+a.asset_type+': '+a.title+(a.url?' — '+a.url:'')).join('\n')||'- None'}
-
-RECENT CRM CONTEXT
-${acts.map(a=>'- '+a.activity_type+': '+(a.subject||a.outcome||'')).join('\n')||'- None'}
-
-Write a natural, short, non-hype outreach email. Do not invent facts. If an asset exists, use it naturally. Return:
-SUBJECT:
-BODY:`;
- modal('AI writing',`<div class="ai-box"><h3>ChatGPT-ready context</h3><p>While the private MCP connection is being activated, this keeps the context clean and complete.</p></div><div class="field" style="margin-top:10px"><textarea id="aiPrompt" class="textarea" rows="17" readonly>${esc(prompt)}</textarea></div><div class="pageactions"><button id="copyAiPrompt" class="btn primary">Copy prompt</button><button id="openChatGPT" class="btn">Open ChatGPT</button></div>`);$('#copyAiPrompt').onclick=async()=>{await navigator.clipboard.writeText($('#aiPrompt').value);toast('AI prompt copied')};$('#openChatGPT').onclick=()=>window.open('https://chatgpt.com/','_blank');
+ openCopilot(prospectId,'Draft the best concise next sales email for this prospect using the live account context. Do not invent facts. Return a subject and body.');
 }
 async function launchApprovedSend(d,approval=null){
  const p=data.prospects.find(x=>x.id===d.prospect_id);
@@ -574,6 +568,13 @@ async function markNotice(id,action){await rpc('sales_os_set_notification_state'
 window.markNotice=markNotice;
 
 function openConnection(key){
+ if(key==='ai'){
+   if(providerStatus.ai){
+     modal('Morpheus AI',`<div class="ai-box"><h3>Native Copilot is connected</h3><p>Sales OS is using the OpenAI API server-side. The API key is stored in Supabase Vault and is not exposed to this browser.</p></div><div style="margin-top:12px"><button id="testNativeCopilot" class="btn primary">Open Copilot</button></div>`);
+     $('#testNativeCopilot').onclick=()=>{closeModal();openCopilot()};
+   }else openAIProviderSetup();
+   return;
+ }
  if(key==='chatgpt'){
   const base='https://viajmvbwpmkiqxjtgshv.supabase.co/functions/v1/sales-os-mcp/mcp';
   const privateMode=!!token;
@@ -650,6 +651,16 @@ if($('#mobileInstallApp'))$('#mobileInstallApp').onclick=async()=>{
 };
 $('#loginBtn').onclick=login;if($('#memberLoginBtn'))$('#memberLoginBtn').onclick=memberLogin;$('#accessCode').addEventListener('keydown',e=>{if(e.key==='Enter'){if($('#memberEmail')?.value.trim())memberLogin();else login()}});$('#lockBtn').onclick=signOutWorkspace;if($('#identityBtn'))$('#identityBtn').onclick=()=>go('approvals');if($('#approvalRefreshBtn'))$('#approvalRefreshBtn').onclick=load;
 $('#notificationBtn').onclick=()=>$('#noticeMenu').classList.toggle('hidden');$('#globalSearch').oninput=()=>{renderProspects();if($('#globalSearch').value)go('prospects')};
+if($('#copilotBtn'))$('#copilotBtn').onclick=()=>openCopilot();
+if($('#pdCopilot'))$('#pdCopilot').onclick=()=>openCopilot(selectedProspect?.id||null);
+if($('#aiAskCopilotBtn'))$('#aiAskCopilotBtn').onclick=()=>openCopilot();
+if($('#inboxCopilotBtn'))$('#inboxCopilotBtn').onclick=()=>selectedInboxThread?openInboxCopilot(selectedInboxThread):openCopilot();
+if($('#copilotClose'))$('#copilotClose').onclick=closeCopilot;
+document.querySelectorAll('[data-close-copilot]').forEach(x=>x.onclick=closeCopilot);
+if($('#copilotSend'))$('#copilotSend').onclick=sendCopilot;
+if($('#copilotInput'))$('#copilotInput').addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key==='Enter')sendCopilot()});
+if($('#inboxStatusFilter'))$('#inboxStatusFilter').onchange=renderInbox;
+if($('#inboxClassFilter'))$('#inboxClassFilter').onchange=renderInbox;
 if($('#syncInboxGuideBtn'))$('#syncInboxGuideBtn').onclick=()=>openChatGPTAutopilot('sync');
 if($('#aiQueueGuideBtn'))$('#aiQueueGuideBtn').onclick=()=>openChatGPTAutopilot('autopilot');
 function openChatGPTAutopilot(mode){
