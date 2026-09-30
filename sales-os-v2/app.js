@@ -7,7 +7,7 @@ const PIPELINE_STAGES=['Research','Ready to contact','Contacted','Follow-up','Re
 const CSV_COLUMNS=['company','category','segment','location','website','contact_name','contact_role','contact_email','phone','priority','score','owner_assigned','sender_name','sender_email','stage','status','next_action','next_action_date','caution','notes','tags','source_groups','source_notes','asset_type','asset_title','asset_url','asset_status','outreach_subject','outreach_message'];
 
 let token='';
-let data={prospects:[],assets:[],activities:[],templates:[],categories:[],notes:[],reminders:[],email_drafts:[],notifications:[],connections:[],gmail_connections:[],email_messages:[],inbox_threads:[],recommendations:[],opportunities:[],approvals:[],audit_log:[],members:[],copilot_threads:[]};
+let data={prospects:[],assets:[],asset_versions:[],asset_work_requests:[],asset_deliverables:[],asset_job_notes:[],asset_builders:[],activities:[],templates:[],categories:[],notes:[],reminders:[],email_drafts:[],notifications:[],connections:[],gmail_connections:[],email_messages:[],inbox_threads:[],recommendations:[],opportunities:[],approvals:[],audit_log:[],members:[],copilot_threads:[]};
 let selectedProspect=null,currentDraft=null,currentPage='dashboard',deferredInstallPrompt=null;
 let sessionAccessToken='',supabaseClient=null,actor=null;
 let selectedInboxThread=null,copilotThreadId=null,copilotProspectId=null,copilotLocal=[];
@@ -28,7 +28,7 @@ async function rpc(fn,payload={}){
  const r=await fetch(API+fn,{method:'POST',headers,body:JSON.stringify(payload)});
  const txt=await r.text();if(!r.ok)throw new Error(txt||`HTTP ${r.status}`);return txt?JSON.parse(txt):null
 }
-function norm(){for(const k of ['prospects','assets','activities','templates','categories','notes','reminders','email_drafts','notifications','connections','gmail_connections','email_messages','inbox_threads','recommendations','opportunities','approvals','audit_log','members','copilot_threads'])data[k]=Array.isArray(data[k])?data[k]:[]}
+function norm(){for(const k of ['prospects','assets','asset_versions','asset_work_requests','asset_deliverables','asset_job_notes','asset_builders','activities','templates','categories','notes','reminders','email_drafts','notifications','connections','gmail_connections','email_messages','inbox_threads','recommendations','opportunities','approvals','audit_log','members','copilot_threads'])data[k]=Array.isArray(data[k])?data[k]:[]}
 
 async function ensureSupabaseClient(){
  if(supabaseClient)return supabaseClient;
@@ -112,6 +112,9 @@ const pReminders=id=>data.reminders.filter(r=>r.prospect_id===id);
 const pActivities=id=>data.activities.filter(a=>a.prospect_id===id).sort((a,b)=>new Date(b.occurred_at)-new Date(a.occurred_at));
 const pOpportunity=id=>data.opportunities.find(o=>o.prospect_id===id)||null;
 const pMessages=id=>data.email_messages.filter(m=>m.prospect_id===id).sort((a,b)=>new Date(b.sent_at)-new Date(a.sent_at));
+const pAssetJobs=id=>data.asset_work_requests.filter(j=>j.prospect_id===id).sort((a,b)=>new Date(b.updated_at)-new Date(a.updated_at));
+const jobDeliverables=id=>data.asset_deliverables.filter(d=>d.work_request_id===id).sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));
+const jobNotes=id=>data.asset_job_notes.filter(n=>n.work_request_id===id).sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));
 const isEngaged=p=>['Replied','Qualified','Meeting','Proposal','Negotiation','Won'].includes(p.stage);
 const dueReminder=r=>r.status==='open'&&new Date(r.due_at)<=new Date();
 const followupDue=p=>p.next_action_date&&p.next_action_date<=todayISO()&&!['Won','Lost','Disqualified','Hold'].includes(p.stage);
@@ -299,7 +302,66 @@ function showDraftEditor(d){
  $('#saveDraftBtn').onclick=saveCurrentDraft;$('#copyDraftBtn').onclick=async()=>{await navigator.clipboard.writeText($('#edBody').value);toast('Copied')};$('#aiDraftBtn').onclick=()=>openAIWriter(d.prospect_id);$('#directSendBtn').onclick=()=>handleDirectSend(d.id);
 }
 window.openDraft=id=>{currentDraft=data.email_drafts.find(d=>d.id===id);renderEmail();if(window.matchMedia('(max-width:760px)').matches)setTimeout(()=>$('#emailEditor')?.scrollIntoView({behavior:'smooth',block:'start'}),60)};
-function renderAssets(){$('#assetGrid').innerHTML=data.assets.length?data.assets.map(a=>`<article class="assetcard"><span class="pill">${esc(a.asset_type)}</span><h3 style="font-size:13px;margin:9px 0 4px">${esc(a.title)}</h3><p>${esc(prospectName(a.prospect_id)||'Unlinked')} · ${esc(a.status||'')}</p><div class="assetactions">${a.url?`<a class="btn" href="${esc(a.url)}" target="_blank">Open ↗</a>`:''}<button class="btn" onclick="editAsset('${a.id}')">Edit</button></div></article>`).join(''):'<div class="empty">No assets.</div>'}
+function renderAssets(){
+ const queue=[...data.asset_work_requests].sort((a,b)=>new Date(b.updated_at)-new Date(a.updated_at));
+ const open=queue.filter(j=>['queued','in_progress','ready_for_review'].includes(j.status));
+ if($('#ahamedQueueSummary'))$('#ahamedQueueSummary').textContent=`${open.length} active · ${queue.filter(j=>j.status==='ready_for_review').length} ready for review`;
+ if($('#ahamedQueue')){
+   $('#ahamedQueue').innerHTML=open.length?open.map(j=>`<div class="asset-build-row" onclick="openAssetJob('${j.id}')">
+     <div class="maincopy"><div class="title">${esc(j.title||j.request_text||'Asset build')}</div><div class="meta">${esc(prospectName(j.prospect_id)||'Unknown prospect')} · ${esc((j.assigned_to||'Ahamed'))} · ${esc(j.priority||'normal')}</div></div>
+     <span class="pill ${j.status==='ready_for_review'?'amber':j.status==='in_progress'?'blue':''}">${esc(j.status.replaceAll('_',' '))}</span>
+   </div>`).join(''):'<div class="empty">No active Ahamed asset jobs.</div>';
+ }
+ $('#assetGrid').innerHTML=data.assets.length?data.assets.map(a=>`<article class="assetcard"><span class="pill">${esc(a.asset_type)}</span><h3 style="font-size:13px;margin:9px 0 4px">${esc(a.title)}</h3><p>${esc(prospectName(a.prospect_id)||'Unlinked')} · ${esc(a.status||'')}</p><div class="assetactions">${a.url?`<a class="btn" href="${esc(a.url)}" target="_blank">Open ↗</a>`:''}<button class="btn" onclick="editAsset('${a.id}')">Edit</button></div></article>`).join(''):'<div class="empty">No assets.</div>';
+}
+
+function renderProspectAssetJobs(id){
+ if(!$('#pdAssetJobs'))return;
+ const jobs=pAssetJobs(id);
+ $('#pdAssetJobs').innerHTML=jobs.length?jobs.map(j=>`<div class="focusrow" onclick="openAssetJob('${j.id}')"><div class="maincopy"><div class="title">${esc(j.title||j.request_text||'Asset build')}</div><div class="meta">Ahamed · ${esc(j.status.replaceAll('_',' '))}${j.due_at?' · due '+new Date(j.due_at).toLocaleDateString():''}</div></div><span class="pill ${j.status==='ready_for_review'?'amber':j.status==='approved'?'green':''}">${esc(j.priority||'normal')}</span></div>`).join(''):'<div class="meta">No asset request assigned to Ahamed yet.</div>';
+}
+function openAhamedRequest(prospectId){
+ const p=data.prospects.find(x=>x.id===prospectId);if(!p)return;
+ const autoResearch=[p.notes,...(p.source_notes||[])].filter(Boolean).join('\n\n');
+ modal('Send asset request to Ahamed',`<div class="ai-box"><h3>${esc(p.company)}</h3><p>Ahamed will receive a scoped snapshot of this prospect's research, sources, notes and existing assets — not the rest of Sales OS.</p></div>
+ <div class="field" style="margin-top:12px"><label>Job title</label><input id="ajTitle" class="input" value="${esc('Build prospect asset for '+p.company)}"></div>
+ <div class="formgrid2"><div class="field"><label>Work type</label><select id="ajType" class="select"><option value="build">New build</option><option value="edit">Edit existing asset</option><option value="images">Images / renders</option><option value="proposal">Proposal</option><option value="research">Research asset</option></select></div><div class="field"><label>Priority</label><select id="ajPriority" class="select"><option>normal</option><option>high</option><option>urgent</option><option>low</option></select></div></div>
+ <div class="field"><label>What Ahamed should make</label><textarea id="ajRequest" class="textarea" rows="7" placeholder="Describe exactly what to build, what the prospect should see, mobile requirements, references, etc."></textarea></div>
+ <div class="field"><label>Extra build brief</label><textarea id="ajBrief" class="textarea" rows="5" placeholder="Brand direction, CTA, must-use copy, products, references…">${esc(autoResearch.slice(0,1800))}</textarea></div>
+ <div class="field"><label>Due date</label><input id="ajDue" class="input" type="datetime-local"></div>
+ <button id="assignAhamedConfirm" class="btn primary">Assign to Ahamed</button>`);
+ $('#assignAhamedConfirm').onclick=async()=>{
+   const request=$('#ajRequest').value.trim();if(!request)return toast('Describe what Ahamed should build');
+   try{
+     await rpc('sales_os_assign_asset_job',{p_token:token||null,p_payload:{
+       prospect_id:p.id,builder_slug:'ahamed',title:$('#ajTitle').value.trim(),request_text:request,work_type:$('#ajType').value,
+       priority:$('#ajPriority').value,due_at:$('#ajDue').value?new Date($('#ajDue').value).toISOString():null,
+       deliverable_types:['preview_url','deployment_url','repository_url'],
+       brief_json:{build_brief:$('#ajBrief').value.trim(),requested_from:'Sales OS',company:p.company,category:p.category}
+     }});
+     closeModal();toast('Sent to Ahamed');await load();openProspect(p.id);
+   }catch(e){toast('Could not assign: '+String(e.message||e))}
+ };
+}
+window.openAhamedRequest=openAhamedRequest;
+
+window.openAssetJob=id=>{
+ const j=data.asset_work_requests.find(x=>x.id===id);if(!j)return;
+ const ds=jobDeliverables(id),ns=jobNotes(id),company=prospectName(j.prospect_id)||'Prospect';
+ modal('Asset job · '+company,`<div class="panelhead"><div><h2 style="margin:0">${esc(j.title||j.request_text||'Asset job')}</h2><small>Ahamed · ${esc(j.status.replaceAll('_',' '))}</small></div><span class="pill ${j.status==='ready_for_review'?'amber':j.status==='approved'?'green':''}">${esc(j.priority||'normal')}</span></div>
+ <div class="thread-context"><div class="meta"><b>Request</b><br>${esc(j.request_text||'')}${j.due_at?'<br><br><b>Due:</b> '+new Date(j.due_at).toLocaleString():''}</div></div>
+ <div class="section"><h3>Deliverables</h3>${ds.length?ds.map(d=>`<div class="focusrow"><div class="maincopy"><div class="title">${esc(d.title)}</div><div class="meta">${esc(d.version_label||d.kind||'link')}${d.notes?' · '+esc(d.notes):''}</div></div><a class="btn" target="_blank" href="${esc(d.deployment_url||d.url||'#')}">Open ↗</a></div>`).join(''):'<div class="meta">Nothing submitted yet.</div>'}</div>
+ <div class="section"><h3>Conversation</h3>${ns.length?ns.map(n=>`<div class="activityrow"><div class="maincopy"><div class="title">${esc(n.author_name||n.author_type)}</div><div class="meta">${esc(n.body)} · ${new Date(n.created_at).toLocaleString()}</div></div></div>`).join(''):'<div class="meta">No notes yet.</div>'}</div>
+ ${j.status==='ready_for_review'?'<div class="section"><h3>Review</h3><div class="field"><label>Review note</label><textarea id="assetReviewNote" class="textarea" rows="4"></textarea></div><div class="pageactions"><button id="approveAssetJob" class="btn green">Approve asset</button><button id="changeAssetJob" class="btn">Request changes</button></div></div>':''}`);
+ if($('#approveAssetJob'))$('#approveAssetJob').onclick=()=>reviewAssetJob(id,'approved');
+ if($('#changeAssetJob'))$('#changeAssetJob').onclick=()=>reviewAssetJob(id,'changes_requested');
+};
+async function reviewAssetJob(id,decision){
+ try{
+   await rpc('sales_os_review_asset_job',{p_token:token||null,p_job_id:id,p_decision:decision,p_notes:$('#assetReviewNote')?.value||''});
+   closeModal();toast(decision==='approved'?'Asset approved':'Changes sent to Ahamed');await load();
+ }catch(e){toast('Review failed: '+String(e.message||e))}
+}
 function renderReminders(){
  const open=data.reminders.filter(r=>r.status==='open').sort((a,b)=>new Date(a.due_at)-new Date(b.due_at)),done=data.reminders.filter(r=>r.status==='completed').sort((a,b)=>new Date(b.completed_at||b.updated_at)-new Date(a.completed_at||a.updated_at));
  const row=r=>`<div class="reminderrow"><div class="maincopy"><div class="title">${esc(r.title)}</div><div class="meta">${esc(prospectName(r.prospect_id)||'General')} · ${new Date(r.due_at).toLocaleString()}</div></div>${r.status==='open'?`<button class="btn" onclick="completeReminder('${r.id}')">Done</button>`:''}</div>`;
@@ -541,6 +603,7 @@ window.openProspect=id=>{
  $('#pdCategorySelect').innerHTML=categoryNames().map(x=>`<option>${esc(x)}</option>`).join('');$('#pdCategorySelect').value=p.category||'';$('#pdStage').innerHTML=STAGES.map(x=>`<option>${x}</option>`).join('');$('#pdStage').value=p.stage||'Research';
  $('#pdOwner').value=p.owner_assigned||'';$('#pdPriority').value=p.priority||'';$('#pdContact').value=p.contact_name||'';$('#pdEmail').value=p.contact_email||'';$('#pdWebsite').value=p.website||'';$('#pdLocation').value=p.location||'';$('#pdNextAction').value=p.next_action||'';$('#pdNextDate').value=p.next_action_date||'';
  $('#pdAssets').innerHTML=pAssets(id).map(a=>`<div class="focusrow"><div class="maincopy"><div class="title">${esc(a.title)}</div><div class="meta">${esc(a.asset_type)} · ${esc(a.status)}</div></div><button class="btn" onclick="editAsset('${a.id}')">Edit</button></div>`).join('')||'<div class="meta">No assets yet.</div>';
+ renderProspectAssetJobs(id);
  $('#pdNotes').innerHTML=pNotes(id).map(n=>`<div class="noterow"><div><div class="title">${esc(n.title||'Note')}</div><div class="meta">${esc((n.body||'').slice(0,140))}</div></div></div>`).join('')||'<div class="meta">No notes yet.</div>';
  $('#pdReminders').innerHTML=pReminders(id).filter(r=>r.status==='open').map(r=>`<div class="reminderrow"><div class="maincopy"><div class="title">${esc(r.title)}</div><div class="meta">${new Date(r.due_at).toLocaleString()}</div></div></div>`).join('')||'<div class="meta">No open reminders.</div>';
  const opp=pOpportunity(id);if($('#pdOppValue'))$('#pdOppValue').value=opp?.estimated_value||'';if($('#pdOppKg'))$('#pdOppKg').value=opp?.monthly_volume_kg||'';if($('#pdOppProb'))$('#pdOppProb').value=opp?.probability_pct||'';if($('#pdOppNotes'))$('#pdOppNotes').value=opp?.commercial_notes||'';
@@ -752,7 +815,7 @@ function openChatGPTAutopilot(mode){
 ['prospectSearch','prospectCategory','prospectStage','prospectOwner'].forEach(id=>$('#'+id).addEventListener(id==='prospectSearch'?'input':'change',renderProspects));
 $('#quickProspectBtn').onclick=openProspectForm;$('#addProspectBtn').onclick=openProspectForm;$('#quickNoteBtn').onclick=()=>openNoteForm();$('#newNoteBtn').onclick=()=>openNoteForm();$('#newReminderBtn').onclick=()=>openReminderForm();$('#dashReminderBtn').onclick=()=>openReminderForm();$('#browserNotifyBtn').onclick=requestBrowserNotifications;
 $('#newAssetBtn').onclick=()=>openAssetForm();$('#newEmailBtn').onclick=()=>openNewDraft();$('#categoryManagerBtn').onclick=openCategoryManager;$('#openImportBtn').onclick=openImporter;$('#categoryImportBtn').onclick=openImporter;$('#dashImportBtn').onclick=openImporter;$('#prospectImportBtn').onclick=openImporter;
-$('#saveProspect').onclick=saveProspect;if($('#saveOpportunity'))$('#saveOpportunity').onclick=saveOpportunity;$('#pdNewAsset').onclick=()=>openAssetForm(selectedProspect?.id);$('#pdNewNote').onclick=()=>openNoteForm(selectedProspect?.id);$('#pdNewReminder').onclick=()=>openReminderForm(selectedProspect?.id);
+$('#saveProspect').onclick=saveProspect;if($('#saveOpportunity'))$('#saveOpportunity').onclick=saveOpportunity;$('#pdNewAsset').onclick=()=>openAssetForm(selectedProspect?.id);if($('#pdAssignAhamed'))$('#pdAssignAhamed').onclick=()=>openAhamedRequest(selectedProspect?.id);$('#pdNewNote').onclick=()=>openNoteForm(selectedProspect?.id);$('#pdNewReminder').onclick=()=>openReminderForm(selectedProspect?.id);
 document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>{const el=$('#'+b.dataset.close);el?.classList.add('hidden');if(b.dataset.close==='prospectDrawer')unlockPage()});$('#genericModal').addEventListener('click',e=>{if(e.target.id==='genericModal')closeModal()});$('#prospectDrawer').addEventListener('click',e=>{if(e.target.id==='prospectDrawer'){e.currentTarget.classList.add('hidden');unlockPage()}});
 (async()=>{
  const lastEmail=localStorage.getItem('salesOsMemberEmail');
