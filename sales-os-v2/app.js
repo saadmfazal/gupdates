@@ -80,7 +80,7 @@ async function load(){
  renderAll();renderIdentity();
  $('#syncLabel').textContent='Last synced '+new Date(data.synced_at||Date.now()).toLocaleString();showDueBrowserNotifications()
 }
-function renderAll(){renderCounts();renderDashboard();syncFilters();renderProspects();renderPipeline();renderInbox();renderAIQueue();renderEmail();renderAssets();renderReminders();renderNotes();renderCategories();renderConnections();renderNotifications();renderApprovals()}
+function renderAll(){renderCounts();renderDashboard();syncFilters();renderProspects();renderPipeline();renderDeals();renderInbox();renderAIQueue();renderEmail();renderAssets();renderReminders();renderNotes();renderCategories();renderDiscovery();renderConnections();renderNotifications();renderApprovals();if(commercialIntel)renderIntelligence()}
 const categoryNames=()=>[...new Set([...data.categories.map(c=>c.name),...data.prospects.map(p=>p.category).filter(Boolean)])].sort();
 const owners=()=>[...new Set(data.prospects.map(p=>p.owner_assigned).filter(Boolean))].sort();
 const prospectName=id=>data.prospects.find(p=>p.id===id)?.company||'';
@@ -90,6 +90,11 @@ const pReminders=id=>data.reminders.filter(r=>r.prospect_id===id);
 const pActivities=id=>data.activities.filter(a=>a.prospect_id===id).sort((a,b)=>new Date(b.occurred_at)-new Date(a.occurred_at));
 const pOpportunity=id=>data.opportunities.find(o=>o.prospect_id===id)||null;
 const pMessages=id=>data.email_messages.filter(m=>m.prospect_id===id).sort((a,b)=>new Date(b.sent_at)-new Date(a.sent_at));
+const pDealRequirements=id=>data.deal_requirements.filter(x=>x.prospect_id===id).sort((a,b)=>(a.sort_order||100)-(b.sort_order||100));
+const pDealChecklist=id=>data.deal_checklist.filter(x=>x.prospect_id===id).sort((a,b)=>(a.sort_order||100)-(b.sort_order||100));
+const pDealHandoffs=id=>data.deal_handoffs.filter(x=>x.prospect_id===id).sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
+const assetVersions=id=>data.asset_versions.filter(x=>x.asset_id===id).sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
+const assetWork=id=>data.asset_work_requests.filter(x=>x.asset_id===id).sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
 const isEngaged=p=>['Replied','Qualified','Meeting','Proposal','Negotiation','Won'].includes(p.stage);
 const dueReminder=r=>r.status==='open'&&new Date(r.due_at)<=new Date();
 const followupDue=p=>p.next_action_date&&p.next_action_date<=todayISO()&&!['Won','Lost','Hold'].includes(p.stage);
@@ -102,6 +107,8 @@ function renderCounts(){
  const aiActions=data.recommendations.filter(r=>r.status==='open').length;
  const activeValue=data.opportunities.filter(o=>!['Won','Lost'].includes(data.prospects.find(p=>p.id===o.prospect_id)?.stage)).reduce((sum,o)=>sum+Number(o.estimated_value||0),0);
  $('#navProspects').textContent=data.prospects.length;$('#navAssets').textContent=data.assets.length;$('#navDrafts').textContent=drafts;$('#navReminders').textContent=openR;
+ if($('#navDeals'))$('#navDeals').textContent=data.opportunities.filter(o=>!['Won','Lost'].includes(data.prospects.find(p=>p.id===o.prospect_id)?.stage)).length;
+ if($('#navDiscovery'))$('#navDiscovery').textContent=data.discovery_candidates.filter(c=>c.review_status==='pending').length;
  if($('#navInbox'))$('#navInbox').textContent=inboxActions;if($('#navAI'))$('#navAI').textContent=aiActions;if($('#navApprovals'))$('#navApprovals').textContent=pendingApprovals;
  $('#statProspects').textContent=data.prospects.filter(p=>!['Won','Lost'].includes(p.stage)).length;$('#statDue').textContent=due;$('#statDrafts').textContent=drafts;
  if($('#statInbox'))$('#statInbox').textContent=inboxActions;if($('#statAI'))$('#statAI').textContent=aiActions;if($('#statValue'))$('#statValue').textContent='$'+activeValue.toLocaleString(undefined,{maximumFractionDigits:0});
@@ -509,7 +516,7 @@ function renderNotifications(){
  const ns=data.notifications.filter(n=>!n.dismissed_at);$('#noticeList').innerHTML=ns.length?ns.slice(0,20).map(n=>`<div class="noticeitem ${n.read_at?'':'unread'}"><b>${esc(n.title)}</b><p>${esc(n.body||'')}</p><button class="btn" onclick="markNotice('${n.id}','read')">Read</button> <button class="btn" onclick="markNotice('${n.id}','dismiss')">Dismiss</button></div>`).join(''):'<div class="empty">You’re all caught up.</div>';
 }
 
-function go(page){currentPage=page;document.querySelectorAll('[data-page-view]').forEach(s=>s.classList.toggle('hidden',s.dataset.pageView!==page));document.querySelectorAll('.navitem[data-page]').forEach(b=>b.classList.toggle('active',b.dataset.page===page));document.querySelectorAll('[data-mobile-page]').forEach(b=>b.classList.toggle('active',b.dataset.mobilePage===page));if($('#mobileMoreBtn'))$('#mobileMoreBtn').classList.toggle('active',['pipeline','email','reminders','assets','notes','categories','approvals','connections'].includes(page));$('#noticeMenu').classList.add('hidden');closeMobileMore();if(page==='prospects')renderProspects();if(page==='inbox')renderInbox();if(page==='email')renderEmail();if(window.matchMedia('(max-width:760px)').matches)window.scrollTo({top:0,behavior:'auto'})}
+function go(page){currentPage=page;document.querySelectorAll('[data-page-view]').forEach(s=>s.classList.toggle('hidden',s.dataset.pageView!==page));document.querySelectorAll('.navitem[data-page]').forEach(b=>b.classList.toggle('active',b.dataset.page===page));document.querySelectorAll('[data-mobile-page]').forEach(b=>b.classList.toggle('active',b.dataset.mobilePage===page));if($('#mobileMoreBtn'))$('#mobileMoreBtn').classList.toggle('active',['pipeline','deals','intelligence','discovery','email','reminders','assets','notes','categories','approvals','connections'].includes(page));$('#noticeMenu').classList.add('hidden');closeMobileMore();if(page==='prospects')renderProspects();if(page==='deals')renderDeals();if(page==='intelligence')loadIntelligence();if(page==='discovery')renderDiscovery();if(page==='inbox')renderInbox();if(page==='email')renderEmail();if(page==='assets')renderAssets();if(window.matchMedia('(max-width:760px)').matches)window.scrollTo({top:0,behavior:'auto'})}
 function modal(title,body){$('#genericModalCard').innerHTML=`<div class="modalhead"><h2>${esc(title)}</h2><button class="close" onclick="closeModal()">×</button></div>${body}`;$('#genericModal').classList.remove('hidden');document.body.classList.add('modal-open')}
 window.closeModal=()=>{$('#genericModal').classList.add('hidden');document.body.classList.remove('modal-open')};
 
