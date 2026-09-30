@@ -7,7 +7,7 @@ const PIPELINE_STAGES=['Research','Ready to contact','Follow-up','Replied','Qual
 const CSV_COLUMNS=['company','category','segment','location','website','contact_name','contact_role','contact_email','phone','priority','score','owner_assigned','sender_name','sender_email','stage','status','next_action','next_action_date','caution','notes','tags','source_groups','source_notes','asset_type','asset_title','asset_url','asset_status','outreach_subject','outreach_message'];
 
 let token='';
-let data={prospects:[],assets:[],activities:[],templates:[],categories:[],notes:[],reminders:[],email_drafts:[],notifications:[],connections:[],email_messages:[],inbox_threads:[],recommendations:[],opportunities:[],approvals:[],audit_log:[],members:[],copilot_threads:[]};
+let data={prospects:[],assets:[],activities:[],templates:[],categories:[],notes:[],reminders:[],email_drafts:[],notifications:[],connections:[],gmail_connections:[],email_messages:[],inbox_threads:[],recommendations:[],opportunities:[],approvals:[],audit_log:[],members:[],copilot_threads:[]};
 let selectedProspect=null,currentDraft=null,currentPage='dashboard',deferredInstallPrompt=null;
 let sessionAccessToken='',supabaseClient=null,actor=null;
 let selectedInboxThread=null,copilotThreadId=null,copilotProspectId=null,copilotLocal=[];
@@ -25,7 +25,7 @@ async function rpc(fn,payload={}){
  const r=await fetch(API+fn,{method:'POST',headers,body:JSON.stringify(payload)});
  const txt=await r.text();if(!r.ok)throw new Error(txt||`HTTP ${r.status}`);return txt?JSON.parse(txt):null
 }
-function norm(){for(const k of ['prospects','assets','activities','templates','categories','notes','reminders','email_drafts','notifications','connections','email_messages','inbox_threads','recommendations','opportunities','approvals','audit_log','members','copilot_threads'])data[k]=Array.isArray(data[k])?data[k]:[]}
+function norm(){for(const k of ['prospects','assets','activities','templates','categories','notes','reminders','email_drafts','notifications','connections','gmail_connections','email_messages','inbox_threads','recommendations','opportunities','approvals','audit_log','members','copilot_threads'])data[k]=Array.isArray(data[k])?data[k]:[]}
 
 async function ensureSupabaseClient(){
  if(supabaseClient)return supabaseClient;
@@ -430,8 +430,13 @@ function openAIProviderSetup(){
   finally{$('#saveOpenAIKey').disabled=false}
  };
 }
+function myGmailConnection(){
+ const email=String(actor?.email||'').toLowerCase();
+ return data.gmail_connections.find(c=>String(c.member_email||'').toLowerCase()===email&&c.active)||null;
+}
 function renderConnections(){
  if(!$('#connectionsGrid'))return;
+ const gmail=myGmailConnection();
  $('#connectionsGrid').innerHTML=data.connections.map(c=>{
    let status=c.status||'setup_required',desc='',button='Set up';
    if(c.key==='ai'){
@@ -440,8 +445,16 @@ function renderConnections(){
      button=providerStatus.ai?'Manage AI':'Connect AI';
    }else if(c.key==='chatgpt'){
      desc='Connect Sales OS to ChatGPT as a private MCP app so ChatGPT can work directly with prospects, assets, reminders, approvals and inbox state.';
-   }else{
-     desc='Gmail remains the external mailbox source. Sales OS stores synchronized prospect threads and follow-up state without storing Gmail credentials in the browser.';
+   }else if(c.key==='gmail'){
+     if(gmail){
+       status=gmail.last_sync_status==='error'?'needs_attention':'connected';
+       desc=`Gmail ${gmail.google_email||gmail.member_email} is connected directly. Prospect messages sync hourly${gmail.last_sync_at?' · last sync '+new Date(gmail.last_sync_at).toLocaleString():''}.`;
+       button='Manage Gmail';
+     }else{
+       status=actor?.authenticated?'not_connected':'member_sign_in_required';
+       desc=actor?.authenticated?'Connect your Gmail once for automatic prospect-thread sync. Only messages matching prospect email addresses are stored in Sales OS.':'Sign in as a named Sales OS member before connecting a personal Gmail mailbox.';
+       button=actor?.authenticated?'Connect Gmail':'Member sign-in required';
+     }
    }
    return `<article class="connection"><div class="panelhead"><h3>${esc(c.label)}</h3><span class="pill ${status==='connected'?'green':'amber'}">${esc(status.replaceAll('_',' '))}</span></div><p>${esc(desc)}</p><button class="btn ${status==='connected'?'':'primary'}" onclick="openConnection('${c.key}')">${esc(button)}</button></article>`;
  }).join('');
@@ -597,12 +610,40 @@ function openConnection(key){
   <details style="margin-top:12px"><summary style="font-size:11px;font-weight:800;cursor:pointer">Stronger OAuth mode later</summary><p class="meta" style="font-size:11px;line-height:1.7">The OAuth consent screen and member allow-list are already built. When Supabase OAuth Server is enabled, the same MCP backend can switch to per-user OAuth instead of the shared team code.</p></details>`);
   if($('#copyMcpBtn'))$('#copyMcpBtn').onclick=async()=>{await navigator.clipboard.writeText(mcp);toast('Private MCP URL copied')};
  } else {
-  modal('Email connection',`<div class="ai-box"><h3>Email works through ChatGPT + Gmail</h3><p>Sales OS stores the editable draft and account context. ChatGPT can use your connected Gmail app to send the actual message, then update the exact Sales OS draft and activity history.</p></div>
-  <p class="meta" style="font-size:11px;line-height:1.7;margin-top:12px">This avoids placing Gmail credentials in the static dashboard. If Gmail is connected in ChatGPT, the full flow is: open Sales OS in ChatGPT → draft/update → send via Gmail → mark the CRM draft sent.</p>`);
+   const gmail=myGmailConnection();
+   if(!actor?.authenticated){
+     modal('Connect Gmail',`<div class="ai-box"><h3>Personal member sign-in required</h3><p>Direct Gmail sync is attached to an individual Sales OS member, not the shared team code.</p></div><p class="meta" style="margin-top:10px">Sign out, then use your Sales OS email + team access code to create your personal session.</p>`);
+   }else if(gmail){
+     modal('Gmail connected',`<div class="ai-box"><h3>${esc(gmail.google_email||gmail.member_email)}</h3><p>Prospect threads synchronize hourly in the background. Only messages that match prospect contact email addresses are imported.</p></div><div class="thread-context" style="margin-top:12px"><div class="meta"><b>Last sync:</b> ${gmail.last_sync_at?new Date(gmail.last_sync_at).toLocaleString():'Not yet'}<br><b>Status:</b> ${esc(gmail.last_sync_status||'connected')}<br>${esc(gmail.last_sync_detail||'')}</div></div><div class="pageactions"><button id="gmailSyncNow" class="btn primary">Sync now</button></div>`);
+     $('#gmailSyncNow').onclick=syncGmailNow;
+   }else{
+     const callback=SUPABASE_URL+'/functions/v1/sales-os-gmail-oauth';
+     modal('Connect Gmail',`<div class="ai-box"><h3>Automatic Sales Inbox</h3><p>Authorize Gmail once. Sales OS will then synchronize only email conversations that match prospect contact addresses and keep thread status current automatically.</p></div><div style="margin-top:12px"><button id="connectGmailNative" class="btn primary">Connect my Gmail</button></div><details style="margin-top:12px"><summary class="meta" style="cursor:pointer">Google OAuth callback</summary><div class="codehead" style="margin-top:7px">${esc(callback)}</div><p class="meta">If Google reports redirect_uri_mismatch, this exact URL must be added once to the existing Google OAuth client's Authorized redirect URIs.</p></details>`);
+     $('#connectGmailNative').onclick=connectGmailNative;
+   }
  }
 }
 window.openConnection=openConnection;
 
+async function connectGmailNative(){
+ if(!actor?.authenticated||!sessionAccessToken)return toast('Personal member sign-in required');
+ try{
+   const r=await fetch(SUPABASE_URL+'/functions/v1/sales-os-gmail-oauth',{method:'POST',headers:{'Content-Type':'application/json',apikey:APIKEY,Authorization:'Bearer '+sessionAccessToken},body:'{}'});
+   const d=await r.json();
+   if(!r.ok||!d.authorization_url)throw new Error(d.detail||d.error||'Could not start Gmail authorization');
+   location.href=d.authorization_url;
+ }catch(e){toast('Gmail connection failed: '+String(e.message||e))}
+}
+async function syncGmailNow(){
+ if(!actor?.authenticated||!sessionAccessToken)return toast('Personal member sign-in required');
+ try{
+   toast('Synchronizing Gmail…');
+   const r=await fetch(SUPABASE_URL+'/functions/v1/sales-os-gmail-sync',{method:'POST',headers:{'Content-Type':'application/json',apikey:APIKEY,Authorization:'Bearer '+sessionAccessToken},body:'{}'});
+   const d=await r.json();
+   if(!r.ok||d.ok===false)throw new Error(d.connections?.find(x=>!x.ok)?.error||d.error||'Gmail sync failed');
+   closeModal();await load();go('inbox');toast('Gmail synchronized');
+ }catch(e){toast('Gmail sync failed: '+String(e.message||e))}
+}
 function openCategoryManager(){modal('Manage categories',`<div class="formgrid2"><div class="field"><label>Category</label><input id="newCatName" class="input" placeholder="Dog Food · Retail"></div><div class="field"><label>Description</label><input id="newCatDesc" class="input"></div></div><button id="addCatConfirm" class="btn primary">Add category</button><div style="margin-top:14px">${categoryNames().map(c=>`<div class="focusrow"><div class="maincopy"><div class="title">${esc(c)}</div><div class="meta">${data.prospects.filter(p=>p.category===c).length} prospects</div></div></div>`).join('')}</div>`);$('#addCatConfirm').onclick=async()=>{const name=$('#newCatName').value.trim();if(!name)return;await rpc('sales_os_save_category',{p_token:token,p_payload:{name,description:$('#newCatDesc').value,active:true}});closeModal();toast('Category added');await load()}}
 const HEADER_ALIASES={'company name':'company','business':'company','business name':'company','prospect':'company','market':'category','industry':'category','contact':'contact_name','contact person':'contact_name','decision maker':'contact_name','role':'contact_role','title':'contact_role','email':'contact_email','e mail':'contact_email','url':'website','site':'website','owner':'owner_assigned','assigned to':'owner_assigned','source':'source_groups','sources':'source_notes','asset':'asset_title','asset link':'asset_url','subject':'outreach_subject','message':'outreach_message'};
 function cleanHeader(x){return String(x||'').replace(/^\uFEFF/,'').trim().toLowerCase().replace(/[\/\-]+/g,' ').replace(/[^a-z0-9 ]+/g,' ').replace(/\s+/g,' ').trim()}
@@ -661,7 +702,7 @@ if($('#copilotSend'))$('#copilotSend').onclick=sendCopilot;
 if($('#copilotInput'))$('#copilotInput').addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key==='Enter')sendCopilot()});
 if($('#inboxStatusFilter'))$('#inboxStatusFilter').onchange=renderInbox;
 if($('#inboxClassFilter'))$('#inboxClassFilter').onchange=renderInbox;
-if($('#syncInboxGuideBtn'))$('#syncInboxGuideBtn').onclick=()=>openChatGPTAutopilot('sync');
+if($('#syncInboxGuideBtn'))$('#syncInboxGuideBtn').onclick=()=>myGmailConnection()?syncGmailNow():openChatGPTAutopilot('sync');
 if($('#aiQueueGuideBtn'))$('#aiQueueGuideBtn').onclick=()=>openChatGPTAutopilot('autopilot');
 function openChatGPTAutopilot(mode){
  const text=mode==='sync'
@@ -683,4 +724,13 @@ document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>{const el=$('
  const saved=localStorage.getItem('salesOsToken');
  if(saved&&$('#accessCode'))$('#accessCode').value=saved;
 })().catch(()=>{});
+const gmailResult=new URLSearchParams(location.search).get('gmail');
+if(gmailResult==='connected'){
+  history.replaceState({},'',location.pathname);
+  setTimeout(()=>{toast('Gmail connected');if(actor?.authenticated)syncGmailNow()},700);
+}else if(gmailResult==='error'){
+  const detail=new URLSearchParams(location.search).get('detail')||'Google authorization failed';
+  history.replaceState({},'',location.pathname);
+  setTimeout(()=>toast('Gmail: '+detail),700);
+}
 if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
