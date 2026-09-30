@@ -3,12 +3,14 @@ const APIKEY='sb_publishable_gGFZftPonWKNZCdvUSM3yQ_gZvyI6_H';
 const RPC=SUPABASE_URL+'/rest/v1/rpc/';
 const AUTH_BOOTSTRAP=SUPABASE_URL+'/functions/v1/sales-os-auth-bootstrap';
 const COPILOT_URL=SUPABASE_URL+'/functions/v1/sales-os-copilot';
+const COMMAND_URL=SUPABASE_URL+'/functions/v1/sales-os-command';
 const STAGES=['Research','Asset ready','Ready to contact','Contacted','Follow-up','Replied','Qualified','Meeting','Proposal','Negotiation','Won','Lost','Disqualified','Hold'];
 const PIPELINE=['Research','Asset ready','Ready to contact','Contacted','Follow-up','Replied','Qualified','Proposal'];
 
 let token='',sessionAccessToken='',supabaseClient=null,actor=null,currentRoute='command',currentProspect=null,currentDraft=null,currentAssetId=null;
 let providerStatus={ai:false};
-let data={prospects:[],assets:[],asset_versions:[],asset_work_requests:[],asset_deliverables:[],asset_job_notes:[],asset_builders:[],activities:[],templates:[],categories:[],notes:[],research_reports:[],reminders:[],email_drafts:[],notifications:[],connections:[],gmail_connections:[],email_messages:[],inbox_threads:[],recommendations:[],opportunities:[],approvals:[],audit_log:[],members:[],copilot_threads:[]};
+let todayQueue=[],lastCommandPlan=null;
+let data={prospects:[],workflow_state:[],assets:[],asset_versions:[],asset_work_requests:[],asset_deliverables:[],asset_job_notes:[],asset_builders:[],activities:[],templates:[],categories:[],notes:[],research_reports:[],reminders:[],email_drafts:[],notifications:[],connections:[],gmail_connections:[],email_messages:[],inbox_threads:[],recommendations:[],opportunities:[],approvals:[],audit_log:[],members:[],copilot_threads:[]};
 let copilotThreadId=null,copilotProspectId=null,copilotLocal=[];
 
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
@@ -26,6 +28,7 @@ const pOpportunity=id=>data.opportunities.find(o=>o.prospect_id===id)||null;
 const jobDeliverables=id=>data.asset_deliverables.filter(d=>d.work_request_id===id).sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));
 const jobNotes=id=>data.asset_job_notes.filter(n=>n.work_request_id===id).sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));
 const pActivities=id=>data.activities.filter(a=>a.prospect_id===id).sort((a,b)=>new Date(b.occurred_at)-new Date(a.occurred_at));
+const workflowFor=id=>data.workflow_state.find(w=>w.prospect_id===id)||null;
 
 function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.remove('hidden');setTimeout(()=>t.classList.add('hidden'),2400)}
 function statusClass(s=''){const v=String(s).toLowerCase();if(v.includes('ready')||v.includes('replied')||v.includes('won'))return'lime';if(v.includes('research')||v.includes('contacted'))return'cyan';if(v.includes('review')||v.includes('follow'))return'amber';return''}
@@ -75,7 +78,9 @@ async function refreshAI(){
     const r=await fetch(COPILOT_URL,{method:'POST',headers,body:JSON.stringify({action:'status'})});const d=await r.json();providerStatus.ai=!!(d.connected&&d.api_ok)}catch{providerStatus.ai=false}
 }
 async function load(){
-  data=await rpc('sales_os_snapshot',{p_token:token||null});norm();actor=data.actor||actor;await refreshAI();renderIdentity();renderAll();
+  data=await rpc('sales_os_snapshot',{p_token:token||null});norm();actor=data.actor||actor;
+  try{todayQueue=await rpc('sales_os_today_queue',{p_token:token||null,p_limit:30})||[]}catch{todayQueue=[]}
+  await refreshAI();renderIdentity();renderAll();
 }
 function renderIdentity(){
   const name=actor?.display_name||actor?.email||'Shared';$('#sideIdentity').innerHTML='<span class="avatar">'+esc(name.charAt(0).toUpperCase())+'</span><div><b>'+esc(name)+'</b><small>Sales OS member</small></div>';$('#topIdentity').textContent=name.charAt(0).toUpperCase();
