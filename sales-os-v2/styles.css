@@ -236,3 +236,343 @@ table{width:100%;border-collapse:collapse;min-width:1050px}th{text-align:left;pa
  .copilot-compose .btn{width:100%}
  .copilot-msg{max-width:94%;font-size:11px}
 }
+
+
+/* MOBILE RECOVERY V21 — explicit phone-first overrides */
+@media(max-width:760px){
+  html,body{
+    width:100%;
+    min-height:100%;
+    height:auto!important;
+    max-width:100%;
+    overflow-x:hidden!important;
+    overflow-y:auto!important;
+    overscroll-behavior-y:auto!important;
+    -webkit-overflow-scrolling:touch;
+  }
+  body{
+    background:#f4f6f3;
+    font-size:14px;
+    touch-action:pan-y;
+  }
+  body.modal-open{
+    overflow-y:auto!important;
+    position:static!important;
+    height:auto!important;
+  }
+  .app,.main,main,[data-page-view]{
+    height:auto!important;
+    min-height:0;
+    overflow:visible!important;
+  }
+  .main{
+    padding-bottom:calc(74px + env(safe-area-inset-bottom));
+  }
+
+  /* Login: full-width, scrollable, calm */
+  .login{
+    min-height:100dvh;
+    height:auto!important;
+    overflow-y:auto!important;
+    display:block;
+    padding:calc(20px + env(safe-area-inset-top)) 18px calc(28px + env(safe-area-inset-bottom));
+    background:#fff;
+  }
+  .logincard{
+    width:100%;
+    max-width:520px;
+    margin:0 auto;
+    border:0;
+    box-shadow:none;
+    border-radius:0;
+    padding:26px 2px 40px;
+    background:#fff;
+  }
+  .logincard h1{font-size:32px;line-height:1.02;margin:14px 0 8px}
+  .logincard p{font-size:13px;line-height:1.55}
+  .logincard .input{font-size:16px;min-height:50px}
+  .logincard .btn{min-height:50px;font-size:13px}
+
+  /* Header */
+  .topbar{
+    min-height:60px;
+    height:auto;
+    padding:8px 10px;
+    gap:8px;
+    background:rgba(255,255,255,.98);
+    border-bottom:1px solid #e5e9e5;
+  }
+  .searchwrap input{
+    height:44px;
+    font-size:16px;
+    border-radius:12px;
+    background:#f6f8f6;
+  }
+  .topactions{gap:6px}
+  .identity-chip,.iconbtn{width:42px;height:42px;min-width:42px}
+  .identity-copy{display:none}
+
+  /* Page rhythm */
+  .page{
+    padding:14px 12px 22px;
+    width:100%;
+    max-width:100%;
+  }
+  .pagehead{
+    display:block;
+    margin:2px 0 14px;
+  }
+  .pagehead h1{
+    font-size:25px;
+    line-height:1.05;
+    margin:0;
+    letter-spacing:-.035em;
+  }
+  .pagehead p{
+    font-size:12px;
+    line-height:1.5;
+    margin-top:6px;
+    max-width:42rem;
+  }
+  .pageactions{
+    width:100%;
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+    margin-top:11px;
+  }
+  .pageactions .btn{
+    flex:1 1 145px;
+    min-height:44px;
+    width:auto;
+    font-size:11px;
+  }
+
+  /* Home: only show useful phone metrics */
+  .stats{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:8px;
+  }
+  .stat{
+    min-height:112px;
+    padding:14px;
+    border-radius:14px;
+  }
+  .stat .label{font-size:11px}
+  .stat strong{font-size:26px;line-height:1;margin:9px 0 5px}
+  .stat small{font-size:10px;line-height:1.35}
+  .stat-active,.stat-pipeline{display:none}
+  .home-panels{display:block}
+  .home-today{margin-top:10px}
+  .home-recent,.home-pipeline{display:none}
+
+  .card,.panel,.editor,.listpanel{
+    border-radius:14px;
+    box-shadow:none;
+  }
+  .panel{padding:13px}
+  .panelhead h2{font-size:15px}
+  .title{font-size:13px;line-height:1.3}
+  .meta,.sub{font-size:11px;line-height:1.45}
+
+  .focusrow,.activityrow,.noterow,.reminderrow{
+    padding:12px;
+    min-height:54px;
+    border-radius:12px;
+    align-items:flex-start;
+  }
+
+  /* Prospects: mobile cards only */
+  .tablecard{border:0;background:transparent;overflow:visible}
+  .tablecard table{display:none!important}
+  .toolbar{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+    padding:0 0 12px;
+    border:0;
+  }
+  .toolbar .grow{grid-column:1/-1}
+  .toolbar input,.toolbar select{
+    width:100%;
+    min-width:0;
+    height:44px;
+    font-size:13px;
+    border-radius:11px;
+  }
+  .mobile-prospect-list{display:grid;gap:9px}
+  .mobile-prospect-card{
+    padding:13px;
+    border-radius:14px;
+    background:#fff;
+  }
+  .mobile-prospect-card h3{font-size:17px}
+  .mobile-prospect-meta,.mobile-prospect-next{font-size:11px}
+
+  /* Pipeline: horizontal snap */
+  .kanban{
+    display:flex;
+    gap:10px;
+    overflow-x:auto!important;
+    overflow-y:visible!important;
+    margin:0 -12px;
+    padding:0 12px 12px;
+    scroll-snap-type:x mandatory;
+    -webkit-overflow-scrolling:touch;
+  }
+  .lane{
+    flex:0 0 calc(100vw - 28px);
+    scroll-snap-align:start;
+    min-height:0;
+    border-radius:14px;
+  }
+
+  /* Email + inbox */
+  .split,.inbox-split{display:block!important}
+  .listpanel{
+    width:100%;
+    max-height:none!important;
+    overflow:visible!important;
+    margin-bottom:10px;
+  }
+  .listrow,.inbox-thread-row{padding:13px;min-height:60px}
+  .editor{padding:13px}
+  .mail-message{max-width:94%}
+  .thread-actions{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+  }
+  .thread-actions .btn{width:100%}
+
+  /* Inputs and forms */
+  .formgrid2,.formgrid3{grid-template-columns:1fr!important;gap:0}
+  .field{margin-bottom:11px}
+  .field label{font-size:10px}
+  .input,.select,.textarea{
+    width:100%;
+    min-height:46px;
+    font-size:16px;
+    padding:10px 11px;
+    border-radius:11px;
+  }
+  .textarea{min-height:116px}
+
+  /* Drawers and modals scroll internally; body never gets permanently trapped */
+  .drawer,.modal,.copilot-drawer,.mobile-more-sheet{
+    touch-action:pan-y;
+  }
+  .drawerpanel{
+    width:100%;
+    height:100dvh;
+    max-height:100dvh;
+    overflow-y:auto!important;
+    -webkit-overflow-scrolling:touch;
+    overscroll-behavior:contain;
+    padding:calc(10px + env(safe-area-inset-top)) 12px calc(24px + env(safe-area-inset-bottom));
+  }
+  .drawerhead{
+    top:calc(-10px - env(safe-area-inset-top));
+    padding:10px 0 9px;
+  }
+  .drawerhead h2{font-size:24px}
+  .modal{
+    align-items:end;
+    overflow:hidden;
+  }
+  .modalcard{
+    width:100%;
+    max-height:92dvh;
+    overflow-y:auto!important;
+    -webkit-overflow-scrolling:touch;
+    overscroll-behavior:contain;
+    border-radius:18px 18px 0 0;
+    padding:14px 12px calc(20px + env(safe-area-inset-bottom));
+  }
+  .copilot-panel{
+    width:100%;
+    height:100dvh;
+    overflow:hidden;
+    padding:calc(10px + env(safe-area-inset-top)) 12px calc(10px + env(safe-area-inset-bottom));
+  }
+  .copilot-messages{
+    overflow-y:auto!important;
+    -webkit-overflow-scrolling:touch;
+  }
+
+  /* Bottom nav */
+  .mobile-nav{
+    height:calc(64px + env(safe-area-inset-bottom));
+    min-height:64px;
+    background:rgba(255,255,255,.98);
+    border-top:1px solid #dde3dd;
+    box-shadow:0 -4px 18px rgba(20,32,23,.05);
+  }
+  .mobile-nav button{font-size:10px;gap:3px}
+  .mobile-nav button span{font-size:18px}
+  .mobile-fab{display:none!important}
+
+  /* More menu becomes a simple clean list, not a tile wall */
+  .mobile-sheet{
+    max-height:88dvh;
+    overflow-y:auto!important;
+    padding:8px 12px calc(16px + env(safe-area-inset-bottom));
+  }
+  .mobile-more-grid{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:6px;
+  }
+  .mobile-more-grid button{
+    min-height:58px;
+    display:grid;
+    grid-template-columns:34px 1fr;
+    grid-template-rows:auto auto;
+    column-gap:8px;
+    align-items:center;
+    padding:9px 11px;
+    border-radius:12px;
+  }
+  .mobile-more-grid button span{
+    grid-row:1/3;
+    margin:0;
+    font-size:18px;
+  }
+  .mobile-more-grid button b{font-size:12px}
+  .mobile-more-grid button small{font-size:10px;margin-top:1px}
+
+  /* Approvals */
+  .approval-card{padding:12px}
+  .approval-actions{
+    grid-template-columns:1fr;
+    gap:7px;
+  }
+
+  /* Assets / notes */
+  .assetgrid,.notesgrid,.connections{grid-template-columns:1fr!important}
+  .assetcard,.notecard,.connection{padding:13px}
+
+  /* Keep notification and toast above nav */
+  .notice-menu{
+    left:10px;
+    right:10px;
+    bottom:calc(72px + env(safe-area-inset-bottom));
+    top:auto;
+    width:auto;
+    max-height:70dvh;
+    overflow-y:auto!important;
+  }
+  .toast{
+    left:12px;
+    right:12px;
+    bottom:calc(76px + env(safe-area-inset-bottom));
+    text-align:center;
+  }
+}
+
+@media(max-width:390px){
+  .page{padding-left:10px;padding-right:10px}
+  .stat{min-height:106px;padding:12px}
+  .stat strong{font-size:24px}
+  .thread-actions{grid-template-columns:1fr}
+}
