@@ -8,12 +8,12 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Sales OS">
-<link rel="manifest" href="./manifest.webmanifest?v=27">
+<link rel="manifest" href="./manifest.webmanifest?v=28">
 <link rel="icon" href="./icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="./icon.svg">
 <meta name="robots" content="noindex,nofollow,noarchive">
 <title>Morpheus Sales OS</title>
-<link rel="stylesheet" href="./styles.css?v=27">
+<link rel="stylesheet" href="./styles.css?v=28">
 </head>
 <body>
 <section id="login" class="login">
@@ -97,8 +97,8 @@
    <section class="page hidden" data-page-view="prospects">
     <div class="pagehead"><div><h1>Prospects</h1><p>Every account, what we know, what we made and what happens next.</p></div><div class="pageactions"><button class="btn" id="findProspectsBtn">✦ Find prospects</button><button class="btn" id="prospectImportBtn">Import CSV</button><button class="btn primary" id="addProspectBtn">+ Prospect</button></div></div>
     <section class="card tablecard">
-      <div class="toolbar"><input id="prospectSearch" class="grow" placeholder="Search companies…"><select id="prospectCategory"><option value="">All categories</option></select><select id="prospectStage"><option value="">All stages</option></select><select id="prospectOwner"><option value="">All owners</option></select></div>
-      <table><thead><tr><th>Company</th><th>Category</th><th>Contact</th><th>Assets</th><th>Owner</th><th>Stage</th><th>Next action</th><th></th></tr></thead><tbody id="prospectTable"></tbody></table>
+      <div class="toolbar"><input id="prospectSearch" class="grow" placeholder="Search companies…"><select id="prospectCategory"><option value="">All categories</option></select><select id="prospectStage"><option value="">All stages</option></select><select id="prospectOwner"><option value="">All assignees</option></select></div>
+      <table><thead><tr><th>Company</th><th>Category</th><th>Contact</th><th>Assets</th><th>Assigned to</th><th>Stage</th><th>Next action</th><th></th></tr></thead><tbody id="prospectTable"></tbody></table>
       <div id="mobileProspectList" class="mobile-prospect-list"></div>
     </section>
    </section>
@@ -246,6 +246,6 @@
 <div id="genericModal" class="modal hidden"><div id="genericModalCard" class="modalcard"></div></div>
 <div id="toast" class="toast hidden"></div>
 
-<script src="./app.js?v=27"></script>
+<script src="./app.js?v=28"></script>
 </body>
 </html>
