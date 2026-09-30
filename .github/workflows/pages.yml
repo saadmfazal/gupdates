@@ -8,6 +8,7 @@ on:
       - "apex/**"
       - "sales-os/**"
       - "sales-os-v2/**"
+      - "sales-os-v3/**"
       - ".github/workflows/pages.yml"
   workflow_dispatch:
 
