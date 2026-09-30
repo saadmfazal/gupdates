@@ -1,0 +1,19 @@
+{
+  "name": "Morpheus Sales OS V3",
+  "short_name": "Morpheus Sales",
+  "description": "Morpheus private sales intelligence workspace.",
+  "start_url": "/sales-os-v3/",
+  "scope": "/sales-os-v3/",
+  "display": "standalone",
+  "background_color": "#050a07",
+  "theme_color": "#050a07",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
