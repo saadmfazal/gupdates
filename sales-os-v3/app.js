@@ -232,7 +232,7 @@ function renderProspectDetail(id){
     '</section>'+
     '<section class="detail-right"><div class="copilot-insight"><div class="eyebrow">MORPHEUS SUGGESTS</div><b>'+esc((reports[0]?.structured?.asset_recommendation?.concept||'Lead with the clearest commercial opportunity.').slice(0,110))+'</b><p>'+esc(insight.slice(0,260))+'</p></div>'+
       '<section class="panel detail-card outreach-draft-card"><div class="panel-head"><h2>Outreach draft</h2><button class="text-link" onclick="aiWrite(\''+p.id+'\')">✦ Refine</button></div><textarea id="prospectDraftBody" placeholder="No draft yet. Use AI Write to prepare one.">'+esc(draft?.body||'')+'</textarea><div class="editor-actions"><button class="btn lime" onclick="saveProspectDraft(\''+p.id+'\')">Save draft</button><button class="btn" onclick="openCopilot(\''+p.id+'\')">Ask Morpheus</button></div></section>'+
-      '<section class="panel detail-card next-action-card"><div class="eyebrow">NEXT ACTION</div><h2>'+esc(p.next_action||'Define the next move')+'</h2><p class="quiet">'+esc(p.owner_assigned||'Unassigned')+(p.next_action_date?' · '+p.next_action_date:'')+'</p></section>'+
+      '<section class="panel detail-card next-action-card"><div class="eyebrow">NEXT ACTION</div><h2>'+esc(p.next_action||'Define the next move')+'</h2><p class="quiet">'+esc(p.owner_assigned||'Unassigned')+(p.next_action_date?' · '+p.next_action_date:'')+'</p><div class="editor-actions"><button class="btn" onclick="addProspectNote(\''+p.id+'\')">Add note</button><button class="btn" onclick="addProspectReminder(\''+p.id+'\')">Reminder</button></div></section>'+
     '</section>'+
   '</div>'+
   '<div class="timeline-bar">'+timeline('Research added',state.research)+timeline('Asset requested',jobs.length>0)+timeline('Draft ready',!!draft)+timeline('Outreach',state.outreach)+'</div>';
@@ -324,6 +324,18 @@ async function sendCopilot(){
 }
 function renderCopilotMsgs(){$('#copilotMessages').innerHTML=copilotLocal.map(m=>'<div class="copilot-msg '+m.role+'">'+esc(m.content)+'</div>').join('');$('#copilotMessages').scrollTop=$('#copilotMessages').scrollHeight}
 
+function addProspectNote(id){
+  const p=data.prospects.find(x=>x.id===id);if(!p)return;
+  modal('Add note · '+p.company,'<div class="field"><label>Title</label><input id="noteTitle" class="control" value="Sales note"></div><div class="field"><label>Note</label><textarea id="noteBody"></textarea></div><button id="saveQuickNote" class="btn lime wide">Save note</button>');
+  $('#saveQuickNote').onclick=async()=>{const body=$('#noteBody').value.trim();if(!body)return toast('Write the note');await rpc('sales_os_save_note',{p_token:token||null,p_payload:{prospect_id:id,title:$('#noteTitle').value,body,pinned:false,created_by:actor?.display_name||'Sales OS'}});closeModal();await load();renderProspectDetail(id);toast('Note saved')};
+}
+window.addProspectNote=addProspectNote;
+function addProspectReminder(id){
+  const p=data.prospects.find(x=>x.id===id);if(!p)return;
+  modal('Add reminder · '+p.company,'<div class="field"><label>Reminder</label><input id="remTitle" class="control" value="Follow up"></div><div class="field"><label>When</label><input id="remDue" class="control" type="datetime-local"></div><button id="saveQuickReminder" class="btn lime wide">Create reminder</button>');
+  $('#saveQuickReminder').onclick=async()=>{if(!$('#remDue').value)return toast('Choose a date and time');await rpc('sales_os_save_reminder',{p_token:token||null,p_payload:{prospect_id:id,title:$('#remTitle').value,due_at:new Date($('#remDue').value).toISOString(),owner_assigned:p.owner_assigned||actor?.display_name||'',priority:'normal',status:'open',notify_in_app:true,created_by:actor?.display_name||'Sales OS'}});closeModal();await load();renderProspectDetail(id);toast('Reminder created')};
+}
+window.addProspectReminder=addProspectReminder;
 function manageCategories(){
   const cats=[...new Set(data.prospects.map(p=>p.category).filter(Boolean))].sort();modal('Categories','<div id="catList">'+cats.map(c=>'<div class="stack-item"><div class="main"><b>'+esc(c)+'</b><span>'+data.prospects.filter(p=>p.category===c).length+' prospects</span></div></div>').join('')+'</div><div class="field" style="margin-top:12px"><label>New category</label><input id="newCat" class="control"></div><button id="addCat" class="btn lime">Add category</button>');$('#addCat').onclick=async()=>{const name=$('#newCat').value.trim();if(!name)return;await rpc('sales_os_save_category',{p_token:token||null,p_payload:{name,active:true}});closeModal();await load();toast('Category added')}}
 function importCsv(){modal('Import prospects','<p class="brief-text">The existing V2 CSV importer remains available during V3 migration.</p><a class="btn lime" href="../sales-os-v2/?v=28" target="_blank">Open CSV importer ↗</a>')}
