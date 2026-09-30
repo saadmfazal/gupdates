@@ -59,15 +59,15 @@ async function memberLogin(){
     const sb=await ensureSupabase(),verified=await sb.auth.verifyOtp({token_hash:tokenHash,type});
     if(verified.error)throw verified.error;if(!verified.data?.session)throw new Error('Session not created');
     sessionAccessToken=verified.data.session.access_token;token='';actor=await rpc('sales_os_whoami',{p_token:null});
-    $('#login').classList.add('hidden');$('#app').classList.remove('hidden');await load();route(location.hash||'#/command',false);
+    await load();$('#login').classList.add('hidden');$('#app').classList.remove('hidden');route(location.hash||'#/command',false);
   }catch(e){$('#loginError').textContent=String(e.message||e);$('#memberLoginBtn').disabled=false;$('#memberLoginBtn').textContent='Open Sales OS'}
 }
 async function sharedLogin(){
   const code=$('#accessCode').value.trim();if(!code)return;
-  try{const ok=await rpc('sales_os_verify',{p_token:code});if(!ok)throw new Error('Invalid code');token=code;actor={display_name:'Shared',authenticated:false};localStorage.setItem('salesOsToken',code);$('#login').classList.add('hidden');$('#app').classList.remove('hidden');await load();route('#/command',false)}catch(e){$('#loginError').textContent='Could not open Sales OS.'}
+  try{const ok=await rpc('sales_os_verify',{p_token:code});if(!ok)throw new Error('Invalid code');token=code;actor={display_name:'Shared',authenticated:false};localStorage.setItem('salesOsToken',code);await load();$('#login').classList.add('hidden');$('#app').classList.remove('hidden');route('#/command',false)}catch(e){$('#loginError').textContent='Could not open Sales OS.'}
 }
 async function trySession(){
-  try{const sb=await ensureSupabase(),{data:{session}}=await sb.auth.getSession();if(!session)return false;sessionAccessToken=session.access_token;actor=await rpc('sales_os_whoami',{p_token:null});$('#login').classList.add('hidden');$('#app').classList.remove('hidden');await load();return true}catch{return false}
+  try{const sb=await ensureSupabase(),{data:{session}}=await sb.auth.getSession();if(!session)return false;sessionAccessToken=session.access_token;actor=await rpc('sales_os_whoami',{p_token:null});await load();$('#login').classList.add('hidden');$('#app').classList.remove('hidden');return true}catch{return false}
 }
 async function signOut(){
   localStorage.removeItem('salesOsToken');localStorage.removeItem('salesOsMemberEmail');try{const sb=await ensureSupabase();await sb.auth.signOut()}catch{}location.href=location.pathname;
@@ -301,14 +301,14 @@ function openSheet(){$('#moreSheet').classList.remove('hidden')}
 
 async function startResearch(id){
   const p=data.prospects.find(x=>x.id===id);if(!p)return;
-  if(!providerStatus.ai){const prompt=researchPrompt(p);navigator.clipboard.writeText(prompt).catch(()=>{});openContextChat(typeof prompt!=='undefined'?prompt:typeof fallback!=='undefined'?fallback:typeof msg!=='undefined'?contextPrompt(msg,copilotProspectId):discoveryPrompt());toast('Research prompt copied');return}
+  if(!providerStatus.ai){const prompt=researchPrompt(p);navigator.clipboard.writeText(prompt).catch(()=>{});openContextChat(contextPrompt(prompt,id));toast('Research prompt copied');return}
   toast('Researching '+p.company+'…');
   try{const headers={'Content-Type':'application/json',apikey:APIKEY};if(sessionAccessToken)headers.Authorization='Bearer '+sessionAccessToken;else if(token)headers['x-sales-os-access-code']=token;
     const r=await fetch(SUPABASE_URL+'/functions/v1/sales-os-prospect-research',{method:'POST',headers,body:JSON.stringify({prospect_id:id})});const out=await r.json();if(!r.ok)throw new Error(out.detail||out.error||'Research failed');await load();toast('Research saved');route('#/prospect/'+id)}catch(e){toast(String(e.message||e))}
 }
 window.startResearch=startResearch;
 function researchPrompt(p){return 'Research this real company for Morpheus Sales OS using current public sources.\n\nCompany: '+p.company+'\nCategory: '+(p.category||'')+'\nWebsite: '+(p.website||'')+'\nKnown context: '+(p.notes||'')+'\n\nVerify what the company does, public contacts when actually available, why it fits Morpheus, the strongest personalized asset to create, outreach angles, cautions, and source URLs. Do not invent facts.'}
-function aiWrite(id){const p=data.prospects.find(x=>x.id===id);if(!p)return;if(providerStatus.ai){openCopilot(id,'Draft the best concise next sales email for this prospect using the live account context, research and assets. Do not invent facts. Return a subject and body.')}else{const prompt='Write a concise B2B sales email for '+p.company+'. Use only verified context from this Sales OS account. Do not invent facts. Return SUBJECT and BODY.';navigator.clipboard.writeText(prompt).catch(()=>{});openContextChat(typeof prompt!=='undefined'?prompt:typeof fallback!=='undefined'?fallback:typeof msg!=='undefined'?contextPrompt(msg,copilotProspectId):discoveryPrompt());toast('AI writing prompt copied')}}
+function aiWrite(id){const p=data.prospects.find(x=>x.id===id);if(!p)return;if(providerStatus.ai){openCopilot(id,'Draft the best concise next sales email for this prospect using the live account context, research and assets. Do not invent facts. Return a subject and body.')}else{const prompt='Write a concise B2B sales email for '+p.company+'. Use only verified context from this Sales OS account. Do not invent facts. Return SUBJECT and BODY.';navigator.clipboard.writeText(prompt).catch(()=>{});openContextChat(contextPrompt(prompt,id));toast('AI writing prompt copied')}}
 window.aiWrite=aiWrite;
 async function saveProspectDraft(id){
   const p=data.prospects.find(x=>x.id===id),body=$('#prospectDraftBody').value.trim();if(!body)return toast('Draft is empty');
@@ -347,7 +347,7 @@ function openAddProspect(){
   modal('Add prospect','<div class="field"><label>Company</label><input id="npCompany" class="control"></div><div class="field"><label>Category</label><input id="npCategory" class="control"></div><div class="field"><label>Website</label><input id="npWebsite" class="control"></div><div class="field"><label>Assigned to</label><select id="npAssignee" class="control"><option>Yazeed</option><option>Saad</option></select></div><button id="createProspectNow" class="btn lime wide">Create prospect</button>');$('#createProspectNow').onclick=async()=>{const company=$('#npCompany').value.trim();if(!company)return toast('Company required');await rpc('sales_os_save_prospect',{p_token:token||null,p_payload:{company,category:$('#npCategory').value||'General',website:$('#npWebsite').value,owner_assigned:$('#npAssignee').value,stage:'Research',status:'Not started',next_action:'Research and qualify'}});closeModal();await load();route('#/prospects');toast('Prospect created')}}
 function openFindProspects(){
   modal('Find new prospects','<div class="field"><label>Market / category</label><input id="fpCategory" class="control" placeholder="e.g. Fish Food · Retail"></div><div class="field"><label>Geography</label><input id="fpGeo" class="control" placeholder="e.g. Northeast USA"></div><div class="field"><label>Extra criteria</label><textarea id="fpCriteria" placeholder="Independent retailers, avoid chains…"></textarea></div><div class="field"><label>How many?</label><select id="fpCount" class="control"><option>10</option><option selected>20</option><option>25</option></select></div><button id="runDiscovery" class="btn lime wide">✦ Start research</button><div id="discoveryResults"></div>');
-  $('#runDiscovery').onclick=async()=>{const category=$('#fpCategory').value.trim();if(!category)return toast('Enter a category');if(!providerStatus.ai){navigator.clipboard.writeText('Find '+$('#fpCount').value+' new B2B prospects for '+category+' in '+($('#fpGeo').value||'the target market')+'. '+($('#fpCriteria').value||'')+' Use current public sources, verify contacts, do not invent facts, and return a CSV for Morpheus Sales OS.').catch(()=>{});openContextChat(typeof prompt!=='undefined'?prompt:typeof fallback!=='undefined'?fallback:typeof msg!=='undefined'?contextPrompt(msg,copilotProspectId):discoveryPrompt());toast('Research prompt copied');return}
+  $('#runDiscovery').onclick=async()=>{const category=$('#fpCategory').value.trim();if(!category)return toast('Enter a category');if(!providerStatus.ai){navigator.clipboard.writeText('Find '+$('#fpCount').value+' new B2B prospects for '+category+' in '+($('#fpGeo').value||'the target market')+'. '+($('#fpCriteria').value||'')+' Use current public sources, verify contacts, do not invent facts, and return a CSV for Morpheus Sales OS.').catch(()=>{});openContextChat(discoveryPrompt());toast('Research prompt copied');return}
     $('#runDiscovery').disabled=true;$('#runDiscovery').textContent='Researching…';try{const headers={'Content-Type':'application/json',apikey:APIKEY};if(sessionAccessToken)headers.Authorization='Bearer '+sessionAccessToken;else if(token)headers['x-sales-os-access-code']=token;const r=await fetch(SUPABASE_URL+'/functions/v1/sales-os-discovery',{method:'POST',headers,body:JSON.stringify({category,geography:$('#fpGeo').value,target_count:Number($('#fpCount').value),criteria:$('#fpCriteria').value})});const out=await r.json();if(!r.ok)throw new Error(out.detail||out.error||'Discovery failed');const run=await rpc('sales_os_get_discovery_run',{p_token:token||null,p_run_id:out.run_id});renderDiscovery(run)}catch(e){toast(String(e.message||e))}finally{$('#runDiscovery').disabled=false;$('#runDiscovery').textContent='✦ Start research'}}
 }
 function renderDiscovery(x){const c=x.candidates||[];$('#discoveryResults').innerHTML='<div class="stack-list" style="margin-top:12px">'+c.map(v=>'<div class="stack-item"><div class="main"><b>'+esc(v.company)+'</b><span>'+esc(v.why_fit||'')+'</span></div>'+(v.review_status==='pending'?'<button class="btn" onclick="reviewCandidate(\''+v.id+'\',\'approved\',\''+x.run.id+'\')">Add</button>':'<span class="status-chip">'+esc(v.review_status)+'</span>')+'</div>').join('')+'</div>'}
@@ -379,7 +379,7 @@ async function openCopilot(id=null,preset=''){
 window.openCopilot=openCopilot;window.quickCopilot=q=>{$('#copilotInput').value=q;sendCopilot()}
 function closeCopilot(){$('#copilot').classList.add('hidden')}
 async function sendCopilot(){
-  const msg=$('#copilotInput').value.trim();if(!msg)return;if(!providerStatus.ai){navigator.clipboard.writeText(msg).catch(()=>{});openContextChat(typeof prompt!=='undefined'?prompt:typeof fallback!=='undefined'?fallback:typeof msg!=='undefined'?contextPrompt(msg,copilotProspectId):discoveryPrompt());toast('Prompt copied');return}
+  const msg=$('#copilotInput').value.trim();if(!msg)return;if(!providerStatus.ai){navigator.clipboard.writeText(msg).catch(()=>{});openContextChat(contextPrompt(msg,copilotProspectId));toast('Prompt copied');return}
   copilotLocal.push({role:'user',content:msg});$('#copilotInput').value='';renderCopilotMsgs();$('#copilotSend').disabled=true;$('#copilotSend').textContent='Thinking…';
   try{const d=await copilotFetch({message:msg,prospect_id:copilotProspectId,thread_id:copilotThreadId});copilotThreadId=d.thread_id||copilotThreadId;copilotLocal.push({role:'assistant',content:d.answer||'',structured:d.structured||{}});renderCopilotMsgs()}catch(e){copilotLocal.push({role:'assistant',content:String(e.message||e)});renderCopilotMsgs()}finally{$('#copilotSend').disabled=false;$('#copilotSend').textContent='Ask'}
 }
@@ -411,7 +411,7 @@ async function runUniversalCommand(command){
   if(!providerStatus.ai){
     const fallback='Use my connected Morpheus Sales OS context to handle this request safely. Do not send email or make irreversible changes without asking me first.\n\nREQUEST:\n'+command;
     navigator.clipboard.writeText(fallback).catch(()=>{});
-    openContextChat(typeof prompt!=='undefined'?prompt:typeof fallback!=='undefined'?fallback:typeof msg!=='undefined'?contextPrompt(msg,copilotProspectId):discoveryPrompt());
+    openContextChat(contextPrompt(command));
     toast('Native AI is not connected — command copied to ChatGPT');
     return;
   }
