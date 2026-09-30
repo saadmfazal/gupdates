@@ -1,9 +1,9 @@
-const CACHE='morpheus-sales-os-v17';
+const CACHE='morpheus-sales-os-v18';
 const SHELL=[
   './',
   './index.html',
-  './styles.css?v=17',
-  './app.js?v=17',
+  './styles.css?v=18',
+  './app.js?v=18',
   './manifest.webmanifest',
   './icon.svg'
 ];
