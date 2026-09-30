@@ -386,6 +386,87 @@ function addProspectReminder(id){
   $('#saveQuickReminder').onclick=async()=>{if(!$('#remDue').value)return toast('Choose a date and time');await rpc('sales_os_save_reminder',{p_token:token||null,p_payload:{prospect_id:id,title:$('#remTitle').value,due_at:new Date($('#remDue').value).toISOString(),owner_assigned:p.owner_assigned||actor?.display_name||'',priority:'normal',status:'open',notify_in_app:true,created_by:actor?.display_name||'Sales OS'}});closeModal();await load();renderProspectDetail(id);toast('Reminder created')};
 }
 window.addProspectReminder=addProspectReminder;
+async function commandFetch(command){
+  const headers={'Content-Type':'application/json',apikey:APIKEY};
+  if(sessionAccessToken)headers.Authorization='Bearer '+sessionAccessToken;
+  else if(token)headers['x-sales-os-access-code']=token;
+  const r=await fetch(COMMAND_URL,{method:'POST',headers,body:JSON.stringify({command})});
+  const d=await r.json().catch(()=>({}));
+  if(!r.ok)throw Object.assign(new Error(d.detail||d.error||'Morpheus command failed'),{status:r.status,payload:d});
+  return d;
+}
+async function runUniversalCommand(command){
+  command=String(command||'').trim();if(!command)return;
+  if(!providerStatus.ai){
+    const fallback='Use my connected Morpheus Sales OS context to handle this request safely. Do not send email or make irreversible changes without asking me first.\n\nREQUEST:\n'+command;
+    navigator.clipboard.writeText(fallback).catch(()=>{});
+    window.open('https://chatgpt.com/','_blank');
+    toast('Native AI is not connected — command copied to ChatGPT');
+    return;
+  }
+  $('#universalCommandRun').disabled=true;$('#universalCommandRun').textContent='…';
+  try{
+    const out=await commandFetch(command);
+    lastCommandPlan=out.plan||{answer:'',actions:[]};
+    renderCommandPlan(command);
+  }catch(e){toast(String(e.message||e))}
+  finally{$('#universalCommandRun').disabled=false;$('#universalCommandRun').textContent='⌁'}
+}
+function renderCommandPlan(command=''){
+  const plan=lastCommandPlan||{answer:'',actions:[]};
+  modal('Morpheus plan',`<div class="command-plan-answer">${esc(plan.answer||'Here is what I can do.')}</div><div class="command-plan-list">${(plan.actions||[]).map((a,i)=>`<article class="command-plan-card ${a._done?'done':''}" id="commandAction-${i}"><div class="top"><div><b>${esc(a.label||a.type)}</b><p>${esc(a.reason||'')}</p></div><span class="workflow-pill">${a.requires_confirmation?'<strong>Confirm</strong>':'Ready'}</span></div><div class="actions"><button class="btn ${a.requires_confirmation?'lime':''}" onclick="runCommandAction(${i})">${a._done?'Done ✓':a.requires_confirmation?'Confirm & run':'Run'}</button>${a.prospect_id?`<button class="btn" onclick="closeModal();route('#/prospect/${a.prospect_id}')">Open account</button>`:''}</div></article>`).join('')||'<div class="empty">No action needed.</div>'}</div>`);
+}
+window.runCommandAction=async i=>{
+  const a=lastCommandPlan?.actions?.[i];if(!a||a._done)return;
+  const p=a.prospect_id?data.prospects.find(x=>x.id===a.prospect_id):null;
+  try{
+    if(a.type==='open_prospect'){closeModal();route('#/prospect/'+a.prospect_id);return}
+    if(a.type==='research_prospect'){closeModal();await startResearch(a.prospect_id);return}
+    if(a.type==='ai_write'){closeModal();aiWrite(a.prospect_id);return}
+    if(a.type==='show_route'){closeModal();route('#/'+(a.payload?.route||'command'));return}
+    if(a.type==='assign_ahamed'){
+      if(!p)throw new Error('Prospect not found');
+      await rpc('sales_os_assign_asset_job',{p_token:token||null,p_payload:{
+        prospect_id:p.id,builder_slug:'ahamed',
+        title:a.payload?.title||('Build prospect asset for '+p.company),
+        request_text:a.payload?.request_text||'Create the strongest prospect-facing asset using the saved research and account context.',
+        work_type:'build',priority:a.payload?.priority||'normal',
+        deliverable_types:['preview_url','deployment_url','repository_url'],
+        brief_json:{requested_from:'Morpheus Command',company:p.company,category:p.category}
+      }});
+      toast('Sent to Ahamed');
+    }else if(a.type==='create_note'){
+      if(!p)throw new Error('Prospect not found');
+      await rpc('sales_os_save_note',{p_token:token||null,p_payload:{prospect_id:p.id,title:a.payload?.title||'Morpheus note',body:a.payload?.body||a.reason||'',pinned:false,created_by:actor?.display_name||'Morpheus Command'}});
+      toast('Note saved');
+    }else if(a.type==='create_reminder'){
+      if(!p)throw new Error('Prospect not found');
+      if(!a.payload?.due_at){closeModal();addProspectReminder(p.id);return}
+      await rpc('sales_os_save_reminder',{p_token:token||null,p_payload:{prospect_id:p.id,title:a.payload?.title||('Follow up with '+p.company),due_at:a.payload.due_at,owner_assigned:p.owner_assigned||actor?.display_name||'',priority:'normal',status:'open',notify_in_app:true,created_by:actor?.display_name||'Morpheus Command'}});
+      toast('Reminder created');
+    }else if(a.type==='create_draft'){
+      if(!p)throw new Error('Prospect not found');
+      await rpc('sales_os_save_email_draft',{p_token:token||null,p_payload:{prospect_id:p.id,recipient:p.contact_email||'',sender_name:actor?.display_name||'',sender_email:actor?.email||'',subject:a.payload?.subject||'',body:a.payload?.body||'',status:'draft',ai_assisted:true,provider:'morpheus_command',created_by:actor?.display_name||'Morpheus Command'}});
+      toast('Draft saved');
+    }else if(a.type==='update_next_action'){
+      if(!p)throw new Error('Prospect not found');
+      await rpc('sales_os_save_prospect',{p_token:token||null,p_payload:{id:p.id,next_action:a.payload?.text||a.label,next_action_date:a.payload?.date||null}});
+      toast('Next action updated');
+    }else if(a.type==='find_prospects'){
+      a._done=true;renderCommandPlan();closeModal();await runDiscoveryFromCommand(a.payload||{});return;
+    }
+    a._done=true;await load();renderCommandPlan();
+  }catch(e){toast('Could not run action: '+String(e.message||e))}
+};
+async function runDiscoveryFromCommand(payload){
+  const category=String(payload.category||'').trim();if(!category)return openFindProspects();
+  modal('Prospect discovery','<div id="discoveryResults"><div class="empty">Researching current public sources…</div></div>');
+  const headers={'Content-Type':'application/json',apikey:APIKEY};if(sessionAccessToken)headers.Authorization='Bearer '+sessionAccessToken;else if(token)headers['x-sales-os-access-code']=token;
+  const r=await fetch(SUPABASE_URL+'/functions/v1/sales-os-discovery',{method:'POST',headers,body:JSON.stringify({category,geography:payload.geography||'',target_count:Number(payload.target_count||20),criteria:payload.criteria||''})});
+  const out=await r.json().catch(()=>({}));if(!r.ok){$('#discoveryResults').innerHTML='<div class="empty">'+esc(out.detail||out.error||'Discovery failed')+'</div>';return}
+  const result=await rpc('sales_os_get_discovery_run',{p_token:token||null,p_run_id:out.run_id});renderDiscovery(result);
+}
+
 function manageCategories(){
   const cats=[...new Set(data.prospects.map(p=>p.category).filter(Boolean))].sort();modal('Categories','<div id="catList">'+cats.map(c=>'<div class="stack-item"><div class="main"><b>'+esc(c)+'</b><span>'+data.prospects.filter(p=>p.category===c).length+' prospects</span></div></div>').join('')+'</div><div class="field" style="margin-top:12px"><label>New category</label><input id="newCat" class="control"></div><button id="addCat" class="btn lime">Add category</button>');$('#addCat').onclick=async()=>{const name=$('#newCat').value.trim();if(!name)return;await rpc('sales_os_save_category',{p_token:token||null,p_payload:{name,active:true}});closeModal();await load();toast('Category added')}}
 const CSV_HEADER_ALIASES={'company name':'company','business':'company','business name':'company','prospect':'company','market':'category','industry':'category','contact':'contact_name','contact person':'contact_name','decision maker':'contact_name','role':'contact_role','title':'contact_role','email':'contact_email','url':'website','site':'website','owner':'owner_assigned','assigned to':'owner_assigned','asset link':'asset_url','subject':'outreach_subject','message':'outreach_message'};
@@ -417,7 +498,9 @@ $('#mobileMore').onclick=openSheet;$$('[data-close-sheet]').forEach(x=>x.onclick
 $('#modal').addEventListener('click',e=>{if(e.target.classList.contains('modal-backdrop'))closeModal()});$('#copilot').addEventListener('click',e=>{if(e.target.classList.contains('copilot-backdrop'))closeCopilot()});
 $('#memberLoginBtn').onclick=memberLogin;$('#sharedLoginBtn').onclick=sharedLogin;$('#signOutBtn').onclick=signOut;$('#sheetSignOut').onclick=signOut;
 $('#newProspectTop').onclick=openAddProspect;$('#commandNewProspect').onclick=openAddProspect;$('#addProspectBtn').onclick=openAddProspect;$('#findProspectsBtn').onclick=openFindProspects;$('#researchFindNew').onclick=openFindProspects;
-$('#commandAskAI').onclick=()=>openCopilot();$('#commandBar').onclick=()=>openCopilot();$('#mobileAI').onclick=()=>openCopilot();$('#newDraftBtn').onclick=openNewDraft;
+$('#commandAskAI').onclick=()=>openCopilot();$('#mobileAI').onclick=()=>openCopilot();$('#newDraftBtn').onclick=openNewDraft;
+$('#commandBar').addEventListener('submit',e=>{e.preventDefault();const q=$('#universalCommandInput').value.trim();if(q)runUniversalCommand(q)});
+$('[data-command]').forEach(b=>b.onclick=()=>{const q=b.dataset.command;$('#universalCommandInput').value=q;runUniversalCommand(q)});
 $('#manageCategoriesBtn').onclick=manageCategories;$('#importCsvBtn').onclick=importCsv;$('#notificationsBtn').onclick=requestNotifications;
 ['prospectSearch','prospectCategory','prospectStage','prospectAssignee'].forEach(id=>$('#'+id)?.addEventListener(id==='prospectSearch'?'input':'change',renderProspects));
 $('#globalSearch').addEventListener('input',()=>{if($('#globalSearch').value.trim())route('#/prospects');renderProspects()});
