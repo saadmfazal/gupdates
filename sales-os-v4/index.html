@@ -12,7 +12,8 @@
 <link rel="manifest" href="./manifest.webmanifest?v=41">
 <link rel="icon" href="./icon.svg" type="image/svg+xml">
 <title>Morpheus Sales OS</title>
-<link rel="stylesheet" href="./styles.css?v=41">
+<link rel="stylesheet" href="./styles.css?v=42">
+<link rel="stylesheet" href="./reference.css?v=42">
 </head>
 <body>
 <section id="login" class="login-screen">
@@ -64,7 +65,7 @@
       <button data-route="pipeline" class="nav-link"><span>▥</span>Pipeline</button>
       <button data-route="settings" class="nav-link"><span>⚙</span>Settings</button>
     </nav>
-    <div class="side-footer">
+    <div class="side-atmosphere"><img src="./media/wetspot.webp" alt="" loading="lazy"><span>A HEALTHIER<br>AQUARIUM<br>WORLD.</span></div><div class="side-footer">
       <div id="sideIdentity" class="member-chip"><span class="avatar">?</span><div><b>Shared</b><small>Sales OS</small></div></div>
       <button id="signOutBtn" class="nav-link subtle"><span>↗</span>Sign out</button>
     </div>
@@ -73,12 +74,12 @@
   <div class="workspace">
     <header class="topbar">
       <button class="mobile-brand" data-route="command" aria-label="Home"><span class="brand-mark tiny">M</span></button>
-      <div class="top-location"><span id="routeLabel">COMMAND CENTRE</span><span id="syncLabel">Live workspace</span></div><div class="team-pill"><span id="teamAvatarA">S</span><span id="teamAvatarB">Y</span><b>Saad + Yazeed</b></div>
+      <div class="mobile-wordmark"><b>MORPHEUS</b><span>Sales OS</span></div><div class="top-location"><span id="routeLabel">COMMAND CENTRE</span><span id="syncLabel">Live workspace</span></div><div class="team-pill"><span id="teamAvatarA">S</span><span id="teamAvatarB">Y</span><b>Saad + Yazeed</b></div>
       <div class="global-search">
         <span>⌕</span><input id="globalSearch" placeholder="Search prospects, assets, research…">
       </div>
       <button id="newProspectTop" class="btn lime">＋ Prospect</button>
-      <button id="topIdentity" class="identity-circle">?</button>
+      <button id="mobileMore" class="mobile-more-top" aria-label="More">•••</button><button id="topIdentity" class="identity-circle">?</button>
     </header>
 
     <main class="main">
@@ -88,20 +89,20 @@
             <div class="hero-copy"><div class="hero-state"><span class="live-dot"></span><span id="systemState">Workspace intelligence</span><span class="edition">V4</span></div>
               <div>
                 <div class="eyebrow">MORPHEUS SALES INTELLIGENCE</div>
-                <h1>Your next <span>move.</span></h1>
-                <p><span id="heroSummary">What needs to move today?</span></p>
+                <h1>MAKE THE NEXT <span>MOVE.</span></h1>
+                <p><span id="heroSummary">Your sales intelligence, in one place.</span></p>
               </div>
               <button id="commandNewProspect" class="btn lime desktop-only">＋ Prospect</button>
             </div>
 
             <div id="commandSignals" class="signal-strip"></div><section class="panel priority-panel">
-              <div class="panel-head"><div><div class="eyebrow">ADAPTIVE TODAY</div><h2>Focus today</h2></div><button data-route="prospects" class="text-link">See all</button></div>
+              <div class="panel-head"><div><div class="eyebrow">ADAPTIVE TODAY</div><h2>Today’s priorities</h2></div><button data-route="prospects" class="text-link">See all</button></div>
               <div id="todayPriorities" class="priority-list"></div>
             </section>
           </section>
 
           <section class="panel intelligence-panel">
-            <div class="panel-head compact"><div><div class="eyebrow">MORPHEUS INTELLIGENCE</div><h2>Signal network</h2></div><span class="wave">⌁</span></div>
+            <div class="panel-head compact"><div><div class="eyebrow">MORPHEUS INTELLIGENCE</div><h2>What shall we move forward today?</h2></div><span class="wave"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span></div>
             <div id="intelligenceVisual" class="intelligence-visual"></div><div id="intelligenceReadout" class="intelligence-readout"></div>
             <div class="intelligence-actions">
               <button id="commandAskAI" class="mini-card"><b id="priorityCount">0 priority accounts</b><span>Ready for next step</span></button>
@@ -121,11 +122,11 @@
         </section>
 
         <form id="commandBar" class="command-bar universal-command">
-  <span class="spark">✦</span>
-  <input id="universalCommandInput" autocomplete="off" placeholder="Ask Morpheus to research, prepare, assign, remind or prioritise…">
-  <button id="universalCommandRun" type="submit">⌁</button>
+  <span class="spark"><span class="command-desktop-spark">✦</span><span class="command-wave"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span></span>
+  <input id="universalCommandInput" autocomplete="off" placeholder="Ask Morpheus to research, prepare or prioritise…">
+  <button id="voiceCommand" type="button" aria-label="Voice command"></button><button id="universalCommandRun" type="submit">⌁</button>
 </form>
-<div id="commandQuick" class="command-quick">
+<button id="mobileAskEntry" class="mobile-ask-entry"><span>✦</span>What shall we move forward?<i>◌</i></button><div id="commandQuick" class="command-quick">
   <button data-command="What needs my attention today?">What needs attention?</button>
   <button data-command="Show me prospects with assets ready but no outreach.">Assets → outreach</button>
   <button data-command="Show me prospects that need follow-up now.">Follow-ups</button>
@@ -210,7 +211,7 @@
     <button data-route="prospects"><span>♙</span>Prospects</button>
     <button data-route="assets"><span>▣</span>Assets</button>
     <button id="mobileAI" data-route="ai"><span>◌</span>AI</button>
-    <button id="mobileMore" aria-label="More"><span>•••</span>More</button>
+    
   </nav>
 </div>
 
@@ -249,7 +250,7 @@
 </div>
 
 <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
-<script src="./app.js?v=41"></script>
-<script src="./v4-ui.js?v=41"></script>
+<script src="./app.js?v=42"></script>
+<script src="./v4-ui.js?v=42"></script>
 </body>
 </html>
