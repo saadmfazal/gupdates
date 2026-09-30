@@ -8,12 +8,12 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Sales OS">
-<link rel="manifest" href="./manifest.webmanifest?v=20">
+<link rel="manifest" href="./manifest.webmanifest?v=19">
 <link rel="icon" href="./icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="./icon.svg">
 <meta name="robots" content="noindex,nofollow,noarchive">
 <title>Morpheus Sales OS</title>
-<link rel="stylesheet" href="./styles.css?v=20">
+<link rel="stylesheet" href="./styles.css?v=19">
 </head>
 <body>
 <section id="login" class="login">
@@ -42,12 +42,10 @@
      <button class="navitem active" data-page="dashboard">Dashboard</button>
      <button class="navitem" data-page="prospects">Prospects <span id="navProspects" class="count">0</span></button>
      <button class="navitem" data-page="pipeline">Pipeline</button>
-     <button class="navitem" data-page="deals">Deal Rooms <span id="navDeals" class="count">0</span></button>
-     <button class="navitem" data-page="intelligence">Intelligence</button>
      <button class="navitem" data-page="inbox">Sales Inbox <span id="navInbox" class="count">0</span></button>
      <button class="navitem" data-page="ai">AI Action Queue <span id="navAI" class="count">0</span></button>
      <button class="navitem" data-page="email">Email Drafts <span id="navDrafts" class="count">0</span></button>
-     <button class="navitem" data-page="assets">Asset Studio <span id="navAssets" class="count">0</span></button>
+     <button class="navitem" data-page="assets">Assets <span id="navAssets" class="count">0</span></button>
      <button class="navitem" data-page="approvals">Approval Center <span id="navApprovals" class="count">0</span></button>
    </div>
    <div class="navgroup">
@@ -55,7 +53,6 @@
      <button class="navitem" data-page="reminders">Reminders <span id="navReminders" class="count">0</span></button>
      <button class="navitem" data-page="notes">Notes</button>
      <button class="navitem" data-page="categories">Categories & Import</button>
-     <button class="navitem" data-page="discovery">Prospect Discovery <span id="navDiscovery" class="count">0</span></button>
    </div>
    <div class="navgroup">
      <div class="navlabel">System</div>
@@ -111,30 +108,6 @@
     <div id="kanban" class="kanban"></div>
    </section>
 
-   <section class="page hidden" data-page-view="deals">
-    <div class="pagehead"><div><h1>Deal Rooms</h1><p>Commercial terms, blockers, requirements and the path from serious interest to operations handoff.</p></div><div class="pageactions"><button class="btn" id="dealCopilotBtn">✦ Deal Copilot</button></div></div>
-    <div class="split deal-split">
-      <div class="listpanel"><div class="toolbar"><input id="dealSearch" class="grow" placeholder="Search active deals…"></div><div id="dealList"></div></div>
-      <div id="dealWorkspace" class="editor"><div class="empty">Open a prospect to start or continue its Deal Room.</div></div>
-    </div>
-   </section>
-
-   <section class="page hidden" data-page-view="intelligence">
-    <div class="pagehead"><div><h1>Commercial Intelligence</h1><p>Pipeline value, weighted value, volume, conversion, category performance and where sales effort is getting stuck.</p></div><div class="pageactions"><button class="btn" id="refreshIntelligenceBtn">Refresh</button><button class="btn primary" id="intelligenceCopilotBtn">✦ Explain the numbers</button></div></div>
-    <div class="grid intel-stats">
-      <div class="card stat"><div class="label">Active pipeline</div><strong id="intelPipeline">$0</strong><small>Entered opportunity value</small></div>
-      <div class="card stat"><div class="label">Weighted pipeline</div><strong id="intelWeighted">$0</strong><small>Value × internal probability</small></div>
-      <div class="card stat"><div class="label">Monthly volume</div><strong id="intelKg">0 kg</strong><small>Active opportunities</small></div>
-      <div class="card stat"><div class="label">Active deals</div><strong id="intelDeals">0</strong><small>Opportunity records</small></div>
-      <div class="card stat"><div class="label">Stalled 14d+</div><strong id="intelStale">0</strong><small>Need intervention</small></div>
-      <div class="card stat"><div class="label">Built, never sent</div><strong id="intelUnsent">0</strong><small>Assets waiting for outreach</small></div>
-    </div>
-    <div class="grid dashboardgrid">
-      <section class="card panel"><div class="panelhead"><h2>Category performance</h2></div><div class="tablecard"><table class="intel-table"><thead><tr><th>Category</th><th>Prospects</th><th>Contacted</th><th>Replied</th><th>Won</th><th>Pipeline</th><th>Monthly kg</th></tr></thead><tbody id="intelCategoryTable"></tbody></table></div></section>
-      <section class="card panel"><div class="panelhead"><h2>Asset effectiveness</h2></div><div id="intelAssetEffectiveness"></div></section>
-    </div>
-   </section>
-
 
    <section class="page hidden" data-page-view="inbox">
     <div class="pagehead"><div><h1>Sales Inbox</h1><p>Real prospect threads, classified and attached to the account that owns them.</p></div><div class="pageactions"><button class="btn" id="syncInboxGuideBtn">Sync with ChatGPT</button><button class="btn primary" id="inboxCopilotBtn">✦ Inbox Copilot</button></div></div>
@@ -160,8 +133,7 @@
    </section>
 
    <section class="page hidden" data-page-view="assets">
-    <div class="pagehead"><div><h1>Asset Studio</h1><p>Websites, proposals, imagery and research — with source, versions, deployment state and active work requests.</p></div><div class="pageactions"><button class="btn" id="assetWorkCopilotBtn">✦ Asset Copilot</button><button class="btn primary" id="newAssetBtn">+ Asset</button></div></div>
-    <section class="card panel" style="margin-bottom:14px"><div class="panelhead"><h2>Work queue</h2><small id="assetWorkSummary"></small></div><div id="assetWorkQueue" class="asset-work-queue"></div></section>
+    <div class="pagehead"><div><h1>Assets</h1><p>Websites, proposals, concepts, imagery, research and supporting material.</p></div><div class="pageactions"><button class="btn primary" id="newAssetBtn">+ Asset</button></div></div>
     <div id="assetGrid" class="assetgrid"></div>
    </section>
 
@@ -180,25 +152,6 @@
     <div class="grid dashboardgrid"><section class="card panel"><div class="panelhead"><h2>Categories</h2></div><div id="categoriesOverview"></div></section><section class="card panel"><div class="panelhead"><h2>ChatGPT prospect workflow</h2></div><div class="ai-box"><h3>Research → CSV → Sales OS</h3><p>Pick a category, copy the exact research prompt, run it in any ChatGPT conversation, download the CSV, and import it here.</p><button class="btn green" id="categoryImportBtn">Open importer</button></div></section></div>
    </section>
 
-
-
-   <section class="page hidden" data-page-view="discovery">
-    <div class="pagehead"><div><h1>Prospect Discovery</h1><p>Research new prospects inside Sales OS, deduplicate them against the live CRM, then approve only the companies worth adding.</p></div></div>
-    <section class="card panel discovery-builder">
-      <div class="formgrid3">
-        <div class="field"><label>Market / category</label><input id="discoveryCategory" class="input" list="discoveryCategoryOptions" placeholder="e.g. Fish Food · Retail"><datalist id="discoveryCategoryOptions"></datalist></div>
-        <div class="field"><label>Geography</label><input id="discoveryGeography" class="input" placeholder="e.g. USA · Northeast"></div>
-        <div class="field"><label>How many</label><select id="discoveryCount" class="select"><option>10</option><option selected>20</option><option>25</option></select></div>
-      </div>
-      <div class="field"><label>Extra criteria</label><textarea id="discoveryCriteria" class="textarea" rows="3" placeholder="Independent retailers, strong aquarium livestock business, private-label opportunity, avoid chains…"></textarea></div>
-      <div class="pageactions"><button id="runDiscoveryBtn" class="btn primary">✦ Find prospects</button><button id="discoveryImportBtn" class="btn">CSV import instead</button></div>
-      <div id="discoveryStatus" class="meta" style="margin-top:10px"></div>
-    </section>
-    <div class="grid dashboardgrid">
-      <section class="card panel"><div class="panelhead"><h2>Review queue</h2><small id="discoveryQueueSummary"></small></div><div id="discoveryCandidates" class="discovery-candidates"></div></section>
-      <section class="card panel"><div class="panelhead"><h2>Research runs</h2></div><div id="discoveryRuns" class="activitylist"></div></section>
-    </div>
-   </section>
 
    <section class="page hidden" data-page-view="approvals">
     <div class="pagehead"><div><h1>Approval Center</h1><p>Review protected actions, see who requested them, and keep a clear audit trail.</p></div><div class="pageactions"><button class="btn" id="approvalRefreshBtn">Refresh</button></div></div>
@@ -236,12 +189,9 @@
     <div class="mobile-sheet-head"><div><strong>More</strong><small>Everything in Sales OS</small></div><button id="mobileMoreClose" class="close">×</button></div>
     <div class="mobile-more-grid">
       <button data-more-page="pipeline"><span>▥</span><b>Pipeline</b><small>Visual stages</small></button>
-      <button data-more-page="deals"><span>◆</span><b>Deal Rooms</b><small>Close opportunities</small></button>
-      <button data-more-page="intelligence"><span>⌁</span><b>Intelligence</b><small>Commercial numbers</small></button>
-      <button data-more-page="discovery"><span>⌕</span><b>Discovery</b><small>Find new prospects</small></button>
       <button data-more-page="email"><span>✎</span><b>Email drafts</b><small>Review & send</small></button>
       <button data-more-page="reminders"><span>◷</span><b>Reminders</b><small>Due work</small></button>
-      <button data-more-page="assets"><span>◇</span><b>Asset Studio</b><small>Sites, versions & work</small></button>
+      <button data-more-page="assets"><span>◇</span><b>Assets</b><small>Sites & proposals</small></button>
       <button data-more-page="notes"><span>≡</span><b>Notes</b><small>Account context</small></button>
       <button data-more-page="categories"><span>⊞</span><b>Categories</b><small>Markets & import</small></button>
       <button data-more-page="approvals"><span>✓</span><b>Approvals</b><small>Review protected work</small></button>
@@ -265,7 +215,7 @@
     <div class="field"><label>Probability %</label><input id="pdOppProb" class="input" type="number" min="0" max="100"></div>
    </div>
    <div class="field"><label>Commercial notes</label><textarea id="pdOppNotes" class="textarea" rows="3"></textarea></div>
-   <div class="pageactions"><button id="saveOpportunity" class="btn">Save opportunity</button><button id="openDealRoomBtn" class="btn primary">Open Deal Room</button></div>
+   <button id="saveOpportunity" class="btn">Save opportunity</button>
   </div>
  <div class="section"><h3>Activity</h3><div id="pdActivity" class="activitylist"></div></div>
 </div></div>
@@ -290,6 +240,6 @@
 <div id="genericModal" class="modal hidden"><div id="genericModalCard" class="modalcard"></div></div>
 <div id="toast" class="toast hidden"></div>
 
-<script src="./app.js?v=20"></script>
+<script src="./app.js?v=19"></script>
 </body>
 </html>
