@@ -46,7 +46,18 @@ async function memberLogin(){
   const r=await fetch(AUTH_BOOTSTRAP,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,access_code:c,return_url:returnUrl})});
   const d=await r.json();
   if(!r.ok||!d.action_link)throw new Error(d.error||d.detail||'Could not sign in');
-  location.href=d.action_link;
+
+  // Supabase's shared QAJ project may default to the QAJ Site URL.
+  // Never follow that redirect. Redeem the generated token on Morpheus instead.
+  const generated=new URL(d.action_link);
+  const tokenHash=generated.searchParams.get('token');
+  const verifyType=generated.searchParams.get('type')||'magiclink';
+  if(!tokenHash)throw new Error('Sales OS sign-in token was not generated');
+  const local=new URL(location.origin+'/sales-os-v2/oauth/');
+  local.searchParams.set('mode','app');
+  local.searchParams.set('token_hash',tokenHash);
+  local.searchParams.set('type',verifyType);
+  location.href=local.toString();
  }catch(e){
   $('#memberLoginBtn').disabled=false;$('#memberLoginBtn').textContent='Continue as team member';
   $('#loginError').textContent=String(e?.message||e);
