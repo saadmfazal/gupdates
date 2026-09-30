@@ -7,8 +7,8 @@ const PIPELINE_STAGES=['Research','Ready to contact','Follow-up','Replied','Qual
 const CSV_COLUMNS=['company','category','segment','location','website','contact_name','contact_role','contact_email','phone','priority','score','owner_assigned','sender_name','sender_email','stage','status','next_action','next_action_date','caution','notes','tags','source_groups','source_notes','asset_type','asset_title','asset_url','asset_status','outreach_subject','outreach_message'];
 
 let token='';
-let data={prospects:[],assets:[],activities:[],templates:[],categories:[],notes:[],reminders:[],email_drafts:[],notifications:[],connections:[],gmail_connections:[],email_messages:[],inbox_threads:[],recommendations:[],opportunities:[],approvals:[],audit_log:[],members:[],copilot_threads:[]};
-let selectedProspect=null,currentDraft=null,currentPage='dashboard',deferredInstallPrompt=null;
+let data={prospects:[],assets:[],asset_versions:[],asset_work_requests:[],deal_requirements:[],deal_checklist:[],deal_handoffs:[],discovery_runs:[],discovery_candidates:[],activities:[],templates:[],categories:[],notes:[],reminders:[],email_drafts:[],notifications:[],connections:[],gmail_connections:[],email_messages:[],inbox_threads:[],recommendations:[],opportunities:[],approvals:[],audit_log:[],members:[],copilot_threads:[]};
+let selectedProspect=null,currentDraft=null,currentPage='dashboard',deferredInstallPrompt=null,selectedDeal=null,commercialIntel=null;
 let sessionAccessToken='',supabaseClient=null,actor=null;
 let selectedInboxThread=null,copilotThreadId=null,copilotProspectId=null,copilotLocal=[];
 let providerStatus={ai:false};
@@ -25,7 +25,7 @@ async function rpc(fn,payload={}){
  const r=await fetch(API+fn,{method:'POST',headers,body:JSON.stringify(payload)});
  const txt=await r.text();if(!r.ok)throw new Error(txt||`HTTP ${r.status}`);return txt?JSON.parse(txt):null
 }
-function norm(){for(const k of ['prospects','assets','activities','templates','categories','notes','reminders','email_drafts','notifications','connections','gmail_connections','email_messages','inbox_threads','recommendations','opportunities','approvals','audit_log','members','copilot_threads'])data[k]=Array.isArray(data[k])?data[k]:[]}
+function norm(){for(const k of ['prospects','assets','asset_versions','asset_work_requests','deal_requirements','deal_checklist','deal_handoffs','discovery_runs','discovery_candidates','activities','templates','categories','notes','reminders','email_drafts','notifications','connections','gmail_connections','email_messages','inbox_threads','recommendations','opportunities','approvals','audit_log','members','copilot_threads'])data[k]=Array.isArray(data[k])?data[k]:[]}
 
 async function ensureSupabaseClient(){
  if(supabaseClient)return supabaseClient;
