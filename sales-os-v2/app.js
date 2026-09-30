@@ -47,19 +47,26 @@ async function memberLogin(){
   const d=await r.json();
   if(!r.ok||!d.action_link)throw new Error(d.error||d.detail||'Could not sign in');
 
-  // Supabase's shared QAJ project may default to the QAJ Site URL.
-  // Never follow that redirect. Redeem the generated token on Morpheus instead.
+  // The Supabase project is shared with QAJ, so do not follow its Site URL redirect.
+  // Redeem the one-time sign-in token directly on the Sales OS page.
   const generated=new URL(d.action_link);
   const tokenHash=generated.searchParams.get('token');
   const verifyType=generated.searchParams.get('type')||'magiclink';
   if(!tokenHash)throw new Error('Sales OS sign-in token was not generated');
-  const local=new URL(location.origin+'/sales-os-v2/oauth/');
-  local.searchParams.set('mode','app');
-  local.searchParams.set('token_hash',tokenHash);
-  local.searchParams.set('type',verifyType);
-  location.href=local.toString();
+
+  const sb=await ensureSupabaseClient();
+  const verified=await sb.auth.verifyOtp({token_hash:tokenHash,type:verifyType});
+  if(verified.error)throw verified.error;
+  const session=verified.data?.session;
+  if(!session)throw new Error('Sales OS session was not created');
+
+  sessionAccessToken=session.access_token;token='';
+  actor=await rpc('sales_os_whoami',{p_token:null});
+  $('#login').classList.add('hidden');
+  $('#app').classList.remove('hidden');
+  await load();
  }catch(e){
-  $('#memberLoginBtn').disabled=false;$('#memberLoginBtn').textContent='Continue as team member';
+  $('#memberLoginBtn').disabled=false;$('#memberLoginBtn').textContent='Open Sales OS';
   $('#loginError').textContent=String(e?.message||e);
  }
 }
