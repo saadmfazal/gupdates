@@ -576,3 +576,14 @@ table{width:100%;border-collapse:collapse;min-width:1050px}th{text-align:left;pa
   .stat strong{font-size:24px}
   .thread-actions{grid-template-columns:1fr}
 }
+
+
+/* ASSET EXCHANGE V1 */
+.asset-build-queue{display:grid;gap:7px}
+.asset-build-row{display:flex;gap:10px;align-items:flex-start;justify-content:space-between;border:1px solid var(--line);border-radius:11px;padding:11px;background:#fff;cursor:pointer}
+.asset-build-row:hover{border-color:#cbd5cd;background:#fbfdfb}
+.asset-build-row .maincopy{flex:1;min-width:0}
+@media(max-width:760px){
+  .asset-build-row{padding:12px;border-radius:12px}
+  .asset-build-row .pill{flex:0 0 auto}
+}
