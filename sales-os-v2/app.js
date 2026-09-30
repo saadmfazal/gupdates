@@ -149,13 +149,111 @@ function renderPipeline(){
  $('#kanban').innerHTML=PIPELINE_STAGES.map(s=>{const ps=data.prospects.filter(p=>p.stage===s);return`<section class="lane"><div class="lanehead"><span>${s}</span><span>${ps.length}</span></div>${ps.map(p=>`<div class="deal" onclick="openProspect('${p.id}')"><b>${esc(p.company)}</b><small>${esc(p.category||'')}</small>${p.next_action_date?`<div style="margin-top:7px"><span class="datechip">${esc(p.next_action_date)}</span></div>`:''}</div>`).join('')}</section>`}).join('');
 }
 
-function renderInbox(){
- const msgs=[...data.email_messages].sort((a,b)=>new Date(b.sent_at)-new Date(a.sent_at));
- const actions=msgs.filter(m=>m.requires_action).length;
- if($('#inboxSummary'))$('#inboxSummary').textContent=`${msgs.length} synced · ${actions} need action`;
- if(!$('#salesInbox'))return;
- $('#salesInbox').innerHTML=msgs.length?msgs.map(m=>`<div class="activityrow" onclick="openProspect('${m.prospect_id}')"><div class="maincopy"><div class="title">${m.direction==='inbound'?'↙':'↗'} ${esc(prospectName(m.prospect_id)||'Unknown')} · ${esc(m.subject||'(No subject)')}</div><div class="meta">${esc(m.classification||m.direction)} · ${m.sent_at?new Date(m.sent_at).toLocaleString():''}</div><div class="sub">${esc(m.snippet||'')}</div></div>${m.requires_action?'<span class="pill amber">Action</span>':''}</div>`).join(''):'<div class="empty">No prospect email has been synced yet.</div>';
+function inboxThreadState(threadId){
+ return data.inbox_threads.find(t=>t.provider_thread_id===threadId)||null;
 }
+function inboxMessages(threadId){
+ return data.email_messages.filter(m=>(m.provider_thread_id||m.provider_message_id)===threadId).sort((a,b)=>new Date(a.sent_at)-new Date(b.sent_at));
+}
+function inboxThreadIds(){
+ const ids=new Set();
+ data.email_messages.forEach(m=>ids.add(m.provider_thread_id||m.provider_message_id));
+ data.inbox_threads.forEach(t=>ids.add(t.provider_thread_id));
+ return [...ids];
+}
+function threadLatest(threadId){
+ const ms=inboxMessages(threadId);return ms[ms.length-1]||null;
+}
+function renderInbox(){
+ if(!$('#inboxThreadList'))return;
+ const status=$('#inboxStatusFilter')?.value||'',cls=$('#inboxClassFilter')?.value||'';
+ const classes=[...new Set(data.inbox_threads.map(t=>t.classification).filter(Boolean))].sort();
+ if($('#inboxClassFilter')){
+   const keep=$('#inboxClassFilter').value;
+   $('#inboxClassFilter').innerHTML='<option value="">All classifications</option>'+classes.map(x=>`<option value="${esc(x)}">${esc(x.replaceAll('_',' '))}</option>`).join('');
+   $('#inboxClassFilter').value=keep;
+ }
+ let threads=inboxThreadIds().map(id=>{
+   const state=inboxThreadState(id),latest=threadLatest(id),msgs=inboxMessages(id);
+   const pid=state?.prospect_id||latest?.prospect_id||msgs[0]?.prospect_id||null;
+   return {id,state,latest,msgs,pid,status:state?.status||(latest?.direction==='outbound'?'waiting':'open'),classification:state?.classification||latest?.classification||'',date:state?.last_message_at||latest?.sent_at||null};
+ }).filter(t=>(!status||t.status===status)&&(!cls||t.classification===cls))
+   .sort((a,b)=>new Date(b.date||0)-new Date(a.date||0));
+
+ const actionCount=threads.filter(t=>t.status==='open'||t.latest?.requires_action).length;
+ $('#inboxSummary').textContent=`${threads.length} threads · ${actionCount} need attention`;
+ $('#inboxThreadList').innerHTML=threads.length?threads.map(t=>`<div class="inbox-thread-row ${selectedInboxThread===t.id?'active':''}" onclick="openInboxThread('${esc(t.id)}')">
+   <div class="inbox-thread-top"><div><h3>${esc(prospectName(t.pid)||'Unknown prospect')}</h3><p>${esc(t.latest?.subject||'(No subject)')}</p></div><span class="pill ${t.status==='open'?'amber':t.status==='done'?'green':''}">${esc(t.status)}</span></div>
+   <p>${esc(t.state?.summary||t.latest?.snippet||'')}</p>
+   <div class="inbox-thread-badges">${t.classification?`<span class="pill blue">${esc(t.classification.replaceAll('_',' '))}</span>`:''}${t.state?.assigned_to?`<span class="pill">${esc(t.state.assigned_to)}</span>`:''}${t.date?`<span class="datechip">${new Date(t.date).toLocaleDateString()}</span>`:''}</div>
+  </div>`).join(''):'<div class="empty">No conversations match this view.</div>';
+
+ if(selectedInboxThread){
+   const exists=threads.some(t=>t.id===selectedInboxThread);
+   if(exists)renderInboxThreadView(selectedInboxThread);
+   else{$('#inboxThreadView').innerHTML='<div class="empty">Select a conversation.</div>';selectedInboxThread=null}
+ }else if(threads[0]&&!window.matchMedia('(max-width:760px)').matches){
+   selectedInboxThread=threads[0].id;renderInboxThreadView(selectedInboxThread);renderInbox();
+ }else $('#inboxThreadView').innerHTML='<div class="empty">Select a conversation.</div>';
+}
+function renderInboxThreadView(threadId){
+ const msgs=inboxMessages(threadId),state=inboxThreadState(threadId),latest=msgs[msgs.length-1],pid=state?.prospect_id||latest?.prospect_id||msgs[0]?.prospect_id;
+ const company=prospectName(pid)||'Unknown prospect';
+ $('#inboxThreadView').innerHTML=`<div class="panelhead"><div><h2>${esc(company)}</h2><small>${esc(latest?.subject||'(No subject)')}</small></div><button class="btn" onclick="openProspect('${pid||''}')">Open account</button></div>
+   <div class="thread-context"><div class="meta"><b>Status:</b> ${esc(state?.status||'open')} · <b>Classification:</b> ${esc((state?.classification||latest?.classification||'unclassified').replaceAll('_',' '))}${state?.next_action?'<br><b>Next:</b> '+esc(state.next_action):''}${state?.next_action_date?' · '+esc(state.next_action_date):''}</div></div>
+   <div class="thread-actions">
+     <button class="btn primary" onclick="draftInboxReply('${esc(threadId)}')">Reply draft</button>
+     <button class="btn" onclick="openInboxCopilot('${esc(threadId)}')">✦ AI reply</button>
+     <button class="btn" onclick="setInboxState('${esc(threadId)}','done')">Done</button>
+     <button class="btn" onclick="snoozeInboxThread('${esc(threadId)}')">Snooze 3d</button>
+   </div>
+   <div class="mail-thread">${msgs.map(m=>`<article class="mail-message ${esc(m.direction)}"><div class="mail-message-head"><span>${esc(m.direction==='inbound'?(m.from_email||'Prospect'):'Us')}</span><span>${m.sent_at?new Date(m.sent_at).toLocaleString():''}</span></div><div class="mail-message-subject">${esc(m.subject||'')}</div><div class="mail-message-body">${esc(m.body||m.snippet||'')}</div></article>`).join('')}</div>`;
+ if(window.matchMedia('(max-width:760px)').matches)setTimeout(()=>$('#inboxThreadView')?.scrollIntoView({behavior:'smooth',block:'start'}),50);
+}
+window.openInboxThread=id=>{selectedInboxThread=id;renderInbox()};
+async function setInboxState(threadId,status){
+ const state=inboxThreadState(threadId),latest=threadLatest(threadId);
+ await rpc('sales_os_set_inbox_thread_state',{p_token:token||null,p_payload:{
+   provider:'gmail',provider_thread_id:threadId,prospect_id:state?.prospect_id||latest?.prospect_id,status,
+   classification:state?.classification||latest?.classification||'',summary:state?.summary||latest?.snippet||'',
+   assigned_to:state?.assigned_to||data.prospects.find(p=>p.id===(state?.prospect_id||latest?.prospect_id))?.owner_assigned||'',
+   next_action:state?.next_action||'',next_action_date:state?.next_action_date||'',last_message_at:state?.last_message_at||latest?.sent_at||'',
+   last_direction:state?.last_direction||latest?.direction||'',unread_count:status==='done'?0:(state?.unread_count||0)
+ }});
+ toast(status==='done'?'Conversation completed':'Inbox updated');await load();selectedInboxThread=threadId;renderInbox();
+}
+window.setInboxState=setInboxState;
+window.snoozeInboxThread=async threadId=>{
+ const state=inboxThreadState(threadId),latest=threadLatest(threadId),d=new Date(Date.now()+3*86400000);
+ await rpc('sales_os_set_inbox_thread_state',{p_token:token||null,p_payload:{
+   provider:'gmail',provider_thread_id:threadId,prospect_id:state?.prospect_id||latest?.prospect_id,status:'snoozed',
+   classification:state?.classification||latest?.classification||'',summary:state?.summary||latest?.snippet||'',
+   assigned_to:state?.assigned_to||'',next_action:'Review snoozed conversation',next_action_date:d.toISOString().slice(0,10),
+   snoozed_until:d.toISOString(),last_message_at:state?.last_message_at||latest?.sent_at||'',last_direction:state?.last_direction||latest?.direction||'',unread_count:0
+ }});
+ toast('Snoozed for 3 days');await load();
+};
+window.draftInboxReply=async threadId=>{
+ const msgs=inboxMessages(threadId),state=inboxThreadState(threadId),latest=msgs[msgs.length-1],pid=state?.prospect_id||latest?.prospect_id;
+ if(!pid)return toast('Prospect match required first');
+ const p=data.prospects.find(x=>x.id===pid);
+ const inbound=[...msgs].reverse().find(m=>m.direction==='inbound');
+ const recipient=inbound?.from_email||p?.contact_email||'';
+ const subject=/^re:/i.test(latest?.subject||'')?(latest.subject||''):'Re: '+(latest?.subject||'');
+ const id=await rpc('sales_os_save_email_draft',{p_token:token||null,p_payload:{
+   prospect_id:pid,recipient,sender_name:p?.sender_name||actor?.display_name||'',
+   sender_email:p?.sender_email||actor?.email||'',subject,body:'',status:'draft',
+   provider:'gmail',provider_thread_id:threadId,reply_to_message_id:inbound?.provider_message_id||latest?.provider_message_id||'',
+   created_by:actor?.display_name||'Sales OS'
+ }});
+ await load();currentDraft=data.email_drafts.find(d=>d.id===id)||data.email_drafts.find(d=>d.provider_thread_id===threadId&&d.status==='draft');go('email');
+ if(currentDraft)openDraft(currentDraft.id);
+};
+window.openInboxCopilot=threadId=>{
+ const state=inboxThreadState(threadId),latest=threadLatest(threadId),pid=state?.prospect_id||latest?.prospect_id;
+ selectedInboxThread=threadId;
+ openCopilot(pid,`Draft a concise reply to the latest message in the current sales inbox conversation. Address what they actually said, do not invent facts, and return a draft subject and body.`);
+};
 
 function renderAIQueue(){
  if(!$('#aiActionQueue'))return;
