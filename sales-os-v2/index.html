@@ -8,12 +8,12 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Sales OS">
-<link rel="manifest" href="./manifest.webmanifest?v=17">
+<link rel="manifest" href="./manifest.webmanifest?v=18">
 <link rel="icon" href="./icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="./icon.svg">
 <meta name="robots" content="noindex,nofollow,noarchive">
 <title>Morpheus Sales OS</title>
-<link rel="stylesheet" href="./styles.css?v=17">
+<link rel="stylesheet" href="./styles.css?v=18">
 </head>
 <body>
 <section id="login" class="login">
@@ -69,6 +69,7 @@
     <div class="searchwrap"><input id="globalSearch" placeholder="Search prospects, contacts, notes, assets…"></div>
     <div class="topactions">
       <button class="btn" id="quickNoteBtn">+ Note</button>
+      <button class="btn" id="copilotBtn">✦ Copilot</button>
       <button class="btn primary" id="quickProspectBtn">+ Prospect</button>
       <button id="identityBtn" class="identity-chip" title="Current Sales OS identity"><span id="identityInitial">?</span><span class="identity-copy"><b id="identityName">Shared</b><small id="identityRole">team code</small></span></button>
       <button class="iconbtn" id="notificationBtn" aria-label="Notifications">◔<span id="notificationDot" class="dot hidden"></span></button>
@@ -109,12 +110,20 @@
 
 
    <section class="page hidden" data-page-view="inbox">
-    <div class="pagehead"><div><h1>Sales Inbox</h1><p>Prospect email threads synchronized into the CRM, with reply classification and action state.</p></div><div class="pageactions"><button class="btn" id="syncInboxGuideBtn">Sync with ChatGPT</button></div></div>
-    <section class="card panel"><div class="panelhead"><h2>Messages</h2><small id="inboxSummary"></small></div><div id="salesInbox" class="activitylist"></div></section>
+    <div class="pagehead"><div><h1>Sales Inbox</h1><p>Real prospect threads, classified and attached to the account that owns them.</p></div><div class="pageactions"><button class="btn" id="syncInboxGuideBtn">Sync with ChatGPT</button><button class="btn primary" id="inboxCopilotBtn">✦ Inbox Copilot</button></div></div>
+    <div class="inbox-toolbar">
+      <select id="inboxStatusFilter" class="select"><option value="">All threads</option><option value="open">Open</option><option value="waiting">Waiting</option><option value="snoozed">Snoozed</option><option value="done">Done</option></select>
+      <select id="inboxClassFilter" class="select"><option value="">All classifications</option></select>
+      <div class="inbox-summary-text" id="inboxSummary"></div>
+    </div>
+    <div class="split inbox-split">
+      <div class="listpanel"><div id="inboxThreadList"></div></div>
+      <div id="inboxThreadView" class="editor"><div class="empty">Select a conversation.</div></div>
+    </div>
    </section>
 
    <section class="page hidden" data-page-view="ai">
-    <div class="pagehead"><div><h1>AI Action Queue</h1><p>The next best actions generated from outreach, replies, reminders and account context.</p></div><div class="pageactions"><button class="btn" id="aiQueueGuideBtn">Run Autopilot in ChatGPT</button></div></div>
+    <div class="pagehead"><div><h1>AI Action Queue</h1><p>The next best actions generated from outreach, replies, reminders and account context.</p></div><div class="pageactions"><button class="btn primary" id="aiAskCopilotBtn">✦ Ask Copilot</button><button class="btn" id="aiQueueGuideBtn">Open in ChatGPT</button></div></div>
     <div id="aiActionQueue" class="focuslist"></div>
    </section>
 
@@ -194,7 +203,7 @@
 </div>
 
 <div id="prospectDrawer" class="drawer hidden"><div class="drawerpanel">
- <div class="drawerhead"><div><span id="pdCategory" class="pill"></span><h2 id="pdCompany"></h2><div id="pdMeta" class="meta"></div></div><button class="close" data-close="prospectDrawer">×</button></div>
+ <div class="drawerhead"><div><span id="pdCategory" class="pill"></span><h2 id="pdCompany"></h2><div id="pdMeta" class="meta"></div></div><div class="drawerhead-actions"><button id="pdCopilot" class="btn">✦ Copilot</button><button class="close" data-close="prospectDrawer">×</button></div></div>
  <div class="section"><h3>Account</h3><div class="formgrid2"><div class="field"><label>Category</label><select id="pdCategorySelect" class="select"></select></div><div class="field"><label>Stage</label><select id="pdStage" class="select"></select></div><div class="field"><label>Owner</label><input id="pdOwner" class="input"></div><div class="field"><label>Priority</label><input id="pdPriority" class="input"></div><div class="field"><label>Contact</label><input id="pdContact" class="input"></div><div class="field"><label>Email</label><input id="pdEmail" class="input"></div><div class="field"><label>Website</label><input id="pdWebsite" class="input"></div><div class="field"><label>Location</label><input id="pdLocation" class="input"></div></div><div class="field"><label>Next action</label><input id="pdNextAction" class="input"></div><div class="field"><label>Next action date</label><input id="pdNextDate" class="input" type="date"></div><button id="saveProspect" class="btn primary">Save account</button></div>
  <div class="section"><h3>Assets</h3><div id="pdAssets"></div><button id="pdNewAsset" class="btn" style="margin-top:8px">+ Asset</button></div>
  <div class="section"><h3>Notes</h3><div id="pdNotes"></div><button id="pdNewNote" class="btn" style="margin-top:8px">+ Note</button></div>
@@ -211,9 +220,26 @@
  <div class="section"><h3>Activity</h3><div id="pdActivity" class="activitylist"></div></div>
 </div></div>
 
+<div id="copilotDrawer" class="copilot-drawer hidden">
+  <div class="copilot-backdrop" data-close-copilot></div>
+  <aside class="copilot-panel">
+    <div class="copilot-head">
+      <div><div class="loginbrand">Morpheus AI</div><h2 id="copilotTitle">Sales Copilot</h2><div id="copilotContext" class="meta"></div></div>
+      <button id="copilotClose" class="close">×</button>
+    </div>
+    <div id="copilotProviderBanner" class="copilot-provider hidden"></div>
+    <div id="copilotQuick" class="copilot-quick"></div>
+    <div id="copilotMessages" class="copilot-messages"></div>
+    <div class="copilot-compose">
+      <textarea id="copilotInput" class="textarea" rows="3" placeholder="Ask about this account, write an email, decide what to do next…"></textarea>
+      <button id="copilotSend" class="btn primary">Ask Copilot</button>
+    </div>
+  </aside>
+</div>
+
 <div id="genericModal" class="modal hidden"><div id="genericModalCard" class="modalcard"></div></div>
 <div id="toast" class="toast hidden"></div>
 
-<script src="./app.js?v=17"></script>
+<script src="./app.js?v=18"></script>
 </body>
 </html>
