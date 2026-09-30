@@ -8,12 +8,12 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Sales OS">
-<link rel="manifest" href="./manifest.webmanifest?v=24">
+<link rel="manifest" href="./manifest.webmanifest?v=25">
 <link rel="icon" href="./icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="./icon.svg">
 <meta name="robots" content="noindex,nofollow,noarchive">
 <title>Morpheus Sales OS</title>
-<link rel="stylesheet" href="./styles.css?v=24">
+<link rel="stylesheet" href="./styles.css?v=25">
 </head>
 <body>
 <section id="login" class="login">
@@ -133,7 +133,11 @@
    </section>
 
    <section class="page hidden" data-page-view="assets">
-    <div class="pagehead"><div><h1>Assets</h1><p>Websites, proposals, concepts, imagery, research and supporting material.</p></div><div class="pageactions"><button class="btn primary" id="newAssetBtn">+ Asset</button></div></div>
+    <div class="pagehead"><div><h1>Assets</h1><p>Prospect assets, Ahamed's build queue, review status and finished links.</p></div><div class="pageactions"><button class="btn primary" id="newAssetBtn">+ Asset</button></div></div>
+    <section class="card panel" style="margin-bottom:14px">
+      <div class="panelhead"><h2>Ahamed build queue</h2><small id="ahamedQueueSummary"></small></div>
+      <div id="ahamedQueue" class="asset-build-queue"></div>
+    </section>
     <div id="assetGrid" class="assetgrid"></div>
    </section>
 
@@ -206,6 +210,7 @@
  <div class="drawerhead"><div><span id="pdCategory" class="pill"></span><h2 id="pdCompany"></h2><div id="pdMeta" class="meta"></div></div><div class="drawerhead-actions"><button id="pdCopilot" class="btn">✦ Copilot</button><button class="close" data-close="prospectDrawer">×</button></div></div>
  <div class="section"><h3>Account</h3><div class="formgrid2"><div class="field"><label>Category</label><select id="pdCategorySelect" class="select"></select></div><div class="field"><label>Stage</label><select id="pdStage" class="select"></select></div><div class="field"><label>Owner</label><input id="pdOwner" class="input"></div><div class="field"><label>Priority</label><input id="pdPriority" class="input"></div><div class="field"><label>Contact</label><input id="pdContact" class="input"></div><div class="field"><label>Email</label><input id="pdEmail" class="input"></div><div class="field"><label>Website</label><input id="pdWebsite" class="input"></div><div class="field"><label>Location</label><input id="pdLocation" class="input"></div></div><div class="field"><label>Next action</label><input id="pdNextAction" class="input"></div><div class="field"><label>Next action date</label><input id="pdNextDate" class="input" type="date"></div><button id="saveProspect" class="btn primary">Save account</button></div>
  <div class="section"><h3>Assets</h3><div id="pdAssets"></div><button id="pdNewAsset" class="btn" style="margin-top:8px">+ Asset</button></div>
+ <div class="section"><h3>Ahamed asset build</h3><div id="pdAssetJobs"></div><button id="pdAssignAhamed" class="btn primary" style="margin-top:8px">Send asset request to Ahamed</button></div>
  <div class="section"><h3>Notes</h3><div id="pdNotes"></div><button id="pdNewNote" class="btn" style="margin-top:8px">+ Note</button></div>
  <div class="section"><h3>Reminders</h3><div id="pdReminders"></div><button id="pdNewReminder" class="btn" style="margin-top:8px">+ Reminder</button></div>
  <div class="section"><h3>Commercial opportunity</h3>
@@ -240,6 +245,6 @@
 <div id="genericModal" class="modal hidden"><div id="genericModalCard" class="modalcard"></div></div>
 <div id="toast" class="toast hidden"></div>
 
-<script src="./app.js?v=24"></script>
+<script src="./app.js?v=25"></script>
 </body>
 </html>
