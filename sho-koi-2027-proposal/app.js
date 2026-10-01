@@ -5,12 +5,14 @@
     7000:{dec:2000,jan:2700,feb:2300}
   };
   const nf=new Intl.NumberFormat('en-US');
+  const kgToLbs=(kg)=>Math.round(kg*2.20462);
+  const formatWeight=(kg)=>nf.format(kgToLbs(kg))+' lbs ('+nf.format(kg)+' kg)';
   const targetButtons=[...document.querySelectorAll('[data-target]')];
   function setPlan(t){
     const p=plans[t]||plans[6500], max=Math.max(p.dec,p.jan,p.feb);
-    document.getElementById('targetTotal').textContent=nf.format(t)+' kg';
+    document.getElementById('targetTotal').textContent=formatWeight(Number(t));
     [['Dec','dec'],['Jan','jan'],['Feb','feb']].forEach(([id,key])=>{
-      document.getElementById('kg'+id).textContent=nf.format(p[key])+' kg';
+      document.getElementById('kg'+id).textContent=formatWeight(p[key]);
       document.getElementById('bar'+id).style.width=Math.round((p[key]/max)*100)+'%';
     });
     targetButtons.forEach(b=>b.classList.toggle('active',Number(b.dataset.target)===Number(t)));
