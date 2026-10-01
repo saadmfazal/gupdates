@@ -10,6 +10,7 @@ on:
       - "sales-os-v2/**"
       - "sales-os-v3/**"
       - "sales-os-v4/**"
+      - "sho-koi-2027-proposal/**"
       - ".github/workflows/pages.yml"
   workflow_dispatch:
 
