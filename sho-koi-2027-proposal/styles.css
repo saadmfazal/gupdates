@@ -57,3 +57,112 @@ footer{padding:34px 0 54px;border-top:1px solid var(--line)}footer .wrap{display
   .pack.sig{width:61%;right:32%}
   .pack.adv{width:50%}
 }
+
+
+/* 2026-10-01 complete proposal game-plan components */
+.phaseGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.phaseCard{min-height:210px;padding:24px;border:1px solid var(--lineDark);background:rgba(255,255,255,.35);border-radius:20px}
+.phaseCard span{display:inline-grid;place-items:center;width:34px;height:34px;border-radius:50%;background:var(--ink);color:var(--gold2);font-size:12px;font-weight:800;margin-bottom:32px}
+.phaseCard b{display:block;font-size:20px;line-height:1.15;margin-bottom:10px}
+.phaseCard p{font-size:14px;color:#5c645d;margin:0}
+
+.printSummary{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px}
+.printSummary>div{padding:22px;border:1px solid var(--line);background:rgba(255,255,255,.035);border-radius:18px}
+.printSummary strong{display:block;font-size:34px;line-height:1.05;letter-spacing:-.035em;margin:8px 0 6px}
+.printSummary small{color:#9eaaa1}
+.printSummary .printTotal{background:var(--gold2);color:var(--ink);border-color:var(--gold2)}
+.printSummary .printTotal .eyebrow{color:#70572d}
+.printSummary .printTotal small{color:#4f4b40}
+
+.tableWrap{overflow:auto;border:1px solid var(--line);border-radius:20px}
+.skuTable{width:100%;border-collapse:collapse;min-width:880px;background:rgba(255,255,255,.025)}
+.skuTable th,.skuTable td{padding:16px 18px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+.skuTable th{font-size:11px;letter-spacing:.13em;text-transform:uppercase;color:#aeb8b0;background:#0c1916}
+.skuTable td{font-size:14px}
+.skuTable td:first-child{color:var(--gold2);font-weight:800;width:56px}
+.skuTable td:nth-child(2){width:42%}
+.skuTable td:nth-child(3){white-space:nowrap}
+.skuTable td:last-child{text-align:right;font-size:18px}
+.skuTable small{display:block;color:#9aa59d;margin-top:4px}
+.skuTable tfoot td{border-bottom:0;background:#10211d;font-size:15px}
+.skuTable tfoot td:last-child{color:var(--gold2)}
+.tier{display:inline-flex;padding:5px 9px;border-radius:999px;font-size:11px;font-weight:800;letter-spacing:.04em;text-transform:uppercase}
+.tier.high{background:rgba(226,198,140,.18);color:var(--gold2)}
+.tier.mid{background:rgba(130,165,133,.18);color:#b9d5bb}
+.tier.low{background:rgba(255,255,255,.08);color:#c0c7c2}
+
+.logicBanner{margin-top:18px;display:grid;grid-template-columns:.6fr 1.4fr;gap:28px;align-items:start;padding:26px;border:1px solid rgba(197,165,107,.28);background:linear-gradient(145deg,#11211d,#0b1714);border-radius:20px}
+.logicBanner span{display:block;font-size:11px;letter-spacing:.13em;color:var(--gold2);font-weight:800;margin-bottom:7px}
+.logicBanner strong{display:block;font-size:25px}
+.logicBanner p{font-size:15px;color:#b6c0b8;margin:0}
+
+.shipmentMaster{border:1px solid var(--line);border-radius:22px;overflow:hidden}
+.shipHead,.shipLine{display:grid;grid-template-columns:150px 180px 1fr 170px;gap:18px;align-items:center;padding:17px 20px}
+.shipHead{background:#0d1a17;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#9ba69e}
+.shipLine{border-top:1px solid var(--line);background:rgba(255,255,255,.025)}
+.shipLine b{font-size:14px}
+.shipLine strong{font-size:18px;line-height:1.2}
+.shipLine strong small{display:block;color:#9aa59d;font-size:12px;font-weight:600;margin-top:2px}
+.shipLine p{font-size:14px;color:#b5beb7;margin:0}
+.shipLine>span{font-size:13px;color:#d4dbd5}
+.shipLine.accentLine{background:linear-gradient(90deg,rgba(197,165,107,.09),rgba(255,255,255,.02))}
+.shipFoot{display:grid;grid-template-columns:1fr auto 1fr auto;gap:14px;align-items:center;padding:20px;background:var(--gold2);color:var(--ink)}
+.shipFoot span{font-size:12px;font-weight:750;text-transform:uppercase;letter-spacing:.08em}
+.shipFoot strong{font-size:18px}
+.scenarioNote{margin-top:18px;padding:24px;border:1px solid var(--line);border-radius:20px;display:grid;grid-template-columns:.8fr 1.2fr;gap:28px;background:rgba(255,255,255,.025)}
+.scenarioNote h3{margin:6px 0 0}
+.scenarioNote p{margin:0;color:#b4beb6;font-size:15px}
+
+.monthlyRule{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:18px}
+.monthlyRule>div{padding:22px;border:1px solid var(--lineDark);background:rgba(255,255,255,.38);border-radius:18px}
+.monthlyRule strong{display:block;font-size:18px;margin-bottom:7px}
+.monthlyRule p{font-size:14px;color:#5b635d;margin:0}
+
+.docGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.docCard{padding:22px;border:1px solid var(--lineDark);border-radius:18px;background:rgba(255,255,255,.38)}
+.docCard span{font-size:11px;font-weight:800;color:#7b5f30;letter-spacing:.1em}
+.docCard strong{display:block;font-size:18px;margin:18px 0 7px}
+.docCard p{font-size:14px;color:#5c645d;margin:0}
+
+.commercialGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+.commercialCard{padding:28px;border:1px solid var(--line);border-radius:20px;background:rgba(255,255,255,.03)}
+.commercialCard strong{display:block;font-size:clamp(26px,3.2vw,44px);line-height:1.05;letter-spacing:-.035em;margin:10px 0 14px}
+.commercialCard p{font-size:15px;color:#afbab1;margin:0}
+.commercialCard.featured{border-color:rgba(197,165,107,.35);background:linear-gradient(145deg,#14261f,#0d1a17)}
+
+.rolesGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.roleCard{padding:26px;border:1px solid var(--lineDark);border-radius:20px;background:rgba(255,255,255,.38)}
+.roleCard>span{font-size:11px;font-weight:800;letter-spacing:.11em;color:#7b5f30}
+.roleCard h3{margin:20px 0 10px}
+.roleCard p{font-size:14px;color:#5b635d;margin:0}
+.statusFacts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:20px}
+.statusFacts span{padding:12px;border:1px solid var(--line);border-radius:13px;font-size:11px;color:#aab4ac}
+.statusFacts b{display:block;color:var(--white);font-size:18px;margin-bottom:2px}
+
+@media(max-width:960px){
+  .phaseGrid,.printSummary,.docGrid,.rolesGrid{grid-template-columns:1fr 1fr}
+  .commercialGrid{grid-template-columns:1fr}
+  .logicBanner,.scenarioNote{grid-template-columns:1fr}
+  .shipHead{display:none}
+  .shipLine{grid-template-columns:1fr 1fr;gap:10px 14px}
+  .shipLine p{grid-column:1/-1}
+  .shipLine>span{text-align:right}
+  .shipFoot{grid-template-columns:1fr 1fr}
+  .monthlyRule{grid-template-columns:1fr}
+}
+@media(max-width:620px){
+  .phaseGrid,.printSummary,.docGrid,.rolesGrid{grid-template-columns:1fr}
+  .phaseCard{min-height:0}
+  .phaseCard span{margin-bottom:22px}
+  .printSummary strong{font-size:30px}
+  .tableWrap{margin-left:-14px;margin-right:-14px;border-radius:0;border-left:0;border-right:0}
+  .skuTable th,.skuTable td{padding:14px}
+  .logicBanner{padding:20px}
+  .shipLine{grid-template-columns:1fr}
+  .shipLine>span{text-align:left}
+  .shipLine p{grid-column:1}
+  .shipFoot{grid-template-columns:1fr;gap:5px}
+  .shipFoot strong{margin-bottom:9px}
+  .scenarioNote{padding:20px}
+  .statusFacts{grid-template-columns:1fr 1fr}
+}
