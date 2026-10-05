@@ -91,6 +91,16 @@ Deno.serve(async(req:Request)=>{
     const activeMember=await member(req,sb);
     if(!activeMember)return json({error:"member_sign_in_required"},401);
     const body=await req.json().catch(()=>({}));
+    const expectedMemberEmail=String(body.expected_member_email||"").trim().toLowerCase();
+    const activeMemberEmail=String(activeMember.email||"").trim().toLowerCase();
+    if(expectedMemberEmail&&expectedMemberEmail!==activeMemberEmail){
+      return json({
+        error:"sales_os_session_mismatch",
+        detail:"The selected Sales OS profile does not match the active authenticated session.",
+        expected_member_email:expectedMemberEmail,
+        active_member_email:activeMemberEmail
+      },409);
+    }
     const accountsDomain=allowedAccountsDomain(String(body.accounts_domain||""))||"https://accounts.zoho.com";
     const [clientId,clientSecret]=await Promise.all([
       serverSecret(sb,"sales_os_zoho_client_id"),
