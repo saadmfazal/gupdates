@@ -1,0 +1,30 @@
+{
+  "issuer": "https://george.morpheuspd.io",
+  "authorization_endpoint": "https://viajmvbwpmkiqxjtgshv.supabase.co/functions/v1/sales-os-mcp/authorize",
+  "token_endpoint": "https://viajmvbwpmkiqxjtgshv.supabase.co/functions/v1/sales-os-mcp/token",
+  "registration_endpoint": "https://viajmvbwpmkiqxjtgshv.supabase.co/functions/v1/sales-os-mcp/register",
+  "scopes_supported": [
+    "sales_os.read",
+    "sales_os.write",
+    "offline_access"
+  ],
+  "response_types_supported": [
+    "code"
+  ],
+  "response_modes_supported": [
+    "query"
+  ],
+  "grant_types_supported": [
+    "authorization_code",
+    "refresh_token"
+  ],
+  "token_endpoint_auth_methods_supported": [
+    "none"
+  ],
+  "code_challenge_methods_supported": [
+    "S256"
+  ],
+  "authorization_response_iss_parameter_supported": true,
+  "client_id_metadata_document_supported": false,
+  "service_documentation": "https://george.morpheuspd.io/sales-os-v4/"
+}
