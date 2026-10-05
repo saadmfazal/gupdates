@@ -1,5 +1,5 @@
 {
-  "issuer": "https://morpheus-sales-os-oauth.vercel.app",
+  "issuer": "https://viajmvbwpmkiqxjtgshv.supabase.co/functions/v1/sales-os-mcp",
   "authorization_endpoint": "https://viajmvbwpmkiqxjtgshv.supabase.co/functions/v1/sales-os-mcp/authorize",
   "token_endpoint": "https://viajmvbwpmkiqxjtgshv.supabase.co/functions/v1/sales-os-mcp/token",
   "registration_endpoint": "https://viajmvbwpmkiqxjtgshv.supabase.co/functions/v1/sales-os-mcp/register",
