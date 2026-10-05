@@ -4,13 +4,14 @@ const RPC=SUPABASE_URL+'/rest/v1/rpc/';
 const AUTH_BOOTSTRAP=SUPABASE_URL+'/functions/v1/sales-os-auth-bootstrap';
 const COPILOT_URL=SUPABASE_URL+'/functions/v1/sales-os-copilot';
 const COMMAND_URL=SUPABASE_URL+'/functions/v1/sales-os-command';
+const ZOHO_REDIRECT_URI=SUPABASE_URL+'/functions/v1/sales-os-zoho-oauth';
 const STAGES=['Research','Asset ready','Ready to contact','Contacted','Follow-up','Replied','Qualified','Meeting','Proposal','Negotiation','Won','Lost','Disqualified','Hold'];
 const PIPELINE=['Research','Asset ready','Ready to contact','Contacted','Follow-up','Replied','Qualified','Proposal'];
 
 let token='',sessionAccessToken='',supabaseClient=null,actor=null,currentRoute='command',currentProspect=null,currentDraft=null,currentAssetId=null;
 let providerStatus={ai:false};
 let todayQueue=[],lastCommandPlan=null;
-let data={prospects:[],workflow_state:[],assets:[],asset_versions:[],asset_work_requests:[],asset_deliverables:[],asset_job_notes:[],asset_builders:[],activities:[],templates:[],categories:[],notes:[],research_reports:[],reminders:[],email_drafts:[],notifications:[],connections:[],gmail_connections:[],email_messages:[],inbox_threads:[],recommendations:[],opportunities:[],approvals:[],audit_log:[],members:[],copilot_threads:[]};
+let data={prospects:[],workflow_state:[],assets:[],asset_versions:[],asset_work_requests:[],asset_deliverables:[],asset_job_notes:[],asset_builders:[],activities:[],templates:[],categories:[],notes:[],research_reports:[],reminders:[],email_drafts:[],notifications:[],connections:[],gmail_connections:[],zoho_connections:[],email_messages:[],inbox_threads:[],recommendations:[],opportunities:[],approvals:[],audit_log:[],members:[],copilot_threads:[]};
 let copilotThreadId=null,copilotProspectId=null,copilotLocal=[];
 
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
@@ -29,6 +30,22 @@ const jobDeliverables=id=>data.asset_deliverables.filter(d=>d.work_request_id===
 const jobNotes=id=>data.asset_job_notes.filter(n=>n.work_request_id===id).sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));
 const pActivities=id=>data.activities.filter(a=>a.prospect_id===id).sort((a,b)=>new Date(b.occurred_at)-new Date(a.occurred_at));
 const workflowFor=id=>data.workflow_state.find(w=>w.prospect_id===id)||null;
+const currentGmail=()=>data.gmail_connections.find(c=>c.active&&String(c.member_email||'').toLowerCase()===String(actor?.email||'').toLowerCase())||null;
+const currentZoho=()=>data.zoho_connections.find(c=>c.active&&String(c.member_email||'').toLowerCase()===String(actor?.email||'').toLowerCase())||null;
+const mailProviderLabel=provider=>provider==='zoho_mail'?'Zoho Mail':'Gmail';
+function draftMailProvider(d=currentDraft){
+  const requested=['gmail','zoho_mail'].includes(d?.provider)?d.provider:'';
+  if(requested)return requested;
+  if(currentGmail())return'gmail';
+  if(currentZoho())return'zoho_mail';
+  return'gmail';
+}
+function mailProviderOptions(d=currentDraft){
+  const selected=draftMailProvider(d),items=[];
+  if(currentGmail()||selected==='gmail')items.push({value:'gmail',label:currentGmail()?'Gmail · '+currentGmail().google_email:'Gmail · not connected'});
+  if(currentZoho()||selected==='zoho_mail')items.push({value:'zoho_mail',label:currentZoho()?'Zoho Mail · '+currentZoho().zoho_email:'Zoho Mail · not connected'});
+  return items.map(item=>'<option value="'+item.value+'" '+(item.value===selected?'selected':'')+'>'+esc(item.label)+'</option>').join('');
+}
 
 function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.remove('hidden');setTimeout(()=>t.classList.add('hidden'),2400)}
 function statusClass(s=''){const v=String(s).toLowerCase();if(v.includes('ready')||v.includes('replied')||v.includes('won'))return'lime';if(v.includes('research')||v.includes('contacted'))return'cyan';if(v.includes('review')||v.includes('follow'))return'amber';return''}
@@ -79,6 +96,7 @@ async function refreshAI(){
 }
 async function load(){
   data=await rpc('sales_os_snapshot',{p_token:token||null});norm();actor=data.actor||actor;
+  try{data.zoho_connections=await rpc('sales_os_zoho_status',{p_token:token||null})||[]}catch{data.zoho_connections=[]}
   try{todayQueue=await rpc('sales_os_today_queue',{p_token:token||null,p_limit:30})||[]}catch{todayQueue=[]}
   await refreshAI();renderIdentity();renderAll();
 }
@@ -214,16 +232,17 @@ function renderOutreach(){
 function openDraft(id){currentDraft=data.email_drafts.find(d=>d.id===id)||null;renderOutreach()}
 window.openDraft=openDraft;
 function renderDraftEditor(d){
-  const p=data.prospects.find(x=>x.id===d.prospect_id);$('#draftEditor').innerHTML='<div class="panel-head"><div><h2>'+esc(p?.company||'Email draft')+'</h2><span class="quiet">'+esc(d.status)+'</span></div><button class="btn" onclick="aiWrite(\''+d.prospect_id+'\')">✦ AI write</button></div><div class="field"><label>To</label><input id="draftTo" class="control" value="'+esc(d.recipient||'')+'"></div><div class="field"><label>Subject</label><input id="draftSubject" class="control" value="'+esc(d.subject||'')+'"></div><div class="field"><label>Message</label><textarea id="draftBody">'+esc(d.body||'')+'</textarea></div><div class="editor-actions"><button class="btn" onclick="saveDraft()">Save draft</button><button class="btn lime" onclick="sendDraft()">Send via Gmail</button></div>';
+  const p=data.prospects.find(x=>x.id===d.prospect_id);$('#draftEditor').innerHTML='<div class="panel-head"><div><h2>'+esc(p?.company||'Email draft')+'</h2><span class="quiet">'+esc(d.status)+'</span></div><button class="btn" onclick="aiWrite(\''+d.prospect_id+'\')">✦ AI write</button></div><div class="field"><label>From</label><select id="draftProvider" class="control">'+mailProviderOptions(d)+'</select></div><div class="field"><label>To</label><input id="draftTo" class="control" value="'+esc(d.recipient||'')+'"></div><div class="field"><label>Subject</label><input id="draftSubject" class="control" value="'+esc(d.subject||'')+'"></div><div class="field"><label>Message</label><textarea id="draftBody">'+esc(d.body||'')+'</textarea></div><div class="editor-actions"><button class="btn" onclick="saveDraft()">Save draft</button><button class="btn lime" onclick="sendDraft()">Review & send</button></div>';
 }
 async function saveDraft(){
-  if(!currentDraft)return;await rpc('sales_os_save_email_draft',{p_token:token||null,p_payload:{id:currentDraft.id,recipient:$('#draftTo').value,subject:$('#draftSubject').value,body:$('#draftBody').value,status:'draft',ai_assisted:currentDraft.ai_assisted}});toast('Draft saved');await load();currentDraft=data.email_drafts.find(d=>d.id===currentDraft.id);renderOutreach();
+  if(!currentDraft)return;await rpc('sales_os_save_email_draft',{p_token:token||null,p_payload:{id:currentDraft.id,recipient:$('#draftTo').value,subject:$('#draftSubject').value,body:$('#draftBody').value,status:'draft',ai_assisted:currentDraft.ai_assisted,provider:$('#draftProvider')?.value||currentDraft.provider}});toast('Draft saved');await load();currentDraft=data.email_drafts.find(d=>d.id===currentDraft.id);renderOutreach();
 }
 async function sendDraft(){
   if(!currentDraft)return;await saveDraft();if(!actor?.authenticated){toast('Sign in as Saad or Yazeed to send');return}
-  const conn=data.gmail_connections.find(c=>String(c.member_email||'').toLowerCase()===String(actor.email||'').toLowerCase()&&c.active);
-  if(!conn){openConnection('gmail');return}
-  try{const r=await fetch(SUPABASE_URL+'/functions/v1/sales-os-gmail-send',{method:'POST',headers:{'Content-Type':'application/json',apikey:APIKEY,Authorization:'Bearer '+sessionAccessToken},body:JSON.stringify({draft_id:currentDraft.id})});const out=await r.json();if(!r.ok)throw new Error(out.error||'Send failed');toast('Email sent');currentDraft=null;await load();renderOutreach()}catch(e){toast(String(e.message||e))}
+  const provider=draftMailProvider(currentDraft),conn=provider==='zoho_mail'?currentZoho():currentGmail();
+  if(!conn){openConnection(provider==='zoho_mail'?'zoho':'gmail');return}
+  const endpoint=provider==='zoho_mail'?'sales-os-zoho-send':'sales-os-gmail-send';
+  try{const r=await fetch(SUPABASE_URL+'/functions/v1/'+endpoint,{method:'POST',headers:{'Content-Type':'application/json',apikey:APIKEY,Authorization:'Bearer '+sessionAccessToken},body:JSON.stringify({draft_id:currentDraft.id})});const out=await r.json();if(!r.ok)throw new Error(out.error||'Send failed');toast('Email sent via '+mailProviderLabel(provider));currentDraft=null;await load();renderOutreach()}catch(e){toast(String(e.message||e))}
 }
 
 function renderPipeline(){
@@ -231,10 +250,11 @@ function renderPipeline(){
 }
 
 function renderSettings(){
-  if(!$('#connectionsGrid'))return;const ai=providerStatus.ai;const gmail=data.gmail_connections.find(c=>String(c.member_email||'').toLowerCase()===String(actor?.email||'').toLowerCase()&&c.active);
+  if(!$('#connectionsGrid'))return;const ai=providerStatus.ai,gmail=currentGmail(),zoho=currentZoho(),zohoSetup=data.connections.find(c=>c.key==='zoho_mail');
   const items=[
     {key:'ai',title:'Morpheus AI',status:ai?'connected':'not connected',desc:ai?'Native account-aware Copilot is active.':'Connect an OpenAI API key for native research and writing.'},
     {key:'gmail',title:'Gmail',status:gmail?'connected':'not connected',desc:gmail?'Prospect threads sync automatically for '+gmail.google_email+'.':'Connect Gmail for automatic inbox sync and direct sending.'},
+    {key:'zoho',title:'Zoho Mail',status:zoho?'connected':zohoSetup?.status==='ready_to_connect'?'ready':'not connected',desc:zoho?'Matched prospect threads sync for '+zoho.zoho_email+'.':zohoSetup?.status==='ready_to_connect'?'OAuth is configured. Authorize your Zoho mailbox.':'Connect Zoho Mail without changing Sales OS as the source of truth.'},
     {key:'chatgpt',title:'ChatGPT',status:'available',desc:'Use the private MCP connection when you want ChatGPT to operate Sales OS directly.'}
   ];
   $('#connectionsGrid').innerHTML=items.map(x=>'<article class="connection-card"><div class="panel-head"><h3>'+esc(x.title)+'</h3><span class="status-chip '+(x.status==='connected'?'lime':'')+'">'+esc(x.status)+'</span></div><p>'+esc(x.desc)+'</p><button class="btn" onclick="openConnection(\''+x.key+'\')">'+(x.status==='connected'?'Manage':'Connect')+'</button></article>').join('');
@@ -359,11 +379,55 @@ function openNewDraft(){
 function openConnection(key){
   if(key==='ai'){if(providerStatus.ai){modal('Morpheus AI','<div class="copilot-insight"><b>Native AI is connected.</b><p>Research and writing run inside Sales OS.</p></div><button class="btn lime" onclick="openCopilot()">Open Copilot</button>')}else{if(!actor?.authenticated)return toast('Sign in as Saad or Yazeed first');modal('Connect Morpheus AI','<div class="field"><label>OpenAI API key</label><input id="openaiKey" type="password" class="control" placeholder="sk-…"></div><p class="quiet">The key is stored server-side in Supabase Vault, not in the browser.</p><button id="saveAiKey" class="btn lime wide">Connect AI</button>');$('#saveAiKey').onclick=async()=>{const keyv=$('#openaiKey').value.trim();if(keyv.length<20)return toast('Paste the full API key');await rpc('sales_os_store_secret',{p_token:token||null,p_name:'sales_os_openai_api_key',p_secret:keyv});closeModal();await refreshAI();renderSettings();toast('Morpheus AI connected')}};return}
   if(key==='gmail'){if(!actor?.authenticated)return toast('Sign in as Saad or Yazeed first');const conn=data.gmail_connections.find(c=>String(c.member_email||'').toLowerCase()===String(actor.email||'').toLowerCase()&&c.active);if(conn){modal('Gmail connected','<div class="copilot-insight"><b>'+esc(conn.google_email||conn.member_email)+'</b><p>Prospect threads sync automatically. Last sync: '+esc(conn.last_sync_at?new Date(conn.last_sync_at).toLocaleString():'Not yet')+'</p></div><button id="syncGmailNow" class="btn lime">Sync now</button>');$('#syncGmailNow').onclick=syncGmail}else{modal('Connect Gmail','<p class="brief-text">Authorize Gmail once. Sales OS will sync only conversations matching prospect contact addresses.</p><button id="connectGmail" class="btn lime wide">Connect my Gmail</button>');$('#connectGmail').onclick=connectGmail};return}
+  if(key==='zoho'){
+    if(!actor?.authenticated)return toast('Sign in as Saad or Yazeed first');
+    const conn=currentZoho(),setup=data.connections.find(c=>c.key==='zoho_mail');
+    if(conn){
+      modal('Zoho Mail connected','<div class="copilot-insight"><b>'+esc(conn.zoho_email||conn.member_email)+'</b><p>Only threads matching saved prospect email addresses enter Sales OS. Last sync: '+esc(conn.last_sync_at?new Date(conn.last_sync_at).toLocaleString():'Not yet')+'</p></div><div class="editor-actions"><button id="syncZohoNow" class="btn lime">Sync now</button><button id="updateZohoCredentials" class="btn">Update OAuth credentials</button></div>');
+      $('#syncZohoNow').onclick=syncZoho;$('#updateZohoCredentials').onclick=openZohoCredentialSetup;
+    }else if(setup?.status==='ready_to_connect'){
+      modal('Authorize Zoho Mail','<p class="brief-text">The secure OAuth bridge is configured. Choose your Zoho data centre, then authorize the mailbox you want Sales OS to use.</p>'+zohoRegionField()+'<div class="field"><label>Registered callback URL</label><input id="zohoCallback" class="control" readonly value="'+esc(ZOHO_REDIRECT_URI)+'"></div><div class="editor-actions"><button id="connectZoho" class="btn lime">Authorize Zoho Mail</button><button id="updateZohoCredentials" class="btn">Update credentials</button></div>');
+      $('#connectZoho').onclick=connectZoho;$('#updateZohoCredentials').onclick=openZohoCredentialSetup;
+    }else openZohoCredentialSetup();
+    return;
+  }
   if(key==='chatgpt'){const base=SUPABASE_URL+'/functions/v1/sales-os-mcp/mcp',url=token?base+'?access_code='+encodeURIComponent(token):base;modal('Connect ChatGPT','<p class="brief-text">Use this MCP endpoint when adding the private Sales OS connection in ChatGPT.</p><div class="field"><label>MCP endpoint</label><input id="mcpCopy" class="control" readonly value="'+esc(url)+'"></div><button id="copyMcp" class="btn lime">Copy endpoint</button>');$('#copyMcp').onclick=()=>navigator.clipboard.writeText(url).then(()=>toast('Copied'));return}
 }
 window.openConnection=openConnection;
 async function connectGmail(){const r=await fetch(SUPABASE_URL+'/functions/v1/sales-os-gmail-oauth',{method:'POST',headers:{'Content-Type':'application/json',apikey:APIKEY,Authorization:'Bearer '+sessionAccessToken},body:'{}'});const d=await r.json();if(!r.ok)throw new Error(d.error||'Could not connect');location.href=d.authorization_url}
 async function syncGmail(){const r=await fetch(SUPABASE_URL+'/functions/v1/sales-os-gmail-sync',{method:'POST',headers:{'Content-Type':'application/json',apikey:APIKEY,Authorization:'Bearer '+sessionAccessToken},body:'{}'});const d=await r.json();if(!r.ok||d.ok===false)throw new Error(d.error||'Sync failed');closeModal();await load();toast('Gmail synchronized')}
+function zohoRegionField(){
+  const selected=localStorage.getItem('salesOsZohoAccountsDomain')||'https://accounts.zoho.com';
+  const regions=[['https://accounts.zoho.com','United States / Global'],['https://accounts.zoho.eu','Europe'],['https://accounts.zoho.in','India'],['https://accounts.zoho.com.au','Australia'],['https://accounts.zoho.jp','Japan'],['https://accounts.zohocloud.ca','Canada'],['https://accounts.zoho.sa','Saudi Arabia']];
+  return '<div class="field"><label>Zoho data centre</label><select id="zohoAccountsDomain" class="control">'+regions.map(x=>'<option value="'+x[0]+'" '+(x[0]===selected?'selected':'')+'>'+x[1]+'</option>').join('')+'</select></div>';
+}
+function openZohoCredentialSetup(){
+  modal('Configure Zoho OAuth','<p class="brief-text">Create a server-based client in the Zoho API Console and register this exact callback URL. The client secret is stored in Supabase Vault and is never returned to the browser.</p><div class="field"><label>Registered callback URL</label><input id="zohoCallback" class="control" readonly value="'+esc(ZOHO_REDIRECT_URI)+'"></div><button id="copyZohoCallback" class="text-link">Copy callback URL</button><div class="field"><label>Zoho Client ID</label><input id="zohoClientId" class="control" autocomplete="off" placeholder="1000.…"></div><div class="field"><label>Zoho Client Secret</label><input id="zohoClientSecret" type="password" class="control" autocomplete="new-password" placeholder="Paste client secret"></div>'+zohoRegionField()+'<button id="saveZohoCredentials" class="btn lime wide">Save securely & continue</button>');
+  $('#copyZohoCallback').onclick=()=>navigator.clipboard.writeText(ZOHO_REDIRECT_URI).then(()=>toast('Callback URL copied'));
+  $('#saveZohoCredentials').onclick=saveZohoCredentials;
+}
+async function saveZohoCredentials(){
+  const clientId=$('#zohoClientId').value.trim(),clientSecret=$('#zohoClientSecret').value.trim();
+  if(clientId.length<10||clientSecret.length<20)return toast('Paste the full Zoho client ID and secret');
+  const button=$('#saveZohoCredentials');button.disabled=true;button.textContent='Saving securely…';
+  try{
+    await rpc('sales_os_store_secret',{p_token:token||null,p_name:'sales_os_zoho_client_id',p_secret:clientId});
+    await rpc('sales_os_store_secret',{p_token:token||null,p_name:'sales_os_zoho_client_secret',p_secret:clientSecret});
+    localStorage.setItem('salesOsZohoAccountsDomain',$('#zohoAccountsDomain').value);
+    closeModal();await load();openConnection('zoho');toast('Zoho OAuth configured');
+  }catch(e){toast(String(e.message||e));button.disabled=false;button.textContent='Save securely & continue'}
+}
+async function connectZoho(){
+  const accountsDomain=$('#zohoAccountsDomain')?.value||localStorage.getItem('salesOsZohoAccountsDomain')||'https://accounts.zoho.com';
+  localStorage.setItem('salesOsZohoAccountsDomain',accountsDomain);
+  const r=await fetch(SUPABASE_URL+'/functions/v1/sales-os-zoho-oauth',{method:'POST',headers:{'Content-Type':'application/json',apikey:APIKEY,Authorization:'Bearer '+sessionAccessToken},body:JSON.stringify({accounts_domain:accountsDomain})});
+  const d=await r.json();if(!r.ok)throw new Error(d.error||'Could not connect Zoho Mail');location.href=d.authorization_url;
+}
+async function syncZoho(){
+  const button=$('#syncZohoNow');if(button){button.disabled=true;button.textContent='Synchronizing…'}
+  try{const r=await fetch(SUPABASE_URL+'/functions/v1/sales-os-zoho-sync',{method:'POST',headers:{'Content-Type':'application/json',apikey:APIKEY,Authorization:'Bearer '+sessionAccessToken},body:'{}'});const d=await r.json();if(!r.ok||d.ok===false)throw new Error(d.connections?.find(x=>!x.ok)?.error||d.error||'Sync failed');closeModal();await load();toast('Zoho Mail synchronized')}catch(e){toast(String(e.message||e));if(button){button.disabled=false;button.textContent='Sync now'}}
+}
+window.openZohoCredentialSetup=openZohoCredentialSetup;
 
 async function copilotFetch(payload={}){
   const headers={'Content-Type':'application/json',apikey:APIKEY};if(sessionAccessToken)headers.Authorization='Bearer '+sessionAccessToken;else if(token)headers['x-sales-os-access-code']=token;
@@ -522,5 +586,6 @@ $('#topIdentity').onclick=()=>route('#/settings');
   const last=localStorage.getItem('salesOsMemberEmail');if(last)$('#memberEmail').value=last;
   const ok=await trySession();if(!ok){const saved=localStorage.getItem('salesOsToken');if(saved)$('#accessCode').value=saved}else route(location.hash||'#/command',false);
   const gmailResult=new URLSearchParams(location.search).get('gmail');if(gmailResult==='connected'){history.replaceState({},'',location.pathname+location.hash);setTimeout(()=>toast('Gmail connected'),500)}
+  const zohoResult=new URLSearchParams(location.search).get('zoho');if(zohoResult==='connected'){history.replaceState({},'',location.pathname+location.hash);setTimeout(()=>toast('Zoho Mail connected'),500)}
 })().catch(()=>{});
 if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
