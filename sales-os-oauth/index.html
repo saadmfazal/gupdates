@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#090c0f">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <meta name="referrer" content="no-referrer">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; form-action https://viajmvbwpmkiqxjtgshv.supabase.co; base-uri 'none'; frame-ancestors 'none'">
+  <title>Connect Morpheus Sales OS</title>
+  <style>
+    :root{color-scheme:dark;--bg:#070a0c;--panel:#10171b;--panel2:#0b1013;--line:#27343a;--ink:#f4f7f7;--muted:#96a5ab;--lime:#c4f83e;--danger:#ffb0b0}
+    *{box-sizing:border-box}
+    body{margin:0;min-height:100vh;min-height:100dvh;display:grid;place-items:center;padding:max(20px,env(safe-area-inset-top)) max(18px,env(safe-area-inset-right)) max(20px,env(safe-area-inset-bottom)) max(18px,env(safe-area-inset-left));background:radial-gradient(circle at 20% 8%,#c4f83e14,transparent 34%),radial-gradient(circle at 95% 90%,#397b8f14,transparent 32%),var(--bg);font:16px/1.5 Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--ink)}
+    main{width:min(100%,540px);padding:clamp(24px,5vw,38px);border:1px solid var(--line);border-radius:22px;background:linear-gradient(145deg,#172126f2,#0b1013f7);box-shadow:0 32px 110px #000a}
+    .brand{display:flex;align-items:center;gap:12px;margin-bottom:24px}.mark{width:40px;height:40px;display:grid;place-items:center;border:1px solid #c4f83e55;border-radius:12px;background:#c4f83e12;color:var(--lime);font-weight:900}.brand-copy b{display:block;font-size:12px;letter-spacing:.22em}.brand-copy span{display:block;margin-top:3px;color:var(--muted);font-size:11px}
+    h1{font-size:clamp(27px,7vw,34px);line-height:1.08;letter-spacing:-.035em;margin:0 0 10px}p{color:var(--muted);margin:0 0 20px}
+    .client{padding:16px;border:1px solid var(--line);border-radius:13px;background:var(--panel2);margin:20px 0}.client b{display:block}.client small{display:block;margin-top:3px;color:var(--muted);overflow-wrap:anywhere}
+    .scopes{display:grid;gap:9px;margin:18px 0 22px}.scope{display:flex;gap:10px;align-items:flex-start;color:#dce3e5;font-size:14px}.scope:before{content:'✓';flex:0 0 auto;color:var(--lime);font-weight:900}
+    label{display:grid;gap:7px;margin:14px 0;font-size:13px;color:#ced7da}input{width:100%;min-height:50px;border:1px solid var(--line);border-radius:11px;background:#080c0f;color:var(--ink);padding:12px 14px;font:inherit}input:focus{outline:3px solid #c4f83e28;border-color:var(--lime)}
+    .actions{display:grid;grid-template-columns:1fr 1.4fr;gap:10px;margin-top:22px}button{min-height:50px;border-radius:11px;border:1px solid var(--line);background:#192227;color:var(--ink);font:700 14px/1 inherit;cursor:pointer}button:hover{border-color:#52646c}button.primary{background:var(--lime);border-color:var(--lime);color:#111707}button:disabled{cursor:wait;opacity:.65}
+    .error{border:1px solid #ff6b6b66;background:#ff6b6b12;color:var(--danger);padding:13px 14px;border-radius:11px;margin:0 0 18px}.hidden{display:none!important}.safety{display:flex;gap:8px;align-items:center;margin-top:18px;color:#718087;font-size:11px}.safety:before{content:'●';color:var(--lime);font-size:8px}
+    @media(max-width:520px){main{padding:24px;border-radius:18px}.actions{grid-template-columns:1fr}button.primary{order:-1}}
+  </style>
+</head>
+<body>
+  <main>
+    <div class="brand"><div class="mark">M</div><div class="brand-copy"><b>MORPHEUS</b><span>Sales OS authorization</span></div></div>
+
+    <section id="authorization" class="hidden">
+      <h1>Connect ChatGPT</h1>
+      <p>Authorize this MCP client to work with Morpheus Sales OS as an active team member.</p>
+      <div id="authError" class="error hidden" role="alert"></div>
+      <div class="client"><b id="clientName">ChatGPT MCP Client</b><small id="returnHost">Returns securely to ChatGPT</small></div>
+      <div id="scopes" class="scopes"></div>
+      <form id="authorizeForm" method="post" action="https://viajmvbwpmkiqxjtgshv.supabase.co/functions/v1/sales-os-mcp/authorize" autocomplete="on">
+        <div id="oauthFields"></div>
+        <label>Sales OS member email<input id="email" name="email" type="email" autocomplete="email" inputmode="email" required placeholder="you@example.com"></label>
+        <label>Sales OS access code<input name="access_code" type="password" autocomplete="current-password" required></label>
+        <div class="actions">
+          <button type="submit" name="decision" value="deny">Cancel</button>
+          <button class="primary" type="submit" name="decision" value="approve">Authorize ChatGPT</button>
+        </div>
+      </form>
+      <div class="safety">Your access code is verified by Sales OS and is never given to ChatGPT.</div>
+    </section>
+
+    <section id="requestError" class="hidden">
+      <h1>Connection could not continue</h1>
+      <div id="requestErrorText" class="error" role="alert"></div>
+      <p>Return to ChatGPT and start the connection again.</p>
+    </section>
+  </main>
+
+  <script>
+    (() => {
+      const params = new URLSearchParams(location.search);
+      const allowedFields = ["response_type","client_id","redirect_uri","scope","state","code_challenge","code_challenge_method","resource"];
+      const requiredFields = ["response_type","client_id","redirect_uri","code_challenge","code_challenge_method","resource"];
+      const requestError = params.get("authorization_error") || "";
+      const hasRequest = requiredFields.every((name) => params.get(name));
+      const $ = (id) => document.getElementById(id);
+
+      if (!hasRequest) {
+        $("requestErrorText").textContent = requestError || "The OAuth authorization request is missing or no longer valid.";
+        $("requestError").classList.remove("hidden");
+        return;
+      }
+
+      $("clientName").textContent = params.get("client_name") || "ChatGPT MCP Client";
+      $("returnHost").textContent = "Returns securely to " + (params.get("return_host") || "chatgpt.com");
+      $("email").value = params.get("email") || "";
+      if (requestError) {
+        $("authError").textContent = requestError;
+        $("authError").classList.remove("hidden");
+      }
+
+      const fieldRoot = $("oauthFields");
+      allowedFields.forEach((name) => {
+        const input = document.createElement("input");
+        input.type = "hidden";
+        input.name = name;
+        input.value = params.get(name) || "";
+        fieldRoot.appendChild(input);
+      });
+
+      const labels = {
+        "sales_os.read":"Read Sales OS prospects, pipeline, research, assets and activity",
+        "sales_os.write":"Create and update approved Sales OS work",
+        "offline_access":"Stay connected securely using rotating refresh tokens"
+      };
+      const scopes = (params.get("scope") || "").split(/\s+/).filter(Boolean);
+      scopes.forEach((scope) => {
+        const item = document.createElement("div");
+        item.className = "scope";
+        item.textContent = labels[scope] || scope;
+        $("scopes").appendChild(item);
+      });
+
+      $("authorizeForm").addEventListener("submit", (event) => {
+        const submitter = event.submitter;
+        if (submitter && submitter.value === "approve") submitter.textContent = "Authorizing…";
+        document.querySelectorAll("button").forEach((button) => button.disabled = true);
+      });
+      $("authorization").classList.remove("hidden");
+    })();
+  </script>
+</body>
+</html>
