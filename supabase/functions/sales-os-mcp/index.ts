@@ -13,6 +13,10 @@ const ISSUER = FUNCTION_URL;
 const AUTHORIZATION_ENDPOINT = FUNCTION_URL + "/authorize";
 const TOKEN_ENDPOINT = FUNCTION_URL + "/token";
 const REGISTRATION_ENDPOINT = FUNCTION_URL + "/register";
+// Supabase Edge Functions intentionally serve HTML returned by GET requests as
+// text/plain. Keep validation and credential handling in this function, while
+// hosting the browser-facing consent form on the existing Morpheus site.
+const AUTHORIZATION_UI_URL = "https://george.morpheuspd.io/sales-os-oauth/";
 const OAUTH_SCOPES = ["sales_os.read", "sales_os.write", "offline_access"];
 const DEFAULT_SCOPE = OAUTH_SCOPES.join(" ");
 const ACCESS_TOKEN_TTL_SECONDS = 3600;
@@ -81,16 +85,6 @@ function appendQuery(raw: string, values: Record<string, string | null | undefin
   const target = new URL(raw);
   for (const [key, value] of Object.entries(values)) if (value !== null && value !== undefined && value !== "") target.searchParams.set(key, value);
   return target.toString();
-}
-
-function htmlEscape(value: unknown) {
-  return String(value ?? "").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[char]!));
-}
-
-function htmlPage(body: string, status = 200) {
-  return new Response(`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Morpheus Sales OS Authorization</title><style>
-  :root{color-scheme:dark;--bg:#090c0f;--panel:#11171c;--line:#2c373e;--ink:#f4f6f7;--muted:#9aa7ae;--lime:#c4f83e}*{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;padding:24px;background:radial-gradient(circle at 20% 10%,#c4f83e12,transparent 38%),var(--bg);font:16px/1.5 Inter,system-ui,sans-serif;color:var(--ink)}main{width:min(100%,520px);padding:32px;border:1px solid var(--line);border-radius:20px;background:linear-gradient(145deg,#172026ee,#0d1115f5);box-shadow:0 30px 100px #0008}.brand{font-size:12px;letter-spacing:.22em;color:var(--lime);font-weight:800}h1{font-size:30px;line-height:1.1;margin:20px 0 10px}p{color:var(--muted);margin:0 0 20px}.client{padding:16px;border:1px solid var(--line);border-radius:12px;background:#0b1014;margin:20px 0}.client b{display:block}.client small{color:var(--muted);overflow-wrap:anywhere}.scopes{display:grid;gap:8px;margin:18px 0}.scope{display:flex;gap:9px;align-items:center;color:#dbe1e4;font-size:14px}.scope:before{content:'✓';color:var(--lime)}label{display:grid;gap:7px;margin:15px 0;font-size:13px;color:#cbd3d7}input{width:100%;min-height:48px;border:1px solid var(--line);border-radius:10px;background:#090d10;color:var(--ink);padding:12px 14px;font:inherit}input:focus{outline:2px solid #c4f83e55;border-color:var(--lime)}.actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:22px}button{min-height:48px;border-radius:10px;border:1px solid var(--line);background:#192126;color:var(--ink);font-weight:700;cursor:pointer}button.primary{background:var(--lime);border-color:var(--lime);color:#121807}.error{border:1px solid #ff6b6b66;background:#ff6b6b12;color:#ffb0b0;padding:12px;border-radius:10px;margin-bottom:16px}@media(max-width:520px){main{padding:24px}.actions{grid-template-columns:1fr}h1{font-size:26px}}
-  </style></head><body><main>${body}</main></body></html>`, { status, headers: { ...cors, "content-type": "text/html; charset=utf-8", "cache-control": "no-store", "content-security-policy": "default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'", "referrer-policy": "no-referrer", "x-content-type-options": "nosniff", "x-frame-options": "DENY" } });
 }
 
 async function rest(path: string, init: RequestInit = {}) {
@@ -865,26 +859,33 @@ async function validateAuthorizationRequest(params: URLSearchParams): Promise<{ 
   return { value: { client, clientId, redirectUri, scope, state:String(params.get("state") || ""), codeChallenge, resource:RESOURCE_URL } };
 }
 
-function renderAuthorization(request: AuthorizationRequest, error = "", email = "") {
-  const fields = {
-    response_type:"code", client_id:request.clientId, redirect_uri:request.redirectUri, scope:request.scope,
-    state:request.state, code_challenge:request.codeChallenge, code_challenge_method:"S256", resource:request.resource,
-  };
-  const hidden = Object.entries(fields).map(([key, value]) => `<input type="hidden" name="${htmlEscape(key)}" value="${htmlEscape(value)}">`).join("");
-  const scopeLabels: Record<string,string> = {
-    "sales_os.read":"Read Sales OS prospects, pipeline, research, assets and activity",
-    "sales_os.write":"Create and update approved Sales OS work",
-    offline_access:"Stay connected securely using rotating refresh tokens",
-  };
-  return htmlPage(`<div class="brand">MORPHEUS · SALES OS</div><h1>Connect ChatGPT</h1><p>Authorize this MCP client to work with Morpheus Sales OS as an active team member.</p>${error ? `<div class="error">${htmlEscape(error)}</div>` : ""}<div class="client"><b>${htmlEscape(request.client.client_name || "ChatGPT MCP Client")}</b><small>Returns securely to ${htmlEscape(new URL(request.redirectUri).hostname)}</small></div><div class="scopes">${request.scope.split(/\s+/).map((scope) => `<div class="scope">${htmlEscape(scopeLabels[scope] || scope)}</div>`).join("")}</div><form method="post" action="${htmlEscape(AUTHORIZATION_ENDPOINT)}">${hidden}<label>Sales OS member email<input name="email" type="email" autocomplete="email" required value="${htmlEscape(email)}" placeholder="you@example.com"></label><label>Sales OS access code<input name="access_code" type="password" autocomplete="current-password" required></label><div class="actions"><button type="submit" name="decision" value="deny">Cancel</button><button class="primary" type="submit" name="decision" value="approve">Authorize ChatGPT</button></div></form>`);
+function authorizationUiUrl(request: AuthorizationRequest, error = "", email = "") {
+  return appendQuery(AUTHORIZATION_UI_URL, {
+    response_type:"code",
+    client_id:request.clientId,
+    redirect_uri:request.redirectUri,
+    scope:request.scope,
+    state:request.state,
+    code_challenge:request.codeChallenge,
+    code_challenge_method:"S256",
+    resource:request.resource,
+    client_name:String(request.client.client_name || "ChatGPT MCP Client"),
+    return_host:new URL(request.redirectUri).hostname,
+    authorization_error:error,
+    email,
+  });
 }
 
 async function handleAuthorization(req: Request, url: URL) {
   const params = req.method === "POST" ? new URLSearchParams(await req.text()) : url.searchParams;
   const checked = await validateAuthorizationRequest(params);
-  if (!checked.value) return htmlPage(`<div class="brand">MORPHEUS · SALES OS</div><h1>Authorization request rejected</h1><div class="error">${htmlEscape(checked.error || "Invalid authorization request.")}</div>`, 400);
+  if (!checked.value) {
+    const description = checked.error || "Invalid authorization request.";
+    if (req.method === "GET") return Response.redirect(appendQuery(AUTHORIZATION_UI_URL, { authorization_error:description }), 302);
+    return oauthError("invalid_request", description, 400);
+  }
   const request = checked.value;
-  if (req.method === "GET") return renderAuthorization(request);
+  if (req.method === "GET") return Response.redirect(authorizationUiUrl(request), 302);
   if (req.method !== "POST") return oauthError("invalid_request", "Authorization endpoint supports GET and POST.", 405);
   if (params.get("decision") === "deny") return Response.redirect(appendQuery(request.redirectUri, { error:"access_denied", error_description:"The user denied the request.", state:request.state, iss:ISSUER }), 302);
   const email = String(params.get("email") || "").trim().toLowerCase();
@@ -894,7 +895,7 @@ async function handleAuthorization(req: Request, url: URL) {
   if (member && accessCode) {
     try { verified = await rest("rpc/sales_os_verify", { method:"POST", body:JSON.stringify({ p_token:accessCode }) }) === true; } catch { verified = false; }
   }
-  if (!member || !verified) return renderAuthorization(request, "The member email or Sales OS access code is not valid.", email);
+  if (!member || !verified) return Response.redirect(authorizationUiUrl(request, "The member email or Sales OS access code is not valid.", email), 303);
   const code = randomToken("mso_code_", 32);
   await rest("sales_os_mcp_oauth_codes", { method:"POST", body:JSON.stringify({
     code_hash:await sha256(code), client_id:request.clientId, member_email:member.email, redirect_uri:request.redirectUri,
