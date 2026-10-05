@@ -61,7 +61,7 @@ async function rpc(fn,payload={}){
 }
 async function ensureSupabase(){
   if(supabaseClient)return supabaseClient;
-  const mod=await import('./vendor/supabase-auth.js?v=53');
+  const mod=await import('./vendor/supabase-auth.js?v=54');
   supabaseClient=mod.createClient(SUPABASE_URL,APIKEY,{auth:{persistSession:true,detectSessionInUrl:true,autoRefreshToken:true}});supabaseClient.auth.onAuthStateChange((event,session)=>{sessionAccessToken=session?.access_token||''});
   return supabaseClient;
 }
@@ -267,7 +267,7 @@ async function sendDraft(){
 
 function renderPipeline(){
   const board=$('#pipelineBoard');if(!board)return;
-  board.innerHTML=PIPELINE.map(stage=>{
+  board.innerHTML=STAGES.map(stage=>{
     const ps=data.prospects.filter(p=>p.stage===stage);
     return '<section class="pipeline-lane" data-pipeline-stage="'+esc(stage)+'"><div class="pipeline-lane-head"><span>'+esc(stage)+'</span><span>'+ps.length+'</span></div><div class="pipeline-lane-deals">'+ps.slice(0,50).map(p=>'<article class="pipeline-deal" draggable="true" tabindex="0" role="button" data-prospect-id="'+esc(p.id)+'" aria-label="Open '+esc(p.company)+'"><div class="pipeline-deal-copy"><b>'+esc(p.company)+'</b><span>'+esc(p.category||'')+'</span></div><button class="pipeline-move" type="button" aria-label="Move '+esc(p.company)+' to another stage">Move</button></article>').join('')+(ps.length? '':'<div class="lane-empty">Drop an account here</div>')+'</div></section>';
   }).join('');
@@ -312,12 +312,12 @@ function bindPipelineMovement(board){
 }
 function openPipelineMovePicker(id){
   const p=data.prospects.find(item=>item.id===id);if(!p)return;
-  const options=PIPELINE.filter(stage=>stage!==p.stage).map(stage=>'<option value="'+esc(stage)+'">'+esc(stage)+'</option>').join('');
+  const options=STAGES.filter(stage=>stage!==p.stage).map(stage=>'<option value="'+esc(stage)+'">'+esc(stage)+'</option>').join('');
   modal('Move '+p.company,'<p class="brief-text">Choose a destination. You will review the move before anything changes.</p><div class="field"><label>Current stage</label><input class="control" value="'+esc(p.stage||'UNKNOWN')+'" readonly></div><div class="field"><label>Move to</label><select id="pipelineTargetStage" class="control">'+options+'</select></div><button id="reviewPipelineMove" class="btn lime wide">Review move</button>');
   $('#reviewPipelineMove').onclick=()=>requestPipelineMove(id,$('#pipelineTargetStage').value);
 }
 function requestPipelineMove(id,targetStage){
-  const p=data.prospects.find(item=>item.id===id);if(!p||!PIPELINE.includes(targetStage))return;
+  const p=data.prospects.find(item=>item.id===id);if(!p||!STAGES.includes(targetStage))return;
   if(p.stage===targetStage){closeModal();toast(p.company+' is already in '+targetStage);return}
   modal('Confirm pipeline move','<div class="pipeline-move-confirm"><span class="eyebrow">ACCOUNT</span><h3>'+esc(p.company)+'</h3><div class="pipeline-stage-change"><span>'+esc(p.stage||'UNKNOWN')+'</span><b aria-hidden="true">→</b><span>'+esc(targetStage)+'</span></div><p>Sales OS will only update the pipeline after you confirm.</p></div><div id="pipelineMoveError" class="form-error" role="alert"></div><div class="editor-actions"><button id="cancelPipelineMove" class="btn">Cancel</button><button id="confirmPipelineMove" class="btn lime">Confirm move</button></div>');
   $('#cancelPipelineMove').onclick=closeModal;
