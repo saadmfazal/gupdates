@@ -61,7 +61,7 @@ async function rpc(fn,payload={}){
 }
 async function ensureSupabase(){
   if(supabaseClient)return supabaseClient;
-  const mod=await import('./vendor/supabase-auth.js?v=54');
+  const mod=await import('./vendor/supabase-auth.js?v=55');
   supabaseClient=mod.createClient(SUPABASE_URL,APIKEY,{auth:{persistSession:true,detectSessionInUrl:true,autoRefreshToken:true}});supabaseClient.auth.onAuthStateChange((event,session)=>{sessionAccessToken=session?.access_token||''});
   return supabaseClient;
 }
@@ -88,13 +88,19 @@ async function memberLogin(){
   const email=$('#memberEmail').value.trim(),code=$('#accessCode').value.trim();$('#loginError').textContent='';
   if(!email||!code){$('#loginError').textContent='Choose your profile and enter the access code.';return}
   try{
-    localStorage.setItem('salesOsMemberEmail',email);$('#memberLoginBtn').disabled=true;$('#memberLoginBtn').textContent='Opening…';
+    $('#memberLoginBtn').disabled=true;$('#memberLoginBtn').textContent='Opening…';
     const r=await fetchLoginBootstrap({email,access_code:code,return_url:location.origin+'/sales-os-v2/oauth/?mode=app'});
     const d=await r.json();if(!r.ok||!d.action_link)throw new Error(d.error||d.detail||'Could not sign in');
     const generated=new URL(d.action_link),tokenHash=generated.searchParams.get('token'),type=generated.searchParams.get('type')||'magiclink';
     if(!tokenHash)throw new Error('Sign-in token missing');
     const sb=await ensureSupabase(),verified=await sb.auth.verifyOtp({token_hash:tokenHash,type});
     if(verified.error)throw verified.error;if(!verified.data?.session)throw new Error('Session not created');
+    const verifiedEmail=String(verified.data.session.user?.email||'').toLowerCase();
+    if(verifiedEmail!==email.toLowerCase()){
+      await sb.auth.signOut({scope:'local'}).catch(()=>{});
+      throw new Error('The active session belongs to '+(verifiedEmail||'another member')+'. Please sign in again as '+email+'.');
+    }
+    localStorage.setItem('salesOsMemberEmail',email);
     sessionAccessToken=verified.data.session.access_token;token='';actor=await retryNetwork(()=>rpc('sales_os_whoami',{p_token:null}));
     await retryNetwork(()=>load());$('#login').classList.add('hidden');$('#app').classList.remove('hidden');route(location.hash||'#/command',false);
   }catch(e){$('#loginError').textContent=isNetworkFailure(e)?'The connection was interrupted. Please try once more.':String(e.message||e);$('#memberLoginBtn').disabled=false;$('#memberLoginBtn').textContent='Open Sales OS'}
@@ -104,7 +110,15 @@ async function sharedLogin(){
   try{const ok=await rpc('sales_os_verify',{p_token:code});if(!ok)throw new Error('Invalid code');token=code;actor={display_name:'Shared',authenticated:false};localStorage.setItem('salesOsToken',code);await load();$('#login').classList.add('hidden');$('#app').classList.remove('hidden');route('#/command',false)}catch(e){$('#loginError').textContent='Could not open Sales OS.'}
 }
 async function trySession(){
-  try{const sb=await ensureSupabase(),{data:{session}}=await sb.auth.getSession();if(!session)return false;sessionAccessToken=session.access_token;actor=await rpc('sales_os_whoami',{p_token:null});await load();$('#login').classList.add('hidden');$('#app').classList.remove('hidden');return true}catch{return false}
+  try{
+    const sb=await ensureSupabase(),{data:{session}}=await sb.auth.getSession();if(!session)return false;
+    const expectedEmail=String(localStorage.getItem('salesOsMemberEmail')||'').toLowerCase();
+    const sessionEmail=String(session.user?.email||'').toLowerCase();
+    if(expectedEmail&&sessionEmail&&expectedEmail!==sessionEmail){
+      await sb.auth.signOut({scope:'local'}).catch(()=>{});sessionAccessToken='';return false;
+    }
+    sessionAccessToken=session.access_token;actor=await rpc('sales_os_whoami',{p_token:null});await load();$('#login').classList.add('hidden');$('#app').classList.remove('hidden');return true
+  }catch{return false}
 }
 async function signOut(){
   localStorage.removeItem('salesOsToken');localStorage.removeItem('salesOsMemberEmail');try{const sb=await ensureSupabase();await sb.auth.signOut()}catch{}location.href=location.pathname;
@@ -499,7 +513,7 @@ async function saveZohoCredentials(){
 async function connectZoho(){
   const accountsDomain=$('#zohoAccountsDomain')?.value||localStorage.getItem('salesOsZohoAccountsDomain')||'https://accounts.zoho.com';
   localStorage.setItem('salesOsZohoAccountsDomain',accountsDomain);
-  const r=await fetch(SUPABASE_URL+'/functions/v1/sales-os-zoho-oauth',{method:'POST',headers:{'Content-Type':'application/json',apikey:APIKEY,Authorization:'Bearer '+sessionAccessToken},body:JSON.stringify({accounts_domain:accountsDomain})});
+  const r=await fetch(SUPABASE_URL+'/functions/v1/sales-os-zoho-oauth',{method:'POST',headers:{'Content-Type':'application/json',apikey:APIKEY,Authorization:'Bearer '+sessionAccessToken},body:JSON.stringify({accounts_domain:accountsDomain,expected_member_email:String(actor?.email||'').toLowerCase()})});
   const d=await r.json();if(!r.ok)throw new Error(d.error||'Could not connect Zoho Mail');location.href=d.authorization_url;
 }
 async function syncZoho(){
@@ -665,6 +679,6 @@ $('#topIdentity').onclick=()=>route('#/settings');
   const last=localStorage.getItem('salesOsMemberEmail');if(last)$('#memberEmail').value=last;
   const ok=await trySession();if(!ok){const saved=localStorage.getItem('salesOsToken');if(saved)$('#accessCode').value=saved}else route(location.hash||'#/command',false);
   const gmailResult=new URLSearchParams(location.search).get('gmail');if(gmailResult==='connected'){history.replaceState({},'',location.pathname+location.hash);setTimeout(()=>toast('Gmail connected'),500)}
-  const zohoResult=new URLSearchParams(location.search).get('zoho');if(zohoResult==='connected'){history.replaceState({},'',location.pathname+location.hash);setTimeout(()=>toast('Zoho Mail connected'),500)}
+  const zohoParams=new URLSearchParams(location.search),zohoResult=zohoParams.get('zoho');if(zohoResult){history.replaceState({},'',location.pathname+location.hash);setTimeout(()=>toast(zohoResult==='connected'?'Zoho Mail connected':(zohoParams.get('detail')||'Zoho Mail connection could not finish')),500)}
 })().catch(()=>{});
 if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
