@@ -1,5 +1,5 @@
-const CACHE='morpheus-sales-v4-52';
-const SHELL=['./','./index.html','./styles.css?v=52','./reference.css?v=52','./app.js?v=52','./v4-ui.js?v=52','./vendor/supabase-auth.js?v=52','./manifest.webmanifest?v=52','./icon.svg'];
+const CACHE='morpheus-sales-v4-53';
+const SHELL=['./','./index.html','./styles.css?v=53','./reference.css?v=53','./app.js?v=53','./v4-ui.js?v=53','./vendor/supabase-auth.js?v=53','./manifest.webmanifest?v=53','./icon.svg'];
 self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(SHELL)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith('morpheus-sales-v4-')&&k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim())));
 self.addEventListener('fetch',e=>{const u=new URL(e.request.url);if(e.request.method!=='GET'||u.origin!==location.origin||!u.pathname.startsWith('/sales-os-v4/'))return;e.respondWith(fetch(e.request).then(r=>{if(r.ok)caches.open(CACHE).then(c=>c.put(e.request,r.clone()));return r}).catch(()=>caches.match(e.request).then(r=>r||(e.request.mode==='navigate'?caches.match('./index.html'):Response.error()))))});

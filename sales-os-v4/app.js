@@ -11,6 +11,7 @@ const PIPELINE=['Research','Asset ready','Ready to contact','Contacted','Follow-
 let token='',sessionAccessToken='',supabaseClient=null,actor=null,currentRoute='command',currentProspect=null,currentDraft=null,currentAssetId=null;
 let providerStatus={ai:false};
 let todayQueue=[],lastCommandPlan=null;
+let pipelineDragId='',pipelineDragJustEnded=false;
 let data={prospects:[],workflow_state:[],assets:[],asset_versions:[],asset_work_requests:[],asset_deliverables:[],asset_job_notes:[],asset_builders:[],activities:[],templates:[],categories:[],notes:[],research_reports:[],reminders:[],email_drafts:[],notifications:[],connections:[],gmail_connections:[],zoho_connections:[],email_messages:[],inbox_threads:[],recommendations:[],opportunities:[],approvals:[],audit_log:[],members:[],copilot_threads:[]};
 let copilotThreadId=null,copilotProspectId=null,copilotLocal=[];
 
@@ -60,7 +61,7 @@ async function rpc(fn,payload={}){
 }
 async function ensureSupabase(){
   if(supabaseClient)return supabaseClient;
-  const mod=await import('./vendor/supabase-auth.js?v=52');
+  const mod=await import('./vendor/supabase-auth.js?v=53');
   supabaseClient=mod.createClient(SUPABASE_URL,APIKEY,{auth:{persistSession:true,detectSessionInUrl:true,autoRefreshToken:true}});supabaseClient.auth.onAuthStateChange((event,session)=>{sessionAccessToken=session?.access_token||''});
   return supabaseClient;
 }
@@ -265,7 +266,66 @@ async function sendDraft(){
 }
 
 function renderPipeline(){
-  if(!$('#pipelineBoard'))return;$('#pipelineBoard').innerHTML=PIPELINE.map(stage=>{const ps=data.prospects.filter(p=>p.stage===stage);return '<section class="pipeline-lane"><div class="pipeline-lane-head"><span>'+stage+'</span><span>'+ps.length+'</span></div>'+ps.slice(0,50).map(p=>'<div class="pipeline-deal" onclick="route(\'#/prospect/'+p.id+'\')"><b>'+esc(p.company)+'</b><span>'+esc(p.category||'')+'</span></div>').join('')+'</section>'}).join('');
+  const board=$('#pipelineBoard');if(!board)return;
+  board.innerHTML=PIPELINE.map(stage=>{
+    const ps=data.prospects.filter(p=>p.stage===stage);
+    return '<section class="pipeline-lane" data-pipeline-stage="'+esc(stage)+'"><div class="pipeline-lane-head"><span>'+esc(stage)+'</span><span>'+ps.length+'</span></div><div class="pipeline-lane-deals">'+ps.slice(0,50).map(p=>'<article class="pipeline-deal" draggable="true" tabindex="0" role="button" data-prospect-id="'+esc(p.id)+'" aria-label="Open '+esc(p.company)+'"><div class="pipeline-deal-copy"><b>'+esc(p.company)+'</b><span>'+esc(p.category||'')+'</span></div><button class="pipeline-move" type="button" aria-label="Move '+esc(p.company)+' to another stage">Move</button></article>').join('')+(ps.length? '':'<div class="lane-empty">Drop an account here</div>')+'</div></section>';
+  }).join('');
+  bindPipelineMovement(board);
+}
+
+function clearPipelineDropState(){
+  $$('.pipeline-lane.is-drop-target').forEach(lane=>lane.classList.remove('is-drop-target'));
+  $$('.pipeline-deal.is-dragging').forEach(deal=>deal.classList.remove('is-dragging'));
+}
+function bindPipelineMovement(board){
+  board.querySelectorAll('.pipeline-deal').forEach(deal=>{
+    const id=deal.dataset.prospectId;
+    deal.addEventListener('click',event=>{
+      if(event.target.closest('.pipeline-move')||pipelineDragJustEnded)return;
+      route('#/prospect/'+id);
+    });
+    deal.addEventListener('keydown',event=>{
+      if((event.key==='Enter'||event.key===' ')&&!event.target.closest('.pipeline-move')){event.preventDefault();route('#/prospect/'+id)}
+    });
+    deal.querySelector('.pipeline-move').addEventListener('click',event=>{event.stopPropagation();openPipelineMovePicker(id)});
+    deal.addEventListener('dragstart',event=>{
+      pipelineDragId=id;deal.classList.add('is-dragging');event.dataTransfer.effectAllowed='move';event.dataTransfer.setData('text/plain',id);
+    });
+    deal.addEventListener('dragend',()=>{
+      clearPipelineDropState();pipelineDragId='';pipelineDragJustEnded=true;setTimeout(()=>pipelineDragJustEnded=false,120);
+    });
+  });
+  board.querySelectorAll('.pipeline-lane').forEach(lane=>{
+    lane.addEventListener('dragover',event=>{
+      const p=data.prospects.find(item=>item.id===pipelineDragId);if(!p||p.stage===lane.dataset.pipelineStage)return;
+      event.preventDefault();event.dataTransfer.dropEffect='move';clearPipelineDropState();lane.classList.add('is-drop-target');
+      const active=board.querySelector('[data-prospect-id="'+CSS.escape(pipelineDragId)+'"]');if(active)active.classList.add('is-dragging');
+    });
+    lane.addEventListener('dragleave',event=>{if(!lane.contains(event.relatedTarget))lane.classList.remove('is-drop-target')});
+    lane.addEventListener('drop',event=>{
+      event.preventDefault();const id=event.dataTransfer.getData('text/plain')||pipelineDragId,targetStage=lane.dataset.pipelineStage;
+      clearPipelineDropState();pipelineDragId='';pipelineDragJustEnded=true;setTimeout(()=>pipelineDragJustEnded=false,120);
+      requestPipelineMove(id,targetStage);
+    });
+  });
+}
+function openPipelineMovePicker(id){
+  const p=data.prospects.find(item=>item.id===id);if(!p)return;
+  const options=PIPELINE.filter(stage=>stage!==p.stage).map(stage=>'<option value="'+esc(stage)+'">'+esc(stage)+'</option>').join('');
+  modal('Move '+p.company,'<p class="brief-text">Choose a destination. You will review the move before anything changes.</p><div class="field"><label>Current stage</label><input class="control" value="'+esc(p.stage||'UNKNOWN')+'" readonly></div><div class="field"><label>Move to</label><select id="pipelineTargetStage" class="control">'+options+'</select></div><button id="reviewPipelineMove" class="btn lime wide">Review move</button>');
+  $('#reviewPipelineMove').onclick=()=>requestPipelineMove(id,$('#pipelineTargetStage').value);
+}
+function requestPipelineMove(id,targetStage){
+  const p=data.prospects.find(item=>item.id===id);if(!p||!PIPELINE.includes(targetStage))return;
+  if(p.stage===targetStage){closeModal();toast(p.company+' is already in '+targetStage);return}
+  modal('Confirm pipeline move','<div class="pipeline-move-confirm"><span class="eyebrow">ACCOUNT</span><h3>'+esc(p.company)+'</h3><div class="pipeline-stage-change"><span>'+esc(p.stage||'UNKNOWN')+'</span><b aria-hidden="true">→</b><span>'+esc(targetStage)+'</span></div><p>Sales OS will only update the pipeline after you confirm.</p></div><div id="pipelineMoveError" class="form-error" role="alert"></div><div class="editor-actions"><button id="cancelPipelineMove" class="btn">Cancel</button><button id="confirmPipelineMove" class="btn lime">Confirm move</button></div>');
+  $('#cancelPipelineMove').onclick=closeModal;
+  $('#confirmPipelineMove').onclick=async()=>{
+    const button=$('#confirmPipelineMove'),error=$('#pipelineMoveError');button.disabled=true;button.textContent='Moving…';error.textContent='';
+    try{await rpc('sales_os_save_prospect',{p_token:token||null,p_payload:{id:p.id,stage:targetStage}});closeModal();await load();toast('Moved '+p.company+' to '+targetStage)}
+    catch(e){error.textContent=String(e.message||e);button.disabled=false;button.textContent='Confirm move'}
+  };
 }
 
 function renderSettings(){
