@@ -173,6 +173,7 @@ Deno.serve(async(req:Request)=>{
     const zohoEmail=String(account.primaryEmailAddress||account.mailboxAddress||account.incomingUserName||"").toLowerCase();
     if(!zohoEmail)return redirect("error","zoho_mail_address_not_found");
 
+    const {data:existingConnection}=await sb.from("sales_os_zoho_connections").select("secret_name,metadata").eq("member_email",oauthState.member_email).maybeSingle();
     let secretName="";
     if(tokenData.refresh_token){
       const stored=await sb.rpc("sales_os_store_zoho_secret",{
@@ -182,13 +183,16 @@ Deno.serve(async(req:Request)=>{
       if(stored.error)return redirect("error","could_not_store_zoho_token");
       secretName=String(stored.data||"");
     }else{
-      const existing=await sb.from("sales_os_zoho_connections").select("secret_name").eq("member_email",oauthState.member_email).maybeSingle();
-      secretName=String(existing.data?.secret_name||"");
+      secretName=String(existingConnection?.secret_name||"");
       if(!secretName)return redirect("error","No refresh token returned. Reconnect and approve offline access.");
     }
 
     const scopes=String(tokenData.scope||SCOPES.join(",")).split(/[,\s]+/).filter(Boolean);
     const connectedAt=new Date().toISOString();
+    const priorMetadata=existingConnection?.metadata&&typeof existingConnection.metadata==="object"?existingConnection.metadata:{};
+    const providerSenderIdentities=(Array.isArray(account.sendMailDetails)?account.sendMailDetails:[])
+      .map((item:any)=>({email:String(item?.fromAddress||"").trim().toLowerCase(),display_name:String(item?.displayName||"").trim()}))
+      .filter((item:any)=>item.email);
     const {error:connectionError}=await sb.from("sales_os_zoho_connections").upsert({
       member_email:oauthState.member_email,
       zoho_email:zohoEmail,
@@ -202,7 +206,12 @@ Deno.serve(async(req:Request)=>{
       updated_at:connectedAt,
       last_sync_status:"connected",
       last_sync_detail:"Zoho Mail authorized",
-      metadata:{location:url.searchParams.get("location")||null,api_domain:tokenData.api_domain||null}
+      metadata:{
+        ...priorMetadata,
+        location:url.searchParams.get("location")||null,
+        api_domain:tokenData.api_domain||null,
+        provider_sender_identities:providerSenderIdentities
+      }
     },{onConflict:"member_email"});
     if(connectionError)return redirect("error","could_not_save_zoho_connection");
 
