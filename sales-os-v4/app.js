@@ -60,24 +60,43 @@ async function rpc(fn,payload={}){
 }
 async function ensureSupabase(){
   if(supabaseClient)return supabaseClient;
-  const mod=await import('https://esm.sh/@supabase/supabase-js@2');
+  const mod=await import('./vendor/supabase-auth.js?v=52');
   supabaseClient=mod.createClient(SUPABASE_URL,APIKEY,{auth:{persistSession:true,detectSessionInUrl:true,autoRefreshToken:true}});supabaseClient.auth.onAuthStateChange((event,session)=>{sessionAccessToken=session?.access_token||''});
   return supabaseClient;
+}
+const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+function isNetworkFailure(error){
+  const message=String(error?.message||error||'').toLowerCase();
+  return error?.name==='AbortError'||message.includes('failed to fetch')||message.includes('load failed')||message.includes('networkerror')||message.includes('network request failed');
+}
+async function retryNetwork(task,attempts=2){
+  let lastError;
+  for(let attempt=1;attempt<=attempts;attempt++){
+    try{return await task()}catch(error){lastError=error;if(!isNetworkFailure(error)||attempt===attempts)throw error;await wait(700*attempt)}
+  }
+  throw lastError;
+}
+async function fetchLoginBootstrap(payload){
+  return retryNetwork(async()=>{
+    const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),20000);
+    try{return await fetch(AUTH_BOOTSTRAP,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload),signal:controller.signal})}
+    finally{clearTimeout(timeout)}
+  });
 }
 async function memberLogin(){
   const email=$('#memberEmail').value.trim(),code=$('#accessCode').value.trim();$('#loginError').textContent='';
   if(!email||!code){$('#loginError').textContent='Choose your profile and enter the access code.';return}
   try{
     localStorage.setItem('salesOsMemberEmail',email);$('#memberLoginBtn').disabled=true;$('#memberLoginBtn').textContent='Opening…';
-    const r=await fetch(AUTH_BOOTSTRAP,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,access_code:code,return_url:location.origin+'/sales-os-v2/oauth/?mode=app'})});
+    const r=await fetchLoginBootstrap({email,access_code:code,return_url:location.origin+'/sales-os-v2/oauth/?mode=app'});
     const d=await r.json();if(!r.ok||!d.action_link)throw new Error(d.error||d.detail||'Could not sign in');
     const generated=new URL(d.action_link),tokenHash=generated.searchParams.get('token'),type=generated.searchParams.get('type')||'magiclink';
     if(!tokenHash)throw new Error('Sign-in token missing');
     const sb=await ensureSupabase(),verified=await sb.auth.verifyOtp({token_hash:tokenHash,type});
     if(verified.error)throw verified.error;if(!verified.data?.session)throw new Error('Session not created');
-    sessionAccessToken=verified.data.session.access_token;token='';actor=await rpc('sales_os_whoami',{p_token:null});
-    await load();$('#login').classList.add('hidden');$('#app').classList.remove('hidden');route(location.hash||'#/command',false);
-  }catch(e){$('#loginError').textContent=String(e.message||e);$('#memberLoginBtn').disabled=false;$('#memberLoginBtn').textContent='Open Sales OS'}
+    sessionAccessToken=verified.data.session.access_token;token='';actor=await retryNetwork(()=>rpc('sales_os_whoami',{p_token:null}));
+    await retryNetwork(()=>load());$('#login').classList.add('hidden');$('#app').classList.remove('hidden');route(location.hash||'#/command',false);
+  }catch(e){$('#loginError').textContent=isNetworkFailure(e)?'The connection was interrupted. Please try once more.':String(e.message||e);$('#memberLoginBtn').disabled=false;$('#memberLoginBtn').textContent='Open Sales OS'}
 }
 async function sharedLogin(){
   const code=$('#accessCode').value.trim();if(!code)return;
