@@ -48,6 +48,35 @@ function mailProviderOptions(d=currentDraft){
   return items.map(item=>'<option value="'+item.value+'" '+(item.value===selected?'selected':'')+'>'+esc(item.label)+'</option>').join('');
 }
 
+function zohoSenderIdentities(){
+  const connection=currentZoho();
+  if(!connection)return[];
+  const configured=Array.isArray(connection.sender_identities)?connection.sender_identities:[];
+  const source=configured.length?configured:(connection.zoho_email?[{email:connection.zoho_email,display_name:actor?.display_name||''}]:[]);
+  const seen=new Set();
+  return source.map(item=>({email:String(item?.email||'').trim().toLowerCase(),display_name:String(item?.display_name||'').trim()})).filter(item=>item.email&&item.email.includes('@')&&!seen.has(item.email)&&seen.add(item.email));
+}
+function selectedZohoSender(d=currentDraft){
+  const identities=zohoSenderIdentities();
+  const requested=String(d?.sender_email||'').trim().toLowerCase();
+  const preferred=String(currentZoho()?.default_sender_email||'').trim().toLowerCase();
+  return identities.find(item=>item.email===requested)||identities.find(item=>item.email===preferred)||identities[0]||null;
+}
+function zohoSenderOptions(d=currentDraft){
+  const selected=selectedZohoSender(d);
+  return zohoSenderIdentities().map(item=>'<option value="'+esc(item.email)+'" '+(item.email===selected?.email?'selected':'')+'>'+esc((item.display_name?item.display_name+' · ':'')+item.email)+'</option>').join('');
+}
+function zohoSenderField(d=currentDraft,disabled=false,fieldClass='field'){
+  const identities=zohoSenderIdentities();
+  if(!identities.length)return'';
+  const hidden=draftMailProvider(d)!=='zoho_mail'?' hidden':'';
+  return '<div class="'+esc(fieldClass)+hidden+'" id="draftSenderField"><label for="draftSender">From address</label><select id="draftSender" class="control" '+(disabled?'disabled':'')+'>'+zohoSenderOptions(d)+'</select></div>';
+}
+function syncDraftSenderField(){
+  const field=$('#draftSenderField');
+  if(field)field.classList.toggle('hidden',$('#draftProvider')?.value!=='zoho_mail');
+}
+
 function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.remove('hidden');setTimeout(()=>t.classList.add('hidden'),2400)}
 function statusClass(s=''){const v=String(s).toLowerCase();if(v.includes('ready')||v.includes('replied')||v.includes('won'))return'lime';if(v.includes('research')||v.includes('contacted'))return'cyan';if(v.includes('review')||v.includes('follow'))return'amber';return''}
 function favicon(p){try{const d=new URL(p.website||p.any_asset_url||'');return 'https://www.google.com/s2/favicons?domain='+encodeURIComponent(d.hostname)+'&sz=128'}catch{return''}}
@@ -61,7 +90,7 @@ async function rpc(fn,payload={}){
 }
 async function ensureSupabase(){
   if(supabaseClient)return supabaseClient;
-  const mod=await import('./vendor/supabase-auth.js?v=55');
+  const mod=await import('./vendor/supabase-auth.js?v=56');
   supabaseClient=mod.createClient(SUPABASE_URL,APIKEY,{auth:{persistSession:true,detectSessionInUrl:true,autoRefreshToken:true}});supabaseClient.auth.onAuthStateChange((event,session)=>{sessionAccessToken=session?.access_token||''});
   return supabaseClient;
 }
@@ -266,10 +295,14 @@ function renderOutreach(){
 function openDraft(id){currentDraft=data.email_drafts.find(d=>d.id===id)||null;renderOutreach()}
 window.openDraft=openDraft;
 function renderDraftEditor(d){
-  const p=data.prospects.find(x=>x.id===d.prospect_id);$('#draftEditor').innerHTML='<div class="panel-head"><div><h2>'+esc(p?.company||'Email draft')+'</h2><span class="quiet">'+esc(d.status)+'</span></div><button class="btn" onclick="aiWrite(\''+d.prospect_id+'\')">✦ AI write</button></div><div class="field"><label>From</label><select id="draftProvider" class="control">'+mailProviderOptions(d)+'</select></div><div class="field"><label>To</label><input id="draftTo" class="control" value="'+esc(d.recipient||'')+'"></div><div class="field"><label>Subject</label><input id="draftSubject" class="control" value="'+esc(d.subject||'')+'"></div><div class="field"><label>Message</label><textarea id="draftBody">'+esc(d.body||'')+'</textarea></div><div class="editor-actions"><button class="btn" onclick="saveDraft()">Save draft</button><button class="btn lime" onclick="sendDraft()">Review & send</button></div>';
+  const p=data.prospects.find(x=>x.id===d.prospect_id);$('#draftEditor').innerHTML='<div class="panel-head"><div><h2>'+esc(p?.company||'Email draft')+'</h2><span class="quiet">'+esc(d.status)+'</span></div><button class="btn" onclick="aiWrite(\''+d.prospect_id+'\')">✦ AI write</button></div><div class="field"><label for="draftProvider">Send with</label><select id="draftProvider" class="control" onchange="syncDraftSenderField()">'+mailProviderOptions(d)+'</select></div>'+zohoSenderField(d)+'<div class="field"><label>To</label><input id="draftTo" class="control" value="'+esc(d.recipient||'')+'"></div><div class="field"><label>Subject</label><input id="draftSubject" class="control" value="'+esc(d.subject||'')+'"></div><div class="field"><label>Message</label><textarea id="draftBody">'+esc(d.body||'')+'</textarea></div><div class="editor-actions"><button class="btn" onclick="saveDraft()">Save draft</button><button class="btn lime" onclick="sendDraft()">Review & send</button></div>';
 }
 async function saveDraft(){
-  if(!currentDraft)return;await rpc('sales_os_save_email_draft',{p_token:token||null,p_payload:{id:currentDraft.id,recipient:$('#draftTo').value,subject:$('#draftSubject').value,body:$('#draftBody').value,status:'draft',ai_assisted:currentDraft.ai_assisted,provider:$('#draftProvider')?.value||currentDraft.provider}});toast('Draft saved');await load();currentDraft=data.email_drafts.find(d=>d.id===currentDraft.id);renderOutreach();
+  if(!currentDraft)return;
+  const provider=$('#draftProvider')?.value||currentDraft.provider;
+  const selected=provider==='zoho_mail'?zohoSenderIdentities().find(item=>item.email===$('#draftSender')?.value)||selectedZohoSender(currentDraft):null;
+  await rpc('sales_os_save_email_draft',{p_token:token||null,p_payload:{id:currentDraft.id,recipient:$('#draftTo').value,subject:$('#draftSubject').value,body:$('#draftBody').value,status:'draft',ai_assisted:currentDraft.ai_assisted,provider,sender_email:selected?.email||currentDraft.sender_email,sender_name:selected?.display_name||currentDraft.sender_name}});
+  toast('Draft saved');await load();currentDraft=data.email_drafts.find(d=>d.id===currentDraft.id);renderOutreach();
 }
 async function sendDraft(){
   if(!currentDraft)return;await saveDraft();if(!actor?.authenticated){toast('Sign in as Saad or Yazeed to send');return}
