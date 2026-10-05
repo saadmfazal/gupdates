@@ -75,6 +75,26 @@ function emails(value:string){
   return [...new Set(found)];
 }
 
+function senderIdentities(connection:any){
+  const configured=Array.isArray(connection?.metadata?.sender_identities)?connection.metadata.sender_identities:[];
+  const source=configured.length?configured:[{email:connection?.zoho_email,display_name:""}];
+  const seen=new Set<string>();
+  return source.map((item:any)=>({
+    email:String(item?.email||"").trim().toLowerCase(),
+    display_name:String(item?.display_name||"").trim()
+  })).filter((item:any)=>item.email&&item.email.includes("@")&&!seen.has(item.email)&&!!seen.add(item.email));
+}
+async function availableZohoSenders(connection:any,accessToken:string){
+  const response=await fetch(String(connection.mail_api_domain)+"/api/accounts",{
+    headers:{accept:"application/json",authorization:"Zoho-oauthtoken "+accessToken}
+  });
+  if(!response.ok)return[];
+  const data=await response.json().catch(()=>({}));
+  const account=(data?.data||[]).find((item:any)=>String(item?.accountId||"")===String(connection.account_id||""));
+  const details=Array.isArray(account?.sendMailDetails)?account.sendMailDetails:[];
+  return [...new Set(details.map((item:any)=>String(item?.fromAddress||"").trim().toLowerCase()).filter(Boolean))];
+}
+
 Deno.serve(async(req:Request)=>{
   if(req.method==="OPTIONS")return new Response(null,{status:204,headers:cors});
   if(req.method!=="POST")return json({error:"method_not_allowed"},405);
@@ -96,12 +116,22 @@ Deno.serve(async(req:Request)=>{
   if(!connection)return json({error:"zoho_mail_not_connected"},409);
   const {data:refresh}=await sb.rpc("sales_os_get_zoho_secret",{p_member_email:activeMember.email});
   if(!refresh)return json({error:"zoho_refresh_token_missing"},409);
-  const access=await accessToken(sb,connection,String(refresh));
   const account=String(connection.zoho_email||"").toLowerCase();
   if(!account||!connection.account_id)return json({error:"zoho_mailbox_identity_incomplete"},409);
 
+  const identities=senderIdentities(connection);
+  const requestedSender=String(draft.sender_email||connection?.metadata?.default_sender_email||account).trim().toLowerCase();
+  const sender=identities.find((item:any)=>item.email===requestedSender);
+  if(!sender)return json({error:"zoho_sender_not_allowed",detail:"Choose an approved From address for this mailbox."},409);
+
+  const access=await accessToken(sb,connection,String(refresh));
+  const providerSenders=await availableZohoSenders(connection,access);
+  if(providerSenders.length&&!providerSenders.includes(sender.email)){
+    return json({error:"zoho_sender_not_available",detail:"This From address is not enabled in Zoho Mail."},409);
+  }
+
   const payload:any={
-    fromAddress:account,
+    fromAddress:sender.email,
     toAddress:String(draft.recipient||""),
     ccAddress:String(draft.cc||""),
     subject:String(draft.subject||""),
@@ -126,7 +156,9 @@ Deno.serve(async(req:Request)=>{
     sent_at:sentAt,
     external_message_id:providerMessageId,
     provider:"zoho_mail",
-    provider_thread_id:threadId
+    provider_thread_id:threadId,
+    sender_email:sender.email,
+    sender_name:sender.display_name||draft.sender_name
   }).eq("id",draft.id);
   await sb.from("sales_os_email_messages").upsert({
     prospect_id:draft.prospect_id,
@@ -134,7 +166,7 @@ Deno.serve(async(req:Request)=>{
     provider_message_id:providerMessageId,
     provider_thread_id:threadId,
     direction:"outbound",
-    from_email:account,
+    from_email:sender.email,
     to_emails:emails(String(draft.recipient||"")),
     cc_emails:emails(String(draft.cc||"")),
     subject:draft.subject,
@@ -149,6 +181,7 @@ Deno.serve(async(req:Request)=>{
       sent_by:"native_sales_os",
       member_email:activeMember.email,
       zoho_account:account,
+      from_address:sender.email,
       awaiting_provider_id:awaitingProviderId
     }
   },{onConflict:"provider,provider_message_id"});
@@ -194,9 +227,10 @@ Deno.serve(async(req:Request)=>{
       thread_id:threadId,
       recipient:draft.recipient,
       provider:"zoho_mail",
+      from_address:sender.email,
       awaiting_provider_id:awaitingProviderId
     },
     source:"native_zoho_mail"
   });
-  return json({ok:true,message_id:providerMessageId,thread_id:threadId,sent_at:sentAt,awaiting_provider_id:awaitingProviderId});
+  return json({ok:true,message_id:providerMessageId,thread_id:threadId,sent_at:sentAt,from_address:sender.email,awaiting_provider_id:awaitingProviderId});
 });
