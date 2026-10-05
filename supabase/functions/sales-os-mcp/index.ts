@@ -5,7 +5,11 @@ const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const FUNCTION_URL = SUPABASE_URL + "/functions/v1/sales-os-mcp";
 const RESOURCE_URL = FUNCTION_URL + "/mcp";
 const META_URL = FUNCTION_URL + "/oauth-protected-resource";
-const ISSUER = "https://george.morpheuspd.io";
+// Keep the authorization-server issuer on the same authority as every OAuth
+// endpoint. ChatGPT validates this relationship before attempting DCR and will
+// reject a metadata document whose issuer is on a different host even when the
+// advertised endpoints themselves are otherwise reachable.
+const ISSUER = FUNCTION_URL;
 const AUTHORIZATION_ENDPOINT = FUNCTION_URL + "/authorize";
 const TOKEN_ENDPOINT = FUNCTION_URL + "/token";
 const REGISTRATION_ENDPOINT = FUNCTION_URL + "/register";
