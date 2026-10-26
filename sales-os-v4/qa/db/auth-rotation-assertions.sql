@@ -1,6 +1,45 @@
 \set ON_ERROR_STOP on
 
 select test_support.assert_true(
+  (select relrowsecurity from pg_catalog.pg_class where oid='public.sales_os_auth_requests'::regclass),
+  'member login request evidence has RLS enabled'
+);
+
+select test_support.assert_true(
+  not has_table_privilege('anon','public.sales_os_auth_requests','select')
+  and not has_table_privilege('authenticated','public.sales_os_auth_requests','select')
+  and has_table_privilege('service_role','public.sales_os_auth_requests','select,insert,delete'),
+  'member login request evidence is service-only'
+);
+
+select test_support.assert_true(
+  not has_function_privilege('anon','public.sales_os_allow_member_login(text,text,text)','execute')
+  and not has_function_privilege('authenticated','public.sales_os_allow_member_login(text,text,text)','execute')
+  and has_function_privilege('service_role','public.sales_os_allow_member_login(text,text,text)','execute'),
+  'member login rate gate is service-only'
+);
+
+begin;
+set local role service_role;
+select public.sales_os_allow_member_login('operator@example.test',repeat('a',64),repeat('b',64)) as member_attempt_1 \gset
+select public.sales_os_allow_member_login('operator@example.test',repeat('a',64),repeat('b',64)) as member_attempt_2 \gset
+select public.sales_os_allow_member_login('operator@example.test',repeat('a',64),repeat('b',64)) as member_attempt_3 \gset
+select public.sales_os_allow_member_login('operator@example.test',repeat('a',64),repeat('b',64)) as member_attempt_4 \gset
+select public.sales_os_allow_member_login('not-a-member@example.test',repeat('c',64),repeat('d',64)) as nonmember_attempt \gset
+rollback;
+
+select test_support.assert_true(
+  :'member_attempt_1'::boolean and :'member_attempt_2'::boolean and :'member_attempt_3'::boolean
+  and not :'member_attempt_4'::boolean,
+  'active member is allowed three requests per fifteen minutes and the fourth is denied'
+);
+
+select test_support.assert_true(
+  not :'nonmember_attempt'::boolean,
+  'nonmember login request is denied'
+);
+
+select test_support.assert_true(
   (select count(*)=1 from vault.secrets where name='sales_os_team_access_token'),
   'exactly one managed Sales OS recovery secret exists'
 );
@@ -104,4 +143,3 @@ select test_support.assert_true(
 );
 
 select 'AUTH_ROTATION_ASSERTIONS_PASSED' as result;
-
