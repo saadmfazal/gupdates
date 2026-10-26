@@ -20,6 +20,11 @@ select test_support.assert_true(
 );
 
 select test_support.assert_true(
+  has_table_privilege('service_role','public.sales_os_members','select'),
+  'service-role login gate can read the existing active-member allowlist'
+);
+
+select test_support.assert_true(
   public.sales_os_auth_ok('fixture-token'),
   'preparation keeps the existing shared credential valid until the final cutover'
 );

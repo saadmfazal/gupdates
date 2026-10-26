@@ -20,6 +20,7 @@ create index if not exists sales_os_auth_requests_cleanup_idx
 alter table public.sales_os_auth_requests enable row level security;
 revoke all on table public.sales_os_auth_requests from public,anon,authenticated;
 grant select,insert,delete on table public.sales_os_auth_requests to service_role;
+grant select on table public.sales_os_members to service_role;
 
 create or replace function public.sales_os_allow_member_login(
   p_email text,
