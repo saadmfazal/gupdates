@@ -1,0 +1,93 @@
+name: Sales OS V4 synthetic database validation
+
+on:
+  push:
+    branches:
+      - test/sales-os-db-validation-20261026
+    paths:
+      - ".github/workflows/sales-os-v4-db-validation.yml"
+      - "sales-os-v4/qa/db/**"
+      - "supabase/migrations/20261026013754_sales_os_consolidated_sync.sql"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sales-os-v4-db-validation-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  synthetic-postgres:
+    if: github.repository == 'saadmfazal/gupdates' && github.ref == 'refs/heads/test/sales-os-db-validation-20261026'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_DB: sales_os_test
+          POSTGRES_PASSWORD: synthetic-only-password
+          POSTGRES_USER: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d sales_os_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: "5432"
+      PGDATABASE: sales_os_test
+      PGUSER: postgres
+      PGPASSWORD: synthetic-only-password
+    steps:
+      - name: Checkout isolated test branch
+        uses: actions/checkout@v4
+
+      - name: Verify isolation guard
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REPOSITORY" = "saadmfazal/gupdates"
+          test "$GITHUB_REF" = "refs/heads/test/sales-os-db-validation-20261026"
+          test -z "${SUPABASE_ACCESS_TOKEN:-}"
+          test -z "${SUPABASE_DB_URL:-}"
+          test -z "${DATABASE_URL:-}"
+          echo "Isolation guard passed: synthetic runner-local PostgreSQL only."
+
+      - name: Ensure PostgreSQL client is available
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! command -v psql >/dev/null 2>&1; then
+            sudo apt-get -qq update
+            sudo apt-get -qq install -y postgresql-client
+          fi
+          psql --version
+
+      - name: Create synthetic legacy Sales OS schema
+        run: psql --set=ON_ERROR_STOP=1 --file sales-os-v4/qa/db/bootstrap.sql
+
+      - name: Apply reviewed consolidation migration
+        run: psql --set=ON_ERROR_STOP=1 --file supabase/migrations/20261026013754_sales_os_consolidated_sync.sql
+
+      - name: Validate migration, RLS, grants, and state semantics
+        run: psql --set=ON_ERROR_STOP=1 --file sales-os-v4/qa/db/assertions.sql
+
+      - name: Validate concurrent leases, send claims, and suppression
+        shell: bash
+        run: bash sales-os-v4/qa/db/concurrency.sh
+
+      - name: Drop disposable database
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          psql --dbname postgres --set=ON_ERROR_STOP=1 --command \
+            "select pg_terminate_backend(pid) from pg_stat_activity where datname='sales_os_test' and pid<>pg_backend_pid();"
+          psql --dbname postgres --set=ON_ERROR_STOP=1 --command "drop database if exists sales_os_test;"
+          remaining="$(psql --dbname postgres --tuples-only --no-align --command "select count(*) from pg_database where datname='sales_os_test';")"
+          test "$remaining" = "0"
+          echo "Cleanup verified: disposable database removed; service container is runner-scoped."
