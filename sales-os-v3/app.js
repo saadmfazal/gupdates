@@ -48,33 +48,25 @@ async function ensureSupabase(){
   return supabaseClient;
 }
 async function memberLogin(){
-  const email=$('#memberEmail').value.trim(),code=$('#accessCode').value.trim();$('#loginError').textContent='';
-  if(!email||!code){$('#loginError').textContent='Choose your profile and enter the access code.';return}
+  const email=$('#memberEmail').value.trim();$('#loginError').textContent='';
+  if(!email){$('#loginError').textContent='Choose your Sales OS profile.';return}
   try{
-    localStorage.setItem('salesOsMemberEmail',email);$('#memberLoginBtn').disabled=true;$('#memberLoginBtn').textContent='Opening…';
-    const r=await fetch(AUTH_BOOTSTRAP,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,access_code:code,return_url:location.origin+'/sales-os-v2/oauth/?mode=app'})});
-    const d=await r.json();if(!r.ok||!d.action_link)throw new Error(d.error||d.detail||'Could not sign in');
-    const generated=new URL(d.action_link),tokenHash=generated.searchParams.get('token'),type=generated.searchParams.get('type')||'magiclink';
-    if(!tokenHash)throw new Error('Sign-in token missing');
-    const sb=await ensureSupabase(),verified=await sb.auth.verifyOtp({token_hash:tokenHash,type});
-    if(verified.error)throw verified.error;if(!verified.data?.session)throw new Error('Session not created');
-    sessionAccessToken=verified.data.session.access_token;token='';actor=await rpc('sales_os_whoami',{p_token:null});
-    $('#login').classList.add('hidden');$('#app').classList.remove('hidden');await load();route(location.hash||'#/command',false);
-  }catch(e){$('#loginError').textContent=String(e.message||e);$('#memberLoginBtn').disabled=false;$('#memberLoginBtn').textContent='Open Sales OS'}
-}
-async function sharedLogin(){
-  const code=$('#accessCode').value.trim();if(!code)return;
-  try{const ok=await rpc('sales_os_verify',{p_token:code});if(!ok)throw new Error('Invalid code');token=code;actor={display_name:'Shared',authenticated:false};localStorage.setItem('salesOsToken',code);$('#login').classList.add('hidden');$('#app').classList.remove('hidden');await load();route('#/command',false)}catch(e){$('#loginError').textContent='Could not open Sales OS.'}
+    localStorage.setItem('salesOsMemberEmail',email);$('#memberLoginBtn').disabled=true;$('#memberLoginBtn').textContent='Requesting link.';
+    const r=await fetch(AUTH_BOOTSTRAP,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,return_url:location.origin+'/sales-os-v3/'})});
+    const d=await r.json().catch(()=>({}));
+    $('#loginError').textContent=d.message||'If this is an active Sales OS profile, a secure sign-in link will arrive shortly.';
+  }catch(e){$('#loginError').textContent='If this is an active Sales OS profile, a secure sign-in link will arrive shortly.'}
+  finally{$('#memberLoginBtn').disabled=false;$('#memberLoginBtn').textContent='Email secure sign-in link'}
 }
 async function trySession(){
   try{const sb=await ensureSupabase(),{data:{session}}=await sb.auth.getSession();if(!session)return false;sessionAccessToken=session.access_token;actor=await rpc('sales_os_whoami',{p_token:null});$('#login').classList.add('hidden');$('#app').classList.remove('hidden');await load();return true}catch{return false}
 }
 async function signOut(){
-  localStorage.removeItem('salesOsToken');localStorage.removeItem('salesOsMemberEmail');try{const sb=await ensureSupabase();await sb.auth.signOut()}catch{}location.href=location.pathname;
+  localStorage.removeItem('salesOsMemberEmail');try{const sb=await ensureSupabase();await sb.auth.signOut()}catch{}location.href=location.pathname;
 }
 
 async function refreshAI(){
-  try{const headers={'Content-Type':'application/json',apikey:APIKEY};if(sessionAccessToken)headers.Authorization='Bearer '+sessionAccessToken;else if(token)headers['x-sales-os-access-code']=token;
+  try{const headers={'Content-Type':'application/json',apikey:APIKEY};if(sessionAccessToken)headers.Authorization='Bearer '+sessionAccessToken;
     const r=await fetch(COPILOT_URL,{method:'POST',headers,body:JSON.stringify({action:'status'})});const d=await r.json();providerStatus.ai=!!(d.connected&&d.api_ok)}catch{providerStatus.ai=false}
 }
 async function load(){
@@ -117,12 +109,12 @@ function renderCommand(){
   const priorities=todayQueue.slice(0,5);
   $('#todayPriorities').innerHTML=priorities.length?priorities.map((x,i)=>{
     const company=x.title||prospectName(x.prospect_id)||'Sales task';
-    const sub=[x.category,x.assigned_to,'Urgency '+x.score].filter(Boolean).join(' · ');
-    return '<div class="priority-row" data-urgency="'+esc(x.score)+'"><div class="priority-art"></div><div><h3>'+esc(x.action_label||company)+'</h3><p>'+esc(company)+' · '+esc(x.reason||'')+'</p><div class="priority-score">'+esc(sub)+'</div></div><button class="btn" onclick="runTodayItem('+i+')">'+esc(x.action_label||'Open')+' →</button></div>';
+    const sub=[x.category,x.assigned_to,'Urgency '+x.score].filter(Boolean).join(' � ');
+    return '<div class="priority-row" data-urgency="'+esc(x.score)+'"><div class="priority-art"></div><div><h3>'+esc(x.action_label||company)+'</h3><p>'+esc(company)+' � '+esc(x.reason||'')+'</p><div class="priority-score">'+esc(sub)+'</div></div><button class="btn" onclick="runTodayItem('+i+')">'+esc(x.action_label||'Open')+' </button></div>';
   }).join(''):'<div class="empty">Nothing urgent right now.</div>';
 
   const activity=[...data.activities].sort((a,b)=>new Date(b.occurred_at)-new Date(a.occurred_at)).slice(0,4);
-  $('#teamActivity').innerHTML=activity.map(a=>'<div class="activity-row"><span class="activity-icon">'+(a.activity_type==='Sent'?'➤':a.activity_type==='Reply'?'✦':'▣')+'</span><div><b>'+esc(a.actor_name||a.activity_type||'Activity')+'</b><span>'+esc((a.subject||a.outcome||prospectName(a.prospect_id)||'').slice(0,76))+'</span></div><time>'+new Date(a.occurred_at).toLocaleDateString()+'</time></div>').join('')||'<div class="empty">No activity yet.</div>';
+  $('#teamActivity').innerHTML=activity.map(a=>'<div class="activity-row"><span class="activity-icon">'+(a.activity_type==='Sent'?'?':a.activity_type==='Reply'?'?':'?')+'</span><div><b>'+esc(a.actor_name||a.activity_type||'Activity')+'</b><span>'+esc((a.subject||a.outcome||prospectName(a.prospect_id)||'').slice(0,76))+'</span></div><time>'+new Date(a.occurred_at).toLocaleDateString()+'</time></div>').join('')||'<div class="empty">No activity yet.</div>';
 
   const pp=priorityProspects();
   const actionable=todayQueue.filter(x=>x.score>=70).length;
@@ -134,7 +126,7 @@ function renderCommand(){
   const replyCount=data.inbox_threads.filter(t=>t.status==='open'&&t.last_direction==='inbound').length;
   const followCount=data.workflow_state.filter(w=>w.recommended_action==='Follow up').length;
   const ai=$('#commandAskAI');
-  if(ai)ai.innerHTML='<b>'+replyCount+' replies · '+reviewCount+' reviews · '+followCount+' follow-ups</b><span>Morpheus has ranked the next moves</span>';
+  if(ai)ai.innerHTML='<b>'+replyCount+' replies � '+reviewCount+' reviews � '+followCount+' follow-ups</b><span>Morpheus has ranked the next moves</span>';
 }
 window.runTodayItem=async i=>{
   const x=todayQueue[i];if(!x)return;
@@ -172,7 +164,7 @@ async function reviewTodayApproval(id,decision){
 window.routeToPriority=(routeName,pid)=>{if(routeName==='prospect'&&pid)route('#/prospect/'+pid);else route('#/'+routeName)};
 function showcaseCard(p){
   const f=favicon(p),tag=p.stage==='Ready to contact'?'Draft ready':p.stage==='Research'?'Research ready':p.stage;
-  return '<article class="showcase-card" onclick="route(\'#/prospect/'+p.id+'\')">'+(f?'<img class="favicon" src="'+esc(f)+'" alt="">':'')+'<div><h3>'+esc(p.company)+'</h3><p>'+esc(p.segment||p.category||'')+'</p><div class="showcase-footer"><span class="status-chip '+statusClass(tag)+'">'+esc(tag)+'</span><button class="round-go">→</button></div></div></article>';
+  return '<article class="showcase-card" onclick="route(\'#/prospect/'+p.id+'\')">'+(f?'<img class="favicon" src="'+esc(f)+'" alt="">':'')+'<div><h3>'+esc(p.company)+'</h3><p>'+esc(p.segment||p.category||'')+'</p><div class="showcase-footer"><span class="status-chip '+statusClass(tag)+'">'+esc(tag)+'</span><button class="round-go"></button></div></div></article>';
 }
 
 function syncFilters(){
@@ -188,13 +180,13 @@ function filteredProspects(){
 }
 function renderProspects(){
   if(!$('#prospectGrid'))return;syncFilters();const rows=filteredProspects();
-  $('#prospectGrid').innerHTML=rows.map(p=>'<article class="prospect-card" onclick="route(\'#/prospect/'+p.id+'\')"><div class="prospect-card-head"><div><span class="eyebrow">'+esc(p.category||'General')+'</span><h3>'+esc(p.company)+'</h3><p>'+esc([p.segment,p.location].filter(Boolean).join(' · '))+'</p></div><span class="status-chip '+statusClass(p.stage)+'">'+esc(p.stage)+'</span></div><div class="card-mid"><span class="status-chip">'+pAssets(p.id).length+' assets</span><span class="status-chip">'+esc(p.owner_assigned||'Unassigned')+'</span></div><div class="prospect-card-footer"><small>'+esc(workflowFor(p.id)?.recommended_action||p.next_action||'No next action')+'</small><button class="round-go">→</button></div></article>').join('')||'<div class="empty">No prospects found.</div>';
+  $('#prospectGrid').innerHTML=rows.map(p=>'<article class="prospect-card" onclick="route(\'#/prospect/'+p.id+'\')"><div class="prospect-card-head"><div><span class="eyebrow">'+esc(p.category||'General')+'</span><h3>'+esc(p.company)+'</h3><p>'+esc([p.segment,p.location].filter(Boolean).join(' � '))+'</p></div><span class="status-chip '+statusClass(p.stage)+'">'+esc(p.stage)+'</span></div><div class="card-mid"><span class="status-chip">'+pAssets(p.id).length+' assets</span><span class="status-chip">'+esc(p.owner_assigned||'Unassigned')+'</span></div><div class="prospect-card-footer"><small>'+esc(workflowFor(p.id)?.recommended_action||p.next_action||'No next action')+'</small><button class="round-go"></button></div></article>').join('')||'<div class="empty">No prospects found.</div>';
 }
 
 function researchExists(p){return pResearch(p.id).length>0||pNotes(p.id).some(n=>String(n.title||'').toLowerCase().startsWith('research'))}
 function renderResearch(){
   if(!$('#researchQueue'))return;const queue=data.prospects.filter(p=>!researchExists(p)&&!['Lost','Disqualified'].includes(p.stage)).sort((a,b)=>(b.score||0)-(a.score||0)).slice(0,20);
-  $('#researchQueueCount').textContent=queue.length+' ready';$('#researchQueue').innerHTML=queue.map(p=>'<div class="stack-item"><div class="main"><b>'+esc(p.company)+'</b><span>'+esc(p.category||'')+' · '+esc(p.owner_assigned||'')+'</span></div><button class="btn" onclick="startResearch(\''+p.id+'\')">Start research →</button></div>').join('')||'<div class="empty">Research queue is clear.</div>';
+  $('#researchQueueCount').textContent=queue.length+' ready';$('#researchQueue').innerHTML=queue.map(p=>'<div class="stack-item"><div class="main"><b>'+esc(p.company)+'</b><span>'+esc(p.category||'')+' � '+esc(p.owner_assigned||'')+'</span></div><button class="btn" onclick="startResearch(\''+p.id+'\')">Start research </button></div>').join('')||'<div class="empty">Research queue is clear.</div>';
   const reports=[...data.research_reports].sort((a,b)=>new Date(b.created_at)-new Date(a.created_at)).slice(0,20);
   $('#recentResearch').innerHTML=reports.map(r=>'<div class="stack-item" onclick="route(\'#/prospect/'+r.prospect_id+'\')"><div class="main"><b>'+esc(prospectName(r.prospect_id))+'</b><span>'+esc((r.summary||'Research complete').slice(0,90))+'</span></div><span class="status-chip cyan">Ready</span></div>').join('')||'<div class="empty">No saved research yet.</div>';
 }
@@ -202,19 +194,19 @@ function renderResearch(){
 function renderAssets(){
   if(!$('#assetQueue'))return;const jobs=[...data.asset_work_requests].sort((a,b)=>new Date(b.updated_at)-new Date(a.updated_at));
   const active=jobs.filter(j=>['queued','in_progress','ready_for_review'].includes(j.status));$('#assetQueueCount').textContent=active.length+' active';
-  $('#assetQueue').innerHTML=active.map(j=>'<article class="asset-job-card" onclick="openAssetJob(\''+j.id+'\')"><div class="row"><span class="eyebrow">AHAMED</span><span class="status-chip '+(j.status==='ready_for_review'?'amber':'cyan')+'">'+esc(j.status.replaceAll('_',' '))+'</span></div><h3>'+esc(j.title||j.request_text||'Asset build')+'</h3><p>'+esc(prospectName(j.prospect_id))+' · '+esc(j.priority||'normal')+'</p></article>').join('')||'<div class="empty">No active asset jobs.</div>';
-  $('#assetLibraryCount').textContent=data.assets.length+' assets';$('#assetLibrary').innerHTML=data.assets.map(a=>'<article class="asset-card"><span class="eyebrow">'+esc(a.asset_type||'Asset')+'</span><h3>'+esc(a.title)+'</h3><p>'+esc(prospectName(a.prospect_id))+' · '+esc(a.status||'')+'</p><div class="asset-actions">'+(safeUrl(a.url)?'<a class="btn" target="_blank" href="'+esc(a.url)+'">Open ↗</a>':'')+'<button class="btn" onclick="route(\'#/prospect/'+a.prospect_id+'\')">Account</button></div></article>').join('')||'<div class="empty">No assets yet.</div>';
+  $('#assetQueue').innerHTML=active.map(j=>'<article class="asset-job-card" onclick="openAssetJob(\''+j.id+'\')"><div class="row"><span class="eyebrow">AHAMED</span><span class="status-chip '+(j.status==='ready_for_review'?'amber':'cyan')+'">'+esc(j.status.replaceAll('_',' '))+'</span></div><h3>'+esc(j.title||j.request_text||'Asset build')+'</h3><p>'+esc(prospectName(j.prospect_id))+' � '+esc(j.priority||'normal')+'</p></article>').join('')||'<div class="empty">No active asset jobs.</div>';
+  $('#assetLibraryCount').textContent=data.assets.length+' assets';$('#assetLibrary').innerHTML=data.assets.map(a=>'<article class="asset-card"><span class="eyebrow">'+esc(a.asset_type||'Asset')+'</span><h3>'+esc(a.title)+'</h3><p>'+esc(prospectName(a.prospect_id))+' � '+esc(a.status||'')+'</p><div class="asset-actions">'+(safeUrl(a.url)?'<a class="btn" target="_blank" href="'+esc(a.url)+'">Open ?</a>':'')+'<button class="btn" onclick="route(\'#/prospect/'+a.prospect_id+'\')">Account</button></div></article>').join('')||'<div class="empty">No assets yet.</div>';
 }
 
 function renderOutreach(){
   if(!$('#draftList'))return;const drafts=[...data.email_drafts].sort((a,b)=>new Date(b.updated_at)-new Date(a.updated_at));$('#draftCount').textContent=drafts.filter(d=>d.status==='draft').length+' drafts';
-  $('#draftList').innerHTML=drafts.map(d=>'<div class="draft-row '+(currentDraft?.id===d.id?'active':'')+'" onclick="openDraft(\''+d.id+'\')"><b>'+esc(d.subject||'(No subject)')+'</b><span>'+esc(prospectName(d.prospect_id))+' · '+esc(d.status)+'</span></div>').join('')||'<div class="empty">No drafts yet.</div>';
+  $('#draftList').innerHTML=drafts.map(d=>'<div class="draft-row '+(currentDraft?.id===d.id?'active':'')+'" onclick="openDraft(\''+d.id+'\')"><b>'+esc(d.subject||'(No subject)')+'</b><span>'+esc(prospectName(d.prospect_id))+' � '+esc(d.status)+'</span></div>').join('')||'<div class="empty">No drafts yet.</div>';
   if(currentDraft){const d=data.email_drafts.find(x=>x.id===currentDraft.id);if(d)renderDraftEditor(d)}
 }
 function openDraft(id){currentDraft=data.email_drafts.find(d=>d.id===id)||null;renderOutreach()}
 window.openDraft=openDraft;
 function renderDraftEditor(d){
-  const p=data.prospects.find(x=>x.id===d.prospect_id);$('#draftEditor').innerHTML='<div class="panel-head"><div><h2>'+esc(p?.company||'Email draft')+'</h2><span class="quiet">'+esc(d.status)+'</span></div><button class="btn" onclick="aiWrite(\''+d.prospect_id+'\')">✦ AI write</button></div><div class="field"><label>To</label><input id="draftTo" class="control" value="'+esc(d.recipient||'')+'"></div><div class="field"><label>Subject</label><input id="draftSubject" class="control" value="'+esc(d.subject||'')+'"></div><div class="field"><label>Message</label><textarea id="draftBody">'+esc(d.body||'')+'</textarea></div><div class="editor-actions"><button class="btn" onclick="saveDraft()">Save draft</button><button class="btn lime" onclick="sendDraft()">Send via Gmail</button></div>';
+  const p=data.prospects.find(x=>x.id===d.prospect_id);$('#draftEditor').innerHTML='<div class="panel-head"><div><h2>'+esc(p?.company||'Email draft')+'</h2><span class="quiet">'+esc(d.status)+'</span></div><button class="btn" onclick="aiWrite(\''+d.prospect_id+'\')">? AI write</button></div><div class="field"><label>To</label><input id="draftTo" class="control" value="'+esc(d.recipient||'')+'"></div><div class="field"><label>Subject</label><input id="draftSubject" class="control" value="'+esc(d.subject||'')+'"></div><div class="field"><label>Message</label><textarea id="draftBody">'+esc(d.body||'')+'</textarea></div><div class="editor-actions"><button class="btn" onclick="saveDraft()">Save draft</button><button class="btn lime" onclick="sendDraft()">Send via Gmail</button></div>';
 }
 async function saveDraft(){
   if(!currentDraft)return;await rpc('sales_os_save_email_draft',{p_token:token||null,p_payload:{id:currentDraft.id,recipient:$('#draftTo').value,subject:$('#draftSubject').value,body:$('#draftBody').value,status:'draft',ai_assisted:currentDraft.ai_assisted}});toast('Draft saved');await load();currentDraft=data.email_drafts.find(d=>d.id===currentDraft.id);renderOutreach();
@@ -242,19 +234,19 @@ function renderSettings(){
 
 function briefFor(p){
   if((p.category||'').toLowerCase().includes('aquanix'))return[
-    ['◎','1,000 kg starting MOQ','Scalable private-label production'],
-    ['▣','Own-brand packaging','Custom formula and your branding'],
-    ['⇢','Delivery from New York','Efficient US fulfilment and logistics']
+    ['?','1,000 kg starting MOQ','Scalable private-label production'],
+    ['?','Own-brand packaging','Custom formula and your branding'],
+    ['?','Delivery from New York','Efficient US fulfilment and logistics']
   ];
   if((p.category||'').toLowerCase().includes('tin tech'))return[
-    ['▣','Dedicated supply program','Packaging capacity built around demand'],
-    ['◎','Commercial proposal','Volume, tooling and pricing tracked'],
-    ['⇢','Delivered program','Supply planning and logistics included']
+    ['?','Dedicated supply program','Packaging capacity built around demand'],
+    ['?','Commercial proposal','Volume, tooling and pricing tracked'],
+    ['?','Delivered program','Supply planning and logistics included']
   ];
   return[
-    ['⌕','Research-backed opportunity','Built from verified prospect context'],
-    ['▣','Personalized asset','Something concrete to react to'],
-    ['➤','Prepared outreach','Sales message tied to the asset']
+    ['?','Research-backed opportunity','Built from verified prospect context'],
+    ['?','Personalized asset','Something concrete to react to'],
+    ['?','Prepared outreach','Sales message tied to the asset']
   ];
 }
 function stageState(p){
@@ -266,35 +258,35 @@ function renderProspectDetail(id){
   currentAssetId=currentAssetId&&assets.some(a=>a.id===currentAssetId)?currentAssetId:assets[0]?.id||null;const activeAsset=assets.find(a=>a.id===currentAssetId)||assets[0]||null;
   const f=favicon(p),insight=reports[0]?.structured?.fit||reports[0]?.summary||p.next_action||'Use the research, asset and outreach context together before the next move.';
   $('#prospectDetail').innerHTML=
-  '<div class="prospect-top"><button class="icon-btn" onclick="history.back()">←</button><div class="prospect-avatar">'+(f?'<img src="'+esc(f)+'" alt="">':esc(p.company.charAt(0)))+'</div><div><div class="eyebrow">'+esc(p.category||'PROSPECT')+'</div><h1>'+esc(p.company)+'</h1><p>'+esc(p.segment||p.location||'Opportunity account')+'</p></div><button class="btn lime" onclick="aiWrite(\''+p.id+'\')">➤ Prepare outreach →</button></div>'+
+  '<div class="prospect-top"><button class="icon-btn" onclick="history.back()"></button><div class="prospect-avatar">'+(f?'<img src="'+esc(f)+'" alt="">':esc(p.company.charAt(0)))+'</div><div><div class="eyebrow">'+esc(p.category||'PROSPECT')+'</div><h1>'+esc(p.company)+'</h1><p>'+esc(p.segment||p.location||'Opportunity account')+'</p></div><button class="btn lime" onclick="aiWrite(\''+p.id+'\')">? Prepare outreach </button></div>'+
   '<div class="step-rail">'+stepHtml('Research',1,state.research,state.research&&!state.assets)+stepHtml('Assets',2,state.assets,state.assets&&!state.review)+stepHtml('Review',3,state.review,state.review&&!state.outreach)+stepHtml('Outreach',4,state.outreach,false)+'</div>'+
   '<div class="prospect-layout">'+
     '<section class="panel detail-card"><h2>Opportunity brief</h2>'+brief.map(x=>'<div class="brief-stat"><span>'+x[0]+'</span><div><b>'+esc(x[1])+'</b><small>'+esc(x[2])+'</small></div></div>').join('')+
     '<div class="tab-row"><button class="active">Brief</button><button onclick="startResearch(\''+p.id+'\')">Research</button><button onclick="openEditProspect(\''+p.id+'\')">Contact</button></div>'+
     '<div class="brief-text">'+esc(reports[0]?.summary||p.notes||'Research this prospect to generate a sourced opportunity brief.')+'</div>'+
-    '<div class="source-list">'+sources.map(u=>'<a href="'+esc(u)+'" target="_blank">↗ '+esc(new URL(u).hostname.replace(/^www\./,''))+'</a>').join('')+'</div>'+
-    '<div class="editor-actions"><button class="btn primary" onclick="startResearch(\''+p.id+'\')">✦ Start research</button><button class="btn" onclick="assignAhamed(\''+p.id+'\')">Send to Ahamed</button></div></section>'+
+    '<div class="source-list">'+sources.map(u=>'<a href="'+esc(u)+'" target="_blank">? '+esc(new URL(u).hostname.replace(/^www\./,''))+'</a>').join('')+'</div>'+
+    '<div class="editor-actions"><button class="btn primary" onclick="startResearch(\''+p.id+'\')">? Start research</button><button class="btn" onclick="assignAhamed(\''+p.id+'\')">Send to Ahamed</button></div></section>'+
     '<section class="panel detail-card"><div class="panel-head"><h2>Asset studio</h2><span class="status-chip '+(jobs.some(j=>j.status==='ready_for_review')?'amber':assets.length?'lime':'')+'">'+esc(jobs.some(j=>j.status==='ready_for_review')?'Awaiting review':assets.length?'Asset ready':'No asset')+'</span></div>'+
-      '<div class="asset-stage"><div class="asset-stage-head"><span class="eyebrow">'+esc(activeAsset?.asset_type||'CONCEPT ASSET')+'</span>'+(activeAsset?.url?'<a class="text-link" target="_blank" href="'+esc(activeAsset.url)+'">Open asset ↗</a>':'')+'</div>'+
+      '<div class="asset-stage"><div class="asset-stage-head"><span class="eyebrow">'+esc(activeAsset?.asset_type||'CONCEPT ASSET')+'</span>'+(activeAsset?.url?'<a class="text-link" target="_blank" href="'+esc(activeAsset.url)+'">Open asset ?</a>':'')+'</div>'+
       '<div class="asset-preview">'+(activeAsset?.url?'<iframe src="'+esc(activeAsset.url)+'" loading="lazy" sandbox="allow-scripts allow-same-origin allow-forms allow-popups"></iframe>':'<div class="asset-preview-empty"><div><b>No asset yet</b><br><span>Send the prospect to Ahamed when the research is ready.</span></div></div>')+'</div>'+
       '<div class="asset-thumbs">'+assets.map(a=>'<button class="asset-thumb '+(a.id===currentAssetId?'active':'')+'" onclick="selectAsset(\''+a.id+'\')"><b>'+esc(a.title)+'</b><span>'+esc(a.asset_type)+'</span></button>').join('')+'</div></div>'+
       ahamedStrip(p,jobs)+
     '</section>'+
     '<section class="detail-right"><div class="copilot-insight"><div class="eyebrow">MORPHEUS SUGGESTS</div><b>'+esc((reports[0]?.structured?.asset_recommendation?.concept||'Lead with the clearest commercial opportunity.').slice(0,110))+'</b><p>'+esc(insight.slice(0,260))+'</p></div>'+
-      '<section class="panel detail-card outreach-draft-card"><div class="panel-head"><h2>Outreach draft</h2><button class="text-link" onclick="aiWrite(\''+p.id+'\')">✦ Refine</button></div><textarea id="prospectDraftBody" placeholder="No draft yet. Use AI Write to prepare one.">'+esc(draft?.body||'')+'</textarea><div class="editor-actions"><button class="btn lime" onclick="saveProspectDraft(\''+p.id+'\')">Save draft</button><button class="btn" onclick="openCopilot(\''+p.id+'\')">Ask Morpheus</button></div></section>'+
-      '<section class="panel detail-card next-action-card"><div class="eyebrow">NEXT ACTION</div><h2>'+esc(workflowFor(p.id)?.recommended_action||p.next_action||'Define the next move')+'</h2><p class="quiet">'+esc(workflowFor(p.id)?.reason||'')+'</p><p class="quiet">'+esc(p.owner_assigned||'Unassigned')+(p.next_action_date?' · '+p.next_action_date:'')+'</p><div class="editor-actions"><button class="btn lime" onclick="runProspectNextMove(\''+p.id+'\')">Do next move</button><button class="btn" onclick="addProspectNote(\''+p.id+'\')">Add note</button><button class="btn" onclick="addProspectReminder(\''+p.id+'\')">Reminder</button></div></section>'+
+      '<section class="panel detail-card outreach-draft-card"><div class="panel-head"><h2>Outreach draft</h2><button class="text-link" onclick="aiWrite(\''+p.id+'\')">? Refine</button></div><textarea id="prospectDraftBody" placeholder="No draft yet. Use AI Write to prepare one.">'+esc(draft?.body||'')+'</textarea><div class="editor-actions"><button class="btn lime" onclick="saveProspectDraft(\''+p.id+'\')">Save draft</button><button class="btn" onclick="openCopilot(\''+p.id+'\')">Ask Morpheus</button></div></section>'+
+      '<section class="panel detail-card next-action-card"><div class="eyebrow">NEXT ACTION</div><h2>'+esc(workflowFor(p.id)?.recommended_action||p.next_action||'Define the next move')+'</h2><p class="quiet">'+esc(workflowFor(p.id)?.reason||'')+'</p><p class="quiet">'+esc(p.owner_assigned||'Unassigned')+(p.next_action_date?' � '+p.next_action_date:'')+'</p><div class="editor-actions"><button class="btn lime" onclick="runProspectNextMove(\''+p.id+'\')">Do next move</button><button class="btn" onclick="addProspectNote(\''+p.id+'\')">Add note</button><button class="btn" onclick="addProspectReminder(\''+p.id+'\')">Reminder</button></div></section>'+
     '</section>'+
   '</div>'+
   '<div class="timeline-bar">'+timeline('Research added',state.research)+timeline('Asset requested',jobs.length>0)+timeline('Draft ready',!!draft)+timeline('Outreach',state.outreach)+'</div>';
 }
-function stepHtml(label,n,done,active){return '<div class="step '+(done?'done ':'')+(active?'active':'')+'"><i>'+(done?'✓':n)+'</i><span>'+label+'</span></div>'}
-function timeline(label,done){return '<div class="timeline-item '+(done?'done':'')+'"><i>'+(done?'✓':'○')+'</i><span>'+label+'</span></div>'}
+function stepHtml(label,n,done,active){return '<div class="step '+(done?'done ':'')+(active?'active':'')+'"><i>'+(done?'V':n)+'</i><span>'+label+'</span></div>'}
+function timeline(label,done){return '<div class="timeline-item '+(done?'done':'')+'"><i>'+(done?'V':'	')+'</i><span>'+label+'</span></div>'}
 function ahamedStrip(p,jobs){
   const job=jobs[0];return '<div class="ahamed-strip"><div class="who"><i>A</i><div><b>Ahamed</b><small>'+(job?esc(job.status.replaceAll('_',' ')):'No active job')+'</small></div></div>'+(job?'<button class="btn" onclick="openAssetJob(\''+job.id+'\')">'+(job.status==='ready_for_review'?'Review':'View job')+'</button>':'<button class="btn" onclick="assignAhamed(\''+p.id+'\')">Request asset</button>')+'</div>';
 }
 window.selectAsset=id=>{currentAssetId=id;renderProspectDetail(currentProspect.id)}
 
-function modal(title,body){$('#modalCard').innerHTML='<div class="modal-head"><div><h2>'+esc(title)+'</h2></div><button class="icon-btn" data-close-modal>×</button></div>'+body;$('#modal').classList.remove('hidden');$$('[data-close-modal]').forEach(x=>x.onclick=closeModal)}
+function modal(title,body){$('#modalCard').innerHTML='<div class="modal-head"><div><h2>'+esc(title)+'</h2></div><button class="icon-btn" data-close-modal>�</button></div>'+body;$('#modal').classList.remove('hidden');$$('[data-close-modal]').forEach(x=>x.onclick=closeModal)}
 function closeModal(){$('#modal').classList.add('hidden')}
 function closeSheet(){$('#moreSheet').classList.add('hidden')}
 function openSheet(){$('#moreSheet').classList.remove('hidden')}
@@ -302,8 +294,8 @@ function openSheet(){$('#moreSheet').classList.remove('hidden')}
 async function startResearch(id){
   const p=data.prospects.find(x=>x.id===id);if(!p)return;
   if(!providerStatus.ai){const prompt=researchPrompt(p);navigator.clipboard.writeText(prompt).catch(()=>{});window.open('https://chatgpt.com/','_blank');toast('Research prompt copied');return}
-  toast('Researching '+p.company+'…');
-  try{const headers={'Content-Type':'application/json',apikey:APIKEY};if(sessionAccessToken)headers.Authorization='Bearer '+sessionAccessToken;else if(token)headers['x-sales-os-access-code']=token;
+  toast('Researching '+p.company+'.');
+  try{const headers={'Content-Type':'application/json',apikey:APIKEY};if(sessionAccessToken)headers.Authorization='Bearer '+sessionAccessToken;
     const r=await fetch(SUPABASE_URL+'/functions/v1/sales-os-prospect-research',{method:'POST',headers,body:JSON.stringify({prospect_id:id})});const out=await r.json();if(!r.ok)throw new Error(out.detail||out.error||'Research failed');await load();toast('Research saved');route('#/prospect/'+id)}catch(e){toast(String(e.message||e))}
 }
 window.startResearch=startResearch;
@@ -337,7 +329,7 @@ window.assignAhamed=assignAhamed;
 
 function openAssetJob(id){
   const j=data.asset_work_requests.find(x=>x.id===id);if(!j)return;const ds=jobDeliverables(id),ns=jobNotes(id);
-  modal('Asset job · '+prospectName(j.prospect_id),'<div class="panel-head"><div><h2>'+esc(j.title||'Asset job')+'</h2><span class="quiet">Ahamed · '+esc(j.status.replaceAll('_',' '))+'</span></div><span class="status-chip '+(j.status==='ready_for_review'?'amber':'')+'">'+esc(j.priority||'normal')+'</span></div><div class="brief-text">'+esc(j.request_text||'')+'</div><div class="source-list">'+ds.map(d=>'<a href="'+esc(d.deployment_url||d.url||'#')+'" target="_blank">↗ '+esc(d.title)+'</a>').join('')+'</div><div class="stack-list">'+ns.map(n=>'<div class="stack-item"><div class="main"><b>'+esc(n.author_name||n.author_type)+'</b><span>'+esc(n.body)+'</span></div></div>').join('')+'</div>'+(j.status==='ready_for_review'?'<div class="field" style="margin-top:12px"><label>Review note</label><textarea id="jobReviewNote"></textarea></div><div class="editor-actions"><button class="btn lime" onclick="reviewAssetJob(\''+id+'\',\'approved\')">Approve</button><button class="btn" onclick="reviewAssetJob(\''+id+'\',\'changes_requested\')">Request changes</button></div>':''));
+  modal('Asset job � '+prospectName(j.prospect_id),'<div class="panel-head"><div><h2>'+esc(j.title||'Asset job')+'</h2><span class="quiet">Ahamed � '+esc(j.status.replaceAll('_',' '))+'</span></div><span class="status-chip '+(j.status==='ready_for_review'?'amber':'')+'">'+esc(j.priority||'normal')+'</span></div><div class="brief-text">'+esc(j.request_text||'')+'</div><div class="source-list">'+ds.map(d=>'<a href="'+esc(d.deployment_url||d.url||'#')+'" target="_blank">? '+esc(d.title)+'</a>').join('')+'</div><div class="stack-list">'+ns.map(n=>'<div class="stack-item"><div class="main"><b>'+esc(n.author_name||n.author_type)+'</b><span>'+esc(n.body)+'</span></div></div>').join('')+'</div>'+(j.status==='ready_for_review'?'<div class="field" style="margin-top:12px"><label>Review note</label><textarea id="jobReviewNote"></textarea></div><div class="editor-actions"><button class="btn lime" onclick="reviewAssetJob(\''+id+'\',\'approved\')">Approve</button><button class="btn" onclick="reviewAssetJob(\''+id+'\',\'changes_requested\')">Request changes</button></div>':''));
 }
 window.openAssetJob=openAssetJob;
 async function reviewAssetJob(id,decision){await rpc('sales_os_review_asset_job',{p_token:token||null,p_job_id:id,p_decision:decision,p_notes:$('#jobReviewNote')?.value||''});closeModal();await load();renderAssets();toast(decision==='approved'?'Asset approved':'Changes sent to Ahamed')}
@@ -346,9 +338,9 @@ window.reviewAssetJob=reviewAssetJob;
 function openAddProspect(){
   modal('Add prospect','<div class="field"><label>Company</label><input id="npCompany" class="control"></div><div class="field"><label>Category</label><input id="npCategory" class="control"></div><div class="field"><label>Website</label><input id="npWebsite" class="control"></div><div class="field"><label>Assigned to</label><select id="npAssignee" class="control"><option>Yazeed</option><option>Saad</option></select></div><button id="createProspectNow" class="btn lime wide">Create prospect</button>');$('#createProspectNow').onclick=async()=>{const company=$('#npCompany').value.trim();if(!company)return toast('Company required');await rpc('sales_os_save_prospect',{p_token:token||null,p_payload:{company,category:$('#npCategory').value||'General',website:$('#npWebsite').value,owner_assigned:$('#npAssignee').value,stage:'Research',status:'Not started',next_action:'Research and qualify'}});closeModal();await load();route('#/prospects');toast('Prospect created')}}
 function openFindProspects(){
-  modal('Find new prospects','<div class="field"><label>Market / category</label><input id="fpCategory" class="control" placeholder="e.g. Fish Food · Retail"></div><div class="field"><label>Geography</label><input id="fpGeo" class="control" placeholder="e.g. Northeast USA"></div><div class="field"><label>Extra criteria</label><textarea id="fpCriteria" placeholder="Independent retailers, avoid chains…"></textarea></div><div class="field"><label>How many?</label><select id="fpCount" class="control"><option>10</option><option selected>20</option><option>25</option></select></div><button id="runDiscovery" class="btn lime wide">✦ Start research</button><div id="discoveryResults"></div>');
+  modal('Find new prospects','<div class="field"><label>Market / category</label><input id="fpCategory" class="control" placeholder="e.g. Fish Food � Retail"></div><div class="field"><label>Geography</label><input id="fpGeo" class="control" placeholder="e.g. Northeast USA"></div><div class="field"><label>Extra criteria</label><textarea id="fpCriteria" placeholder="Independent retailers, avoid chains."></textarea></div><div class="field"><label>How many?</label><select id="fpCount" class="control"><option>10</option><option selected>20</option><option>25</option></select></div><button id="runDiscovery" class="btn lime wide">? Start research</button><div id="discoveryResults"></div>');
   $('#runDiscovery').onclick=async()=>{const category=$('#fpCategory').value.trim();if(!category)return toast('Enter a category');if(!providerStatus.ai){navigator.clipboard.writeText('Find '+$('#fpCount').value+' new B2B prospects for '+category+' in '+($('#fpGeo').value||'the target market')+'. '+($('#fpCriteria').value||'')+' Use current public sources, verify contacts, do not invent facts, and return a CSV for Morpheus Sales OS.').catch(()=>{});window.open('https://chatgpt.com/','_blank');toast('Research prompt copied');return}
-    $('#runDiscovery').disabled=true;$('#runDiscovery').textContent='Researching…';try{const headers={'Content-Type':'application/json',apikey:APIKEY};if(sessionAccessToken)headers.Authorization='Bearer '+sessionAccessToken;else if(token)headers['x-sales-os-access-code']=token;const r=await fetch(SUPABASE_URL+'/functions/v1/sales-os-discovery',{method:'POST',headers,body:JSON.stringify({category,geography:$('#fpGeo').value,target_count:Number($('#fpCount').value),criteria:$('#fpCriteria').value})});const out=await r.json();if(!r.ok)throw new Error(out.detail||out.error||'Discovery failed');const run=await rpc('sales_os_get_discovery_run',{p_token:token||null,p_run_id:out.run_id});renderDiscovery(run)}catch(e){toast(String(e.message||e))}finally{$('#runDiscovery').disabled=false;$('#runDiscovery').textContent='✦ Start research'}}
+    $('#runDiscovery').disabled=true;$('#runDiscovery').textContent='Researching.';try{const headers={'Content-Type':'application/json',apikey:APIKEY};if(sessionAccessToken)headers.Authorization='Bearer '+sessionAccessToken;const r=await fetch(SUPABASE_URL+'/functions/v1/sales-os-discovery',{method:'POST',headers,body:JSON.stringify({category,geography:$('#fpGeo').value,target_count:Number($('#fpCount').value),criteria:$('#fpCriteria').value})});const out=await r.json();if(!r.ok)throw new Error(out.detail||out.error||'Discovery failed');const run=await rpc('sales_os_get_discovery_run',{p_token:token||null,p_run_id:out.run_id});renderDiscovery(run)}catch(e){toast(String(e.message||e))}finally{$('#runDiscovery').disabled=false;$('#runDiscovery').textContent='? Start research'}}
 }
 function renderDiscovery(x){const c=x.candidates||[];$('#discoveryResults').innerHTML='<div class="stack-list" style="margin-top:12px">'+c.map(v=>'<div class="stack-item"><div class="main"><b>'+esc(v.company)+'</b><span>'+esc(v.why_fit||'')+'</span></div>'+(v.review_status==='pending'?'<button class="btn" onclick="reviewCandidate(\''+v.id+'\',\'approved\',\''+x.run.id+'\')">Add</button>':'<span class="status-chip">'+esc(v.review_status)+'</span>')+'</div>').join('')+'</div>'}
 async function reviewCandidate(id,decision,runId){await rpc('sales_os_review_discovery_candidate',{p_token:token||null,p_candidate_id:id,p_decision:decision});const run=await rpc('sales_os_get_discovery_run',{p_token:token||null,p_run_id:runId});renderDiscovery(run);await load()}
@@ -357,50 +349,49 @@ window.reviewCandidate=reviewCandidate;
 function openNewDraft(){
   modal('New email draft','<div class="field"><label>Prospect</label><select id="ndProspect" class="control">'+data.prospects.map(p=>'<option value="'+p.id+'">'+esc(p.company)+'</option>').join('')+'</select></div><div class="field"><label>Subject</label><input id="ndSubject" class="control"></div><div class="field"><label>Message</label><textarea id="ndBody"></textarea></div><button id="saveNewDraft" class="btn lime wide">Save draft</button>');$('#saveNewDraft').onclick=async()=>{const p=data.prospects.find(x=>x.id===$('#ndProspect').value);await rpc('sales_os_save_email_draft',{p_token:token||null,p_payload:{prospect_id:p.id,recipient:p.contact_email||'',sender_name:actor?.display_name||'',sender_email:actor?.email||'',subject:$('#ndSubject').value,body:$('#ndBody').value,status:'draft',created_by:actor?.display_name||'Sales OS'}});closeModal();await load();route('#/outreach');toast('Draft saved')}}
 function openConnection(key){
-  if(key==='ai'){if(providerStatus.ai){modal('Morpheus AI','<div class="copilot-insight"><b>Native AI is connected.</b><p>Research and writing run inside Sales OS.</p></div><button class="btn lime" onclick="openCopilot()">Open Copilot</button>')}else{if(!actor?.authenticated)return toast('Sign in as Saad or Yazeed first');modal('Connect Morpheus AI','<div class="field"><label>OpenAI API key</label><input id="openaiKey" type="password" class="control" placeholder="sk-…"></div><p class="quiet">The key is stored server-side in Supabase Vault, not in the browser.</p><button id="saveAiKey" class="btn lime wide">Connect AI</button>');$('#saveAiKey').onclick=async()=>{const keyv=$('#openaiKey').value.trim();if(keyv.length<20)return toast('Paste the full API key');await rpc('sales_os_store_secret',{p_token:token||null,p_name:'sales_os_openai_api_key',p_secret:keyv});closeModal();await refreshAI();renderSettings();toast('Morpheus AI connected')}};return}
+  if(key==='ai'){if(providerStatus.ai){modal('Morpheus AI','<div class="copilot-insight"><b>Native AI is connected.</b><p>Research and writing run inside Sales OS.</p></div><button class="btn lime" onclick="openCopilot()">Open Copilot</button>')}else{if(!actor?.authenticated)return toast('Sign in as Saad or Yazeed first');modal('Connect Morpheus AI','<div class="field"><label>OpenAI API key</label><input id="openaiKey" type="password" class="control" placeholder="sk-."></div><p class="quiet">The key is stored server-side in Supabase Vault, not in the browser.</p><button id="saveAiKey" class="btn lime wide">Connect AI</button>');$('#saveAiKey').onclick=async()=>{const keyv=$('#openaiKey').value.trim();if(keyv.length<20)return toast('Paste the full API key');await rpc('sales_os_store_secret',{p_token:token||null,p_name:'sales_os_openai_api_key',p_secret:keyv});closeModal();await refreshAI();renderSettings();toast('Morpheus AI connected')}};return}
   if(key==='gmail'){if(!actor?.authenticated)return toast('Sign in as Saad or Yazeed first');const conn=data.gmail_connections.find(c=>String(c.member_email||'').toLowerCase()===String(actor.email||'').toLowerCase()&&c.active);if(conn){modal('Gmail connected','<div class="copilot-insight"><b>'+esc(conn.google_email||conn.member_email)+'</b><p>Prospect threads sync automatically. Last sync: '+esc(conn.last_sync_at?new Date(conn.last_sync_at).toLocaleString():'Not yet')+'</p></div><button id="syncGmailNow" class="btn lime">Sync now</button>');$('#syncGmailNow').onclick=syncGmail}else{modal('Connect Gmail','<p class="brief-text">Authorize Gmail once. Sales OS will sync only conversations matching prospect contact addresses.</p><button id="connectGmail" class="btn lime wide">Connect my Gmail</button>');$('#connectGmail').onclick=connectGmail};return}
-  if(key==='chatgpt'){const base=SUPABASE_URL+'/functions/v1/sales-os-mcp/mcp',url=token?base+'?access_code='+encodeURIComponent(token):base;modal('Connect ChatGPT','<p class="brief-text">Use this MCP endpoint when adding the private Sales OS connection in ChatGPT.</p><div class="field"><label>MCP endpoint</label><input id="mcpCopy" class="control" readonly value="'+esc(url)+'"></div><button id="copyMcp" class="btn lime">Copy endpoint</button>');$('#copyMcp').onclick=()=>navigator.clipboard.writeText(url).then(()=>toast('Copied'));return}
+  if(key==='chatgpt'){const url=SUPABASE_URL+'/functions/v1/sales-os-mcp/mcp';modal('Connect ChatGPT','<p class="brief-text">Use this MCP endpoint in ChatGPT. Sales OS will ask an active member to sign in and approve access.</p><div class="field"><label>MCP endpoint</label><input id="mcpCopy" class="control" readonly value="'+esc(url)+'"></div><button id="copyMcp" class="btn lime">Copy endpoint</button>');$('#copyMcp').onclick=()=>navigator.clipboard.writeText(url).then(()=>toast('Copied'));return}
 }
 window.openConnection=openConnection;
 async function connectGmail(){const r=await fetch(SUPABASE_URL+'/functions/v1/sales-os-gmail-oauth',{method:'POST',headers:{'Content-Type':'application/json',apikey:APIKEY,Authorization:'Bearer '+sessionAccessToken},body:'{}'});const d=await r.json();if(!r.ok)throw new Error(d.error||'Could not connect');location.href=d.authorization_url}
 async function syncGmail(){const r=await fetch(SUPABASE_URL+'/functions/v1/sales-os-gmail-sync',{method:'POST',headers:{'Content-Type':'application/json',apikey:APIKEY,Authorization:'Bearer '+sessionAccessToken},body:'{}'});const d=await r.json();if(!r.ok||d.ok===false)throw new Error(d.error||'Sync failed');closeModal();await load();toast('Gmail synchronized')}
 
 async function copilotFetch(payload={}){
-  const headers={'Content-Type':'application/json',apikey:APIKEY};if(sessionAccessToken)headers.Authorization='Bearer '+sessionAccessToken;else if(token)headers['x-sales-os-access-code']=token;
+  const headers={'Content-Type':'application/json',apikey:APIKEY};if(sessionAccessToken)headers.Authorization='Bearer '+sessionAccessToken;
   const r=await fetch(COPILOT_URL,{method:'POST',headers,body:JSON.stringify(payload)});const d=await r.json();if(!r.ok)throw new Error(d.detail||d.error||'Copilot failed');return d;
 }
 async function openCopilot(id=null,preset=''){
-  copilotProspectId=id||null;copilotLocal=[];const p=data.prospects.find(x=>x.id===id);$('#copilotTitle').textContent=p?('Copilot · '+p.company):'Ask Morpheus';$('#copilotContext').textContent=p?([p.category,p.stage,p.owner_assigned].filter(Boolean).join(' · ')):'Live Sales OS workspace';
+  copilotProspectId=id||null;copilotLocal=[];const p=data.prospects.find(x=>x.id===id);$('#copilotTitle').textContent=p?('Copilot � '+p.company):'Ask Morpheus';$('#copilotContext').textContent=p?([p.category,p.stage,p.owner_assigned].filter(Boolean).join(' � ')):'Live Sales OS workspace';
   $('#copilotQuick').innerHTML=(p?['Summarize this account','Draft the next email','What should happen next?','What are we missing?']:['What needs attention today?','Which prospects are stalled?','What assets should we review?','Give me a sales brief']).map(q=>'<button onclick="quickCopilot(\''+esc(q).replace(/'/g,"\\'")+'\')">'+esc(q)+'</button>').join('');
   $('#copilot').classList.remove('hidden');$('#copilotProvider').classList.toggle('hidden',providerStatus.ai);
-  $('#copilotProvider').innerHTML=providerStatus.ai?'':'Native AI is not connected. Use Settings → Morpheus AI, or the command will open ChatGPT instead.';
+  $('#copilotProvider').innerHTML=providerStatus.ai?'':'Native AI is not connected. Use Settings  Morpheus AI, or the command will open ChatGPT instead.';
   $('#copilotMessages').innerHTML='<div class="empty">Ask something about the live account or workspace.</div>';if(preset){$('#copilotInput').value=preset;if(providerStatus.ai)setTimeout(sendCopilot,40)}
 }
 window.openCopilot=openCopilot;window.quickCopilot=q=>{$('#copilotInput').value=q;sendCopilot()}
 function closeCopilot(){$('#copilot').classList.add('hidden')}
 async function sendCopilot(){
   const msg=$('#copilotInput').value.trim();if(!msg)return;if(!providerStatus.ai){navigator.clipboard.writeText(msg).catch(()=>{});window.open('https://chatgpt.com/','_blank');toast('Prompt copied');return}
-  copilotLocal.push({role:'user',content:msg});$('#copilotInput').value='';renderCopilotMsgs();$('#copilotSend').disabled=true;$('#copilotSend').textContent='Thinking…';
+  copilotLocal.push({role:'user',content:msg});$('#copilotInput').value='';renderCopilotMsgs();$('#copilotSend').disabled=true;$('#copilotSend').textContent='Thinking.';
   try{const d=await copilotFetch({message:msg,prospect_id:copilotProspectId,thread_id:copilotThreadId});copilotThreadId=d.thread_id||copilotThreadId;copilotLocal.push({role:'assistant',content:d.answer||'',structured:d.structured||{}});renderCopilotMsgs()}catch(e){copilotLocal.push({role:'assistant',content:String(e.message||e)});renderCopilotMsgs()}finally{$('#copilotSend').disabled=false;$('#copilotSend').textContent='Ask'}
 }
 function renderCopilotMsgs(){$('#copilotMessages').innerHTML=copilotLocal.map(m=>'<div class="copilot-msg '+m.role+'">'+esc(m.content)+'</div>').join('');$('#copilotMessages').scrollTop=$('#copilotMessages').scrollHeight}
 
 function addProspectNote(id){
   const p=data.prospects.find(x=>x.id===id);if(!p)return;
-  modal('Add note · '+p.company,'<div class="field"><label>Title</label><input id="noteTitle" class="control" value="Sales note"></div><div class="field"><label>Note</label><textarea id="noteBody"></textarea></div><button id="saveQuickNote" class="btn lime wide">Save note</button>');
+  modal('Add note � '+p.company,'<div class="field"><label>Title</label><input id="noteTitle" class="control" value="Sales note"></div><div class="field"><label>Note</label><textarea id="noteBody"></textarea></div><button id="saveQuickNote" class="btn lime wide">Save note</button>');
   $('#saveQuickNote').onclick=async()=>{const body=$('#noteBody').value.trim();if(!body)return toast('Write the note');await rpc('sales_os_save_note',{p_token:token||null,p_payload:{prospect_id:id,title:$('#noteTitle').value,body,pinned:false,created_by:actor?.display_name||'Sales OS'}});closeModal();await load();renderProspectDetail(id);toast('Note saved')};
 }
 window.addProspectNote=addProspectNote;
 function addProspectReminder(id){
   const p=data.prospects.find(x=>x.id===id);if(!p)return;
-  modal('Add reminder · '+p.company,'<div class="field"><label>Reminder</label><input id="remTitle" class="control" value="Follow up"></div><div class="field"><label>When</label><input id="remDue" class="control" type="datetime-local"></div><button id="saveQuickReminder" class="btn lime wide">Create reminder</button>');
+  modal('Add reminder � '+p.company,'<div class="field"><label>Reminder</label><input id="remTitle" class="control" value="Follow up"></div><div class="field"><label>When</label><input id="remDue" class="control" type="datetime-local"></div><button id="saveQuickReminder" class="btn lime wide">Create reminder</button>');
   $('#saveQuickReminder').onclick=async()=>{if(!$('#remDue').value)return toast('Choose a date and time');await rpc('sales_os_save_reminder',{p_token:token||null,p_payload:{prospect_id:id,title:$('#remTitle').value,due_at:new Date($('#remDue').value).toISOString(),owner_assigned:p.owner_assigned||actor?.display_name||'',priority:'normal',status:'open',notify_in_app:true,created_by:actor?.display_name||'Sales OS'}});closeModal();await load();renderProspectDetail(id);toast('Reminder created')};
 }
 window.addProspectReminder=addProspectReminder;
 async function commandFetch(command){
   const headers={'Content-Type':'application/json',apikey:APIKEY};
   if(sessionAccessToken)headers.Authorization='Bearer '+sessionAccessToken;
-  else if(token)headers['x-sales-os-access-code']=token;
   const r=await fetch(COMMAND_URL,{method:'POST',headers,body:JSON.stringify({command})});
   const d=await r.json().catch(()=>({}));
   if(!r.ok)throw Object.assign(new Error(d.detail||d.error||'Morpheus command failed'),{status:r.status,payload:d});
@@ -412,20 +403,20 @@ async function runUniversalCommand(command){
     const fallback='Use my connected Morpheus Sales OS context to handle this request safely. Do not send email or make irreversible changes without asking me first.\n\nREQUEST:\n'+command;
     navigator.clipboard.writeText(fallback).catch(()=>{});
     window.open('https://chatgpt.com/','_blank');
-    toast('Native AI is not connected — command copied to ChatGPT');
+    toast('Native AI is not connected - command copied to ChatGPT');
     return;
   }
-  $('#universalCommandRun').disabled=true;$('#universalCommandRun').textContent='…';
+  $('#universalCommandRun').disabled=true;$('#universalCommandRun').textContent='.';
   try{
     const out=await commandFetch(command);
     lastCommandPlan=out.plan||{answer:'',actions:[]};
     renderCommandPlan(command);
   }catch(e){toast(String(e.message||e))}
-  finally{$('#universalCommandRun').disabled=false;$('#universalCommandRun').textContent='⌁'}
+  finally{$('#universalCommandRun').disabled=false;$('#universalCommandRun').textContent='?'}
 }
 function renderCommandPlan(command=''){
   const plan=lastCommandPlan||{answer:'',actions:[]};
-  modal('Morpheus plan',`<div class="command-plan-answer">${esc(plan.answer||'Here is what I can do.')}</div><div class="command-plan-list">${(plan.actions||[]).map((a,i)=>`<article class="command-plan-card ${a._done?'done':''}" id="commandAction-${i}"><div class="top"><div><b>${esc(a.label||a.type)}</b><p>${esc(a.reason||'')}</p></div><span class="workflow-pill">${a.requires_confirmation?'<strong>Confirm</strong>':'Ready'}</span></div><div class="actions"><button class="btn ${a.requires_confirmation?'lime':''}" onclick="runCommandAction(${i})">${a._done?'Done ✓':a.requires_confirmation?'Confirm & run':'Run'}</button>${a.prospect_id?`<button class="btn" onclick="closeModal();route('#/prospect/${a.prospect_id}')">Open account</button>`:''}</div></article>`).join('')||'<div class="empty">No action needed.</div>'}</div>`);
+  modal('Morpheus plan',`<div class="command-plan-answer">${esc(plan.answer||'Here is what I can do.')}</div><div class="command-plan-list">${(plan.actions||[]).map((a,i)=>`<article class="command-plan-card ${a._done?'done':''}" id="commandAction-${i}"><div class="top"><div><b>${esc(a.label||a.type)}</b><p>${esc(a.reason||'')}</p></div><span class="workflow-pill">${a.requires_confirmation?'<strong>Confirm</strong>':'Ready'}</span></div><div class="actions"><button class="btn ${a.requires_confirmation?'lime':''}" onclick="runCommandAction(${i})">${a._done?'Done V':a.requires_confirmation?'Confirm & run':'Run'}</button>${a.prospect_id?`<button class="btn" onclick="closeModal();route('#/prospect/${a.prospect_id}')">Open account</button>`:''}</div></article>`).join('')||'<div class="empty">No action needed.</div>'}</div>`);
 }
 window.runCommandAction=async i=>{
   const a=lastCommandPlan?.actions?.[i];if(!a||a._done)return;
@@ -471,8 +462,8 @@ window.runCommandAction=async i=>{
 };
 async function runDiscoveryFromCommand(payload){
   const category=String(payload.category||'').trim();if(!category)return openFindProspects();
-  modal('Prospect discovery','<div id="discoveryResults"><div class="empty">Researching current public sources…</div></div>');
-  const headers={'Content-Type':'application/json',apikey:APIKEY};if(sessionAccessToken)headers.Authorization='Bearer '+sessionAccessToken;else if(token)headers['x-sales-os-access-code']=token;
+  modal('Prospect discovery','<div id="discoveryResults"><div class="empty">Researching current public sources.</div></div>');
+  const headers={'Content-Type':'application/json',apikey:APIKEY};if(sessionAccessToken)headers.Authorization='Bearer '+sessionAccessToken;
   const r=await fetch(SUPABASE_URL+'/functions/v1/sales-os-discovery',{method:'POST',headers,body:JSON.stringify({category,geography:payload.geography||'',target_count:Number(payload.target_count||20),criteria:payload.criteria||''})});
   const out=await r.json().catch(()=>({}));if(!r.ok){$('#discoveryResults').innerHTML='<div class="empty">'+esc(out.detail||out.error||'Discovery failed')+'</div>';return}
   const result=await rpc('sales_os_get_discovery_run',{p_token:token||null,p_run_id:out.run_id});renderDiscovery(result);
@@ -498,7 +489,7 @@ function importCsv(){
     $('#runCsvImport').onclick=async()=>{
       const normalized=rows.map(r=>({...r,tags:String(r.tags||'').split(/[|;]/).filter(Boolean),source_groups:String(r.source_groups||'').split(/[|;]/).filter(Boolean),source_notes:String(r.source_notes||'').split(/[|;]/).filter(Boolean)}));
       const res=await rpc('sales_os_bulk_import',{p_token:token||null,p_rows:normalized,p_mode:$('#csvMode').value,p_defaults:{category:$('#csvCategory').value,owner_assigned:'Yazeed',stage:'Research',status:'Not started',sender_name:'Robert Gibbons',sender_email:'robert@morpheuspd.io'}});
-      closeModal();await load();route('#/prospects');toast((res.inserted||0)+' new · '+(res.updated||0)+' merged');
+      closeModal();await load();route('#/prospects');toast((res.inserted||0)+' new � '+(res.updated||0)+' merged');
     };
   };
 }
@@ -507,7 +498,7 @@ function requestNotifications(){if(!('Notification'in window))return toast('Noti
 $$('[data-route]').forEach(b=>b.onclick=()=>route('#/'+b.dataset.route));
 $('#mobileMore').onclick=openSheet;$$('[data-close-sheet]').forEach(x=>x.onclick=closeSheet);$$('[data-close-modal]').forEach(x=>x.onclick=closeModal);$$('[data-close-copilot]').forEach(x=>x.onclick=closeCopilot);
 $('#modal').addEventListener('click',e=>{if(e.target.classList.contains('modal-backdrop'))closeModal()});$('#copilot').addEventListener('click',e=>{if(e.target.classList.contains('copilot-backdrop'))closeCopilot()});
-$('#memberLoginBtn').onclick=memberLogin;$('#sharedLoginBtn').onclick=sharedLogin;$('#signOutBtn').onclick=signOut;$('#sheetSignOut').onclick=signOut;
+$('#memberLoginBtn').onclick=memberLogin;$('#signOutBtn').onclick=signOut;$('#sheetSignOut').onclick=signOut;
 $('#newProspectTop').onclick=openAddProspect;$('#commandNewProspect').onclick=openAddProspect;$('#addProspectBtn').onclick=openAddProspect;$('#findProspectsBtn').onclick=openFindProspects;$('#researchFindNew').onclick=openFindProspects;
 $('#commandAskAI').onclick=()=>openCopilot();$('#mobileAI').onclick=()=>openCopilot();$('#newDraftBtn').onclick=openNewDraft;
 $('#commandBar').addEventListener('submit',e=>{e.preventDefault();const q=$('#universalCommandInput').value.trim();if(q)runUniversalCommand(q)});
@@ -520,7 +511,8 @@ $('#topIdentity').onclick=()=>route('#/settings');
 
 (async()=>{
   const last=localStorage.getItem('salesOsMemberEmail');if(last)$('#memberEmail').value=last;
-  const ok=await trySession();if(!ok){const saved=localStorage.getItem('salesOsToken');if(saved)$('#accessCode').value=saved}else route(location.hash||'#/command',false);
+  const ok=await trySession();if(ok)route(location.hash||'#/command',false);
   const gmailResult=new URLSearchParams(location.search).get('gmail');if(gmailResult==='connected'){history.replaceState({},'',location.pathname+location.hash);setTimeout(()=>toast('Gmail connected'),500)}
 })().catch(()=>{});
 if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+

@@ -18,17 +18,16 @@ h1{font-size:28px;letter-spacing:-.04em;margin:8px 0}p{color:var(--muted);font-s
 <div class="card">
   <div class="brand"><div class="mark">M</div><div><b>MORPHEUS</b><span>Sales OS authorization</span></div></div>
   <div id="loading">
-    <h1>Connecting Sales OS…</h1>
+    <h1>Connecting Sales OS.</h1>
     <p>Checking your authorization request.</p>
-    <div class="status" id="loadingStatus">Loading…</div>
+    <div class="status" id="loadingStatus">Loading.</div>
   </div>
 
   <section id="signin" class="hidden">
     <h1>Sign in to Sales OS</h1>
-    <p>Use your approved Sales OS email and the same team access code you use for the dashboard. This creates a secure Supabase session for the ChatGPT connection; the access code itself is not given to ChatGPT.</p>
+    <p>Use your approved Sales OS email. If it is active, we will send a one-time secure sign-in link.</p>
     <div class="field"><label>Email</label><input id="email" class="input" type="email" autocomplete="email"></div>
-    <div class="field"><label>Sales OS access code</label><input id="access" class="input" type="password" autocomplete="current-password"></div>
-    <button id="signinBtn" class="btn primary" style="width:100%">Continue securely</button>
+    <button id="signinBtn" class="btn primary" style="width:100%">Email secure sign-in link</button>
     <div id="signinStatus" class="status hidden"></div>
   </section>
 
@@ -106,12 +105,12 @@ async function begin(){
     }
 
     if(appMode){
-      $("#loadingStatus").textContent="Identity verified. Opening Sales OS…";
+      $("#loadingStatus").textContent="Identity verified. Opening Sales OS.";
       location.replace("../?member=1");
       return;
     }
 
-    $("#loadingStatus").textContent="Loading ChatGPT request…";
+    $("#loadingStatus").textContent="Loading ChatGPT request.";
     const {data,error}=await supabase.auth.oauth.getAuthorizationDetails(authId);
     if(error)throw error;
     const d=data||{};
@@ -126,20 +125,19 @@ async function begin(){
 }
 
 $("#signinBtn").onclick=async()=>{
-  const email=$("#email").value.trim(),access=$("#access").value.trim();
-  if(!email||!access)return;
-  $("#signinStatus").textContent="Creating secure sign-in…";$("#signinStatus").classList.remove("hidden");
+  const email=$("#email").value.trim();
+  if(!email)return;
+  $("#signinStatus").textContent="Requesting secure sign-in link.";$("#signinStatus").classList.remove("hidden");
   try{
     const returnUrl=location.href;
-    const r=await fetch(BOOTSTRAP,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({email,access_code:access,return_url:returnUrl})});
-    const d=await r.json();
-    if(!r.ok||!d.action_link)throw new Error(d.error||d.detail||"Could not sign in");
-    location.href=d.action_link;
-  }catch(e){$("#signinStatus").textContent=String(e?.message||e)}
+    const r=await fetch(BOOTSTRAP,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({email,return_url:returnUrl})});
+    const d=await r.json().catch(()=>({}));
+    $("#signinStatus").textContent=d.message||"If this is an active Sales OS profile, a secure sign-in link will arrive shortly.";
+  }catch(e){$("#signinStatus").textContent="If this is an active Sales OS profile, a secure sign-in link will arrive shortly."}
 };
 
 $("#approveBtn").onclick=async()=>{
-  $("#consentStatus").textContent="Approving…";$("#consentStatus").classList.remove("hidden");
+  $("#consentStatus").textContent="Approving.";$("#consentStatus").classList.remove("hidden");
   try{
     const {data,error}=await supabase.auth.oauth.approveAuthorization(authId);
     if(error)throw error;
@@ -159,3 +157,4 @@ begin();
 </script>
 </body>
 </html>
+

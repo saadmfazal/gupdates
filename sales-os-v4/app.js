@@ -114,29 +114,16 @@ async function fetchLoginBootstrap(payload){
   });
 }
 async function memberLogin(){
-  const email=$('#memberEmail').value.trim(),code=$('#accessCode').value.trim();$('#loginError').textContent='';
-  if(!email||!code){$('#loginError').textContent='Choose your profile and enter the access code.';return}
+  const email=$('#memberEmail').value.trim();$('#loginError').textContent='';
+  if(!email){$('#loginError').textContent='Choose your approved Sales OS profile.';return}
   try{
-    $('#memberLoginBtn').disabled=true;$('#memberLoginBtn').textContent='Opening…';
-    const r=await fetchLoginBootstrap({email,access_code:code,return_url:location.origin+'/sales-os-v2/oauth/?mode=app'});
-    const d=await r.json();if(!r.ok||!d.action_link)throw new Error(d.error||d.detail||'Could not sign in');
-    const generated=new URL(d.action_link),tokenHash=generated.searchParams.get('token'),type=generated.searchParams.get('type')||'magiclink';
-    if(!tokenHash)throw new Error('Sign-in token missing');
-    const sb=await ensureSupabase(),verified=await sb.auth.verifyOtp({token_hash:tokenHash,type});
-    if(verified.error)throw verified.error;if(!verified.data?.session)throw new Error('Session not created');
-    const verifiedEmail=String(verified.data.session.user?.email||'').toLowerCase();
-    if(verifiedEmail!==email.toLowerCase()){
-      await sb.auth.signOut({scope:'local'}).catch(()=>{});
-      throw new Error('The active session belongs to '+(verifiedEmail||'another member')+'. Please sign in again as '+email+'.');
-    }
+    $('#memberLoginBtn').disabled=true;$('#memberLoginBtn').textContent='Requesting link…';
+    const r=await fetchLoginBootstrap({email,return_url:location.origin+'/sales-os-v4/'});
+    const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error('Could not request sign-in');
     localStorage.setItem('salesOsMemberEmail',email);
-    sessionAccessToken=verified.data.session.access_token;token='';actor=await retryNetwork(()=>rpc('sales_os_whoami',{p_token:null}));
-    await retryNetwork(()=>load());$('#login').classList.add('hidden');$('#app').classList.remove('hidden');route(location.hash||'#/command',false);
-  }catch(e){$('#loginError').textContent=isNetworkFailure(e)?'The connection was interrupted. Please try once more.':String(e.message||e);$('#memberLoginBtn').disabled=false;$('#memberLoginBtn').textContent='Open Sales OS'}
-}
-async function sharedLogin(){
-  const code=$('#accessCode').value.trim();if(!code)return;
-  try{const ok=await rpc('sales_os_verify',{p_token:code});if(!ok)throw new Error('Invalid code');token=code;actor={display_name:'Shared',authenticated:false};localStorage.setItem('salesOsToken',code);await load();$('#login').classList.add('hidden');$('#app').classList.remove('hidden');route('#/command',false)}catch(e){$('#loginError').textContent='Could not open Sales OS.'}
+    $('#loginError').textContent=d.message||'If this is an active Sales OS profile, a secure sign-in link will arrive shortly.';
+  }catch(e){$('#loginError').textContent=isNetworkFailure(e)?'The connection was interrupted. Please try once more.':'If this is an active Sales OS profile, a secure sign-in link will arrive shortly.'}
+  finally{$('#memberLoginBtn').disabled=false;$('#memberLoginBtn').textContent='Email secure sign-in link'}
 }
 async function trySession(){
   try{
@@ -150,7 +137,7 @@ async function trySession(){
   }catch{return false}
 }
 async function signOut(){
-  localStorage.removeItem('salesOsToken');localStorage.removeItem('salesOsMemberEmail');try{const sb=await ensureSupabase();await sb.auth.signOut()}catch{}location.href=location.pathname;
+  localStorage.removeItem('salesOsMemberEmail');try{const sb=await ensureSupabase();await sb.auth.signOut()}catch{}location.href=location.pathname;
 }
 
 async function refreshAI(){
@@ -517,7 +504,7 @@ function openConnection(key){
     }else openZohoCredentialSetup();
     return;
   }
-  if(key==='chatgpt'){const base=SUPABASE_URL+'/functions/v1/sales-os-mcp/mcp',url=token?base+'?access_code='+encodeURIComponent(token):base;modal('Connect ChatGPT','<p class="brief-text">Use this MCP endpoint when adding the private Sales OS connection in ChatGPT.</p><div class="field"><label>MCP endpoint</label><input id="mcpCopy" class="control" readonly value="'+esc(url)+'"></div><button id="copyMcp" class="btn lime">Copy endpoint</button>');$('#copyMcp').onclick=()=>navigator.clipboard.writeText(url).then(()=>toast('Copied'));return}
+  if(key==='chatgpt'){const url=SUPABASE_URL+'/functions/v1/sales-os-mcp/mcp';modal('Connect ChatGPT','<p class="brief-text">Use this MCP endpoint. ChatGPT will ask an active Sales OS member to sign in and approve the connection.</p><div class="field"><label>MCP endpoint</label><input id="mcpCopy" class="control" readonly value="'+esc(url)+'"></div><button id="copyMcp" class="btn lime">Copy endpoint</button>');$('#copyMcp').onclick=()=>navigator.clipboard.writeText(url).then(()=>toast('Copied'));return}
 }
 window.openConnection=openConnection;
 async function connectGmail(){const r=await fetch(SUPABASE_URL+'/functions/v1/sales-os-gmail-oauth',{method:'POST',headers:{'Content-Type':'application/json',apikey:APIKEY,Authorization:'Bearer '+sessionAccessToken},body:'{}'});const d=await r.json();if(!r.ok)throw new Error(d.error||'Could not connect');location.href=d.authorization_url}
@@ -697,7 +684,7 @@ function requestNotifications(){if(!('Notification'in window))return toast('Noti
 $$('[data-route]').forEach(b=>b.onclick=()=>route('#/'+b.dataset.route));
 $('#mobileMore').onclick=openSheet;$$('[data-close-sheet]').forEach(x=>x.onclick=closeSheet);$$('[data-close-modal]').forEach(x=>x.onclick=closeModal);$$('[data-close-copilot]').forEach(x=>x.onclick=closeCopilot);
 $('#modal').addEventListener('click',e=>{if(e.target.classList.contains('modal-backdrop'))closeModal()});$('#copilot').addEventListener('click',e=>{if(e.target.classList.contains('copilot-backdrop'))closeCopilot()});
-$('#memberLoginBtn').onclick=memberLogin;$('#sharedLoginBtn').onclick=sharedLogin;$('#signOutBtn').onclick=signOut;$('#sheetSignOut').onclick=signOut;
+$('#memberLoginBtn').onclick=memberLogin;$('#signOutBtn').onclick=signOut;$('#sheetSignOut').onclick=signOut;
 $('#newProspectTop').onclick=openAddProspect;$('#commandNewProspect').onclick=openAddProspect;$('#addProspectBtn').onclick=openAddProspect;$('#findProspectsBtn').onclick=openFindProspects;$('#researchFindNew').onclick=openFindProspects;
 $('#commandAskAI').onclick=()=>openCopilot();$('#mobileAI').onclick=()=>openCopilot();$('#newDraftBtn').onclick=openNewDraft;
 $('#commandBar').addEventListener('submit',e=>{e.preventDefault();const q=$('#universalCommandInput').value.trim();if(q)runUniversalCommand(q)});
@@ -710,7 +697,7 @@ $('#topIdentity').onclick=()=>route('#/settings');
 
 (async()=>{
   const last=localStorage.getItem('salesOsMemberEmail');if(last)$('#memberEmail').value=last;
-  const ok=await trySession();if(!ok){const saved=localStorage.getItem('salesOsToken');if(saved)$('#accessCode').value=saved}else route(location.hash||'#/command',false);
+  const ok=await trySession();if(ok)route(location.hash||'#/command',false);
   const gmailResult=new URLSearchParams(location.search).get('gmail');if(gmailResult==='connected'){history.replaceState({},'',location.pathname+location.hash);setTimeout(()=>toast('Gmail connected'),500)}
   const zohoParams=new URLSearchParams(location.search),zohoResult=zohoParams.get('zoho');if(zohoResult){history.replaceState({},'',location.pathname+location.hash);setTimeout(()=>toast(zohoResult==='connected'?'Zoho Mail connected':(zohoParams.get('detail')||'Zoho Mail connection could not finish')),500)}
 })().catch(()=>{});

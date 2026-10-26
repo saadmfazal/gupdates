@@ -3,6 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta http-equiv="refresh" content="0;url=../sales-os-v4/">
+<script>location.replace('../sales-os-v4/');</script>
 <meta name="theme-color" content="#090b0a">
 <meta name="robots" content="noindex,nofollow,noarchive">
 <title>Morpheus Sales OS</title>
@@ -60,7 +62,7 @@ table{width:100%;border-collapse:collapse;min-width:1080px}th{position:sticky;to
 <body>
 <section id="login" class="login">
   <div class="login-card">
-    <div class="eyebrow">Morpheus PD · Private</div>
+    <div class="eyebrow">Morpheus PD � Private</div>
     <h1>Sales OS</h1>
     <p>The shared prospect pipeline for Saad and Yazeed. One place for research, what we built, outreach, follow-ups, replies and next actions.</p>
     <div class="field"><label>Team access code</label><input id="accessCode" class="input" type="password" autocomplete="current-password" placeholder="Enter access code"></div>
@@ -73,9 +75,9 @@ table{width:100%;border-collapse:collapse;min-width:1080px}th{position:sticky;to
 <div id="app" class="hidden">
 <div class="shell">
   <header class="topbar">
-    <div class="brand"><div class="mark">M</div><div><strong>MORPHEUS SALES OS</strong><small>Shared pipeline · Saad + Yazeed</small></div></div>
+    <div class="brand"><div class="mark">M</div><div><strong>MORPHEUS SALES OS</strong><small>Shared pipeline � Saad + Yazeed</small></div></div>
     <div class="actions">
-      <button class="btn" id="refreshBtn">↻ Sync</button>
+      <button class="btn" id="refreshBtn">? Sync</button>
       <button class="btn" id="addProspectBtn">+ Prospect</button>
       <button class="btn" id="manageCategoriesBtn">Categories</button>
       <button class="btn primary" id="importCsvBtn">Import CSV</button>
@@ -90,7 +92,7 @@ table{width:100%;border-collapse:collapse;min-width:1080px}th{position:sticky;to
       <h1>From prospect<br>to close.</h1>
       <p>Every company we researched, every asset we made, who owns the outreach, the exact message, what was actually sent, what came back and what happens next.</p>
     </div>
-    <div id="syncText" class="sync">Connecting…</div>
+    <div id="syncText" class="sync">Connecting.</div>
   </section>
 
   <section class="stats">
@@ -124,7 +126,7 @@ table{width:100%;border-collapse:collapse;min-width:1080px}th{position:sticky;to
 
     <main class="content">
       <div class="toolbar">
-        <input id="search" class="input search" type="search" placeholder="Search company, contact, category, location, notes…">
+        <input id="search" class="input search" type="search" placeholder="Search company, contact, category, location, notes.">
         <div class="viewtabs"><button class="btn small active" data-view="list">List</button><button class="btn small" data-view="board">Pipeline</button></div>
         <span id="shown" class="pill">0 shown</span>
       </div>
@@ -145,7 +147,7 @@ table{width:100%;border-collapse:collapse;min-width:1080px}th{position:sticky;to
 </div>
 
 <div id="drawer" class="drawer hidden"><div class="drawer-panel">
-  <div class="drawer-head"><div><div id="dEyebrow" class="eyebrow"></div><h2 id="dCompany"></h2><div id="dTags"></div></div><button id="closeDrawer" class="close">×</button></div>
+  <div class="drawer-head"><div><div id="dEyebrow" class="eyebrow"></div><h2 id="dCompany"></h2><div id="dTags"></div></div><button id="closeDrawer" class="close">�</button></div>
   <div class="section"><h3>Account</h3><div id="dInfo" class="grid2"></div></div>
   <div class="section"><h3>Pipeline control</h3>
     <div class="grid2">
@@ -181,17 +183,17 @@ table{width:100%;border-collapse:collapse;min-width:1080px}th{position:sticky;to
         <button id="markSent" class="btn primary">Mark as sent</button>
         <button id="saveDraft" class="btn">Save draft</button>
       </div>
-      <p class="hint">“Open email app” prepares the message on your device. “Mark as sent” records it in the shared CRM and sets the follow-up. This version does not silently send external email.</p>
+      <p class="hint">"Open email app" prepares the message on your device. "Mark as sent" records it in the shared CRM and sets the follow-up. This version does not silently send external email.</p>
     </div>
   </div>
   <div class="section"><h3>Activity</h3>
-    <div class="grid2"><div class="field"><label>Add note</label><textarea id="noteText" class="textarea" rows="3" placeholder="Call notes, reply summary, context…"></textarea></div><div><div class="field"><label>Outcome / stage</label><select id="noteStage" class="select"></select></div><button id="addNote" class="btn" style="margin-top:8px">Add to timeline</button></div></div>
+    <div class="grid2"><div class="field"><label>Add note</label><textarea id="noteText" class="textarea" rows="3" placeholder="Call notes, reply summary, context."></textarea></div><div><div class="field"><label>Outcome / stage</label><select id="noteStage" class="select"></select></div><button id="addNote" class="btn" style="margin-top:8px">Add to timeline</button></div></div>
     <div id="dTimeline" class="timeline" style="margin-top:13px"></div>
   </div>
 </div></div>
 
 <div id="prospectModal" class="modal hidden"><div class="modal-card">
-  <div class="modal-top"><h2>Add prospect</h2><button class="close" data-close="prospectModal">×</button></div>
+  <div class="modal-top"><h2>Add prospect</h2><button class="close" data-close="prospectModal">�</button></div>
   <div class="grid2">
     <div class="field"><label>Company</label><input id="pCompany" class="input"></div>
     <div class="field"><label>Category</label><select id="pCategory" class="select"></select></div>
@@ -206,7 +208,7 @@ table{width:100%;border-collapse:collapse;min-width:1080px}th{position:sticky;to
 </div></div>
 
 <div id="assetModal" class="modal hidden"><div class="modal-card">
-  <div class="modal-top"><h2>Link an asset</h2><button class="close" data-close="assetModal">×</button></div>
+  <div class="modal-top"><h2>Link an asset</h2><button class="close" data-close="assetModal">�</button></div>
   <div class="grid2">
     <div class="field"><label>Type</label><select id="aType" class="select"><option>Website</option><option>Proposal</option><option>Images</option><option>Spreadsheet</option><option>Research</option><option>Other</option></select></div>
     <div class="field"><label>Status</label><select id="aStatus" class="select"><option>Built</option><option>Draft</option><option>Needs QA</option><option>Sent</option></select></div>
@@ -218,10 +220,10 @@ table{width:100%;border-collapse:collapse;min-width:1080px}th{position:sticky;to
 </div></div>
 
 <div id="categoryModal" class="modal hidden"><div class="modal-card">
-  <div class="modal-top"><div><div class="eyebrow">Markets / categories</div><h2>Category Manager</h2></div><button class="close" data-close="categoryModal">×</button></div>
-  <p class="hint">Add categories whenever the sales direction expands — for example Fish Food · Retail, Fish Food · Distributor, Dog Food, Packaging, Website Reimagination or any new market you decide to pursue.</p>
+  <div class="modal-top"><div><div class="eyebrow">Markets / categories</div><h2>Category Manager</h2></div><button class="close" data-close="categoryModal">�</button></div>
+  <p class="hint">Add categories whenever the sales direction expands - for example Fish Food � Retail, Fish Food � Distributor, Dog Food, Packaging, Website Reimagination or any new market you decide to pursue.</p>
   <div class="grid2">
-    <div class="field"><label>Category name</label><input id="catName" class="input" placeholder="e.g. Dog Food · Independent Retail"></div>
+    <div class="field"><label>Category name</label><input id="catName" class="input" placeholder="e.g. Dog Food � Independent Retail"></div>
     <div class="field"><label>Description</label><input id="catDescription" class="input" placeholder="Optional internal description"></div>
   </div>
   <div class="compose-actions"><button id="createCategory" class="btn primary">Add category</button></div>
@@ -229,13 +231,13 @@ table{width:100%;border-collapse:collapse;min-width:1080px}th{position:sticky;to
 </div></div>
 
 <div id="importModal" class="modal hidden"><div class="modal-card" style="width:min(1180px,100%)">
-  <div class="modal-top"><div><div class="eyebrow">ChatGPT → CSV → Sales OS</div><h2>Import prospects</h2></div><button class="close" data-close="importModal">×</button></div>
+  <div class="modal-top"><div><div class="eyebrow">ChatGPT  CSV  Sales OS</div><h2>Import prospects</h2></div><button class="close" data-close="importModal">�</button></div>
   <div class="import-layout">
     <div>
       <div class="grid2">
         <div class="field"><label>Default category</label><select id="importCategory" class="select"></select></div>
         <div class="field"><label>Default owner</label><input id="importOwner" class="input" value="Yazeed"></div>
-        <div class="field"><label>Import mode</label><select id="importMode" class="select"><option value="smart">Smart merge — recommended</option><option value="overwrite">Update existing with nonblank CSV values</option><option value="new_only">New companies only — skip duplicates</option></select></div>
+        <div class="field"><label>Import mode</label><select id="importMode" class="select"><option value="smart">Smart merge - recommended</option><option value="overwrite">Update existing with nonblank CSV values</option><option value="new_only">New companies only - skip duplicates</option></select></div>
         <div class="field"><label>Default sender</label><input id="importSender" class="input" value="Robert Gibbons"></div>
         <div class="field"><label>Default sender email</label><input id="importSenderEmail" class="input" value="robert@morpheuspd.io"></div>
       </div>
@@ -279,7 +281,7 @@ async function rpc(fn,payload){
 }
 async function verify(code){return await rpc('sales_os_verify',{p_token:code})}
 async function load(){
-  $('#syncText').textContent='Syncing…';
+  $('#syncText').textContent='Syncing.';
   data=await rpc('sales_os_snapshot',{p_token:token});
   data.prospects=data.prospects||[];data.assets=data.assets||[];data.activities=data.activities||[];data.templates=data.templates||[];data.categories=data.categories||[];
   $('#syncText').textContent='Synced '+new Date(data.synced_at||Date.now()).toLocaleString();
@@ -333,7 +335,7 @@ function stagePill(s){const c=s==='Won'?'lime':s==='Lost'||s==='Hold'?'red':s===
 function renderList(ps){
  const am=assetMap(), xm=activityMap();
  $('#tbody').innerHTML=ps.map(p=>{const as=am[p.id]||[], acts=xm[p.id]||[]; const a=as[0];return `<tr>
- <td><div class="company">${esc(p.company)}</div><div class="sub">${esc(p.location||'')} ${p.contact_name?'· '+esc(p.contact_name):''}</div></td>
+ <td><div class="company">${esc(p.company)}</div><div class="sub">${esc(p.location||'')} ${p.contact_name?'� '+esc(p.contact_name):''}</div></td>
  <td><span class="pill">${esc(p.category||'General')}</span><div class="sub">${esc(p.segment||'')}</div></td>
  <td>${as.length?`<span class="pill lime">${as.length} asset${as.length>1?'s':''}</span>${a?.url?`<div class="sub">${esc(a.title)}</div>`:''}`:'<span class="sub">Nothing linked yet</span>'}</td>
  <td><b>${esc(p.owner_assigned||'Unassigned')}</b><div class="sub">${esc(p.sender_name||'No sender set')}</div></td>
@@ -341,7 +343,7 @@ function renderList(ps){
  <td>${p.next_action_date?`<span class="pill ${due(p)?'amber':''}">${esc(p.next_action_date)}</span>`:''}<div class="sub">${esc(p.next_action||'')}</div></td>
  <td><div class="row-actions"><button class="btn small" onclick="openDrawer('${p.id}')">Open</button></div></td>
  </tr>`}).join('');
- $('#mobilecards').innerHTML=ps.map(p=>{const as=am[p.id]||[];return `<div class="mcard" onclick="openDrawer('${p.id}')"><div class="eyebrow">${esc(p.category||'General')}</div><h3>${esc(p.company)}</h3><div class="meta">${esc(p.location||'')} ${p.owner_assigned?'· '+esc(p.owner_assigned):''}</div><div style="margin-top:8px">${stagePill(p.stage)} ${as.length?`<span class="pill lime">${as.length} built</span>`:''}</div><div class="mrow"><small>${esc(p.next_action||'No next action')}</small>${p.next_action_date?`<span class="pill ${due(p)?'amber':''}">${esc(p.next_action_date)}</span>`:''}</div></div>`}).join('');
+ $('#mobilecards').innerHTML=ps.map(p=>{const as=am[p.id]||[];return `<div class="mcard" onclick="openDrawer('${p.id}')"><div class="eyebrow">${esc(p.category||'General')}</div><h3>${esc(p.company)}</h3><div class="meta">${esc(p.location||'')} ${p.owner_assigned?'� '+esc(p.owner_assigned):''}</div><div style="margin-top:8px">${stagePill(p.stage)} ${as.length?`<span class="pill lime">${as.length} built</span>`:''}</div><div class="mrow"><small>${esc(p.next_action||'No next action')}</small>${p.next_action_date?`<span class="pill ${due(p)?'amber':''}">${esc(p.next_action_date)}</span>`:''}</div></div>`}).join('');
 }
 function renderBoard(ps){
  const groups=['Research','Asset ready','Ready to contact','Contacted','Follow-up','Replied','Qualified','Meeting','Proposal','Negotiation','Won','Hold'];
@@ -350,24 +352,24 @@ function renderBoard(ps){
 function render(){
  renderStats(); const ps=filtered();$('#shown').textContent=ps.length+' shown';$('#empty').classList.toggle('hidden',!!ps.length);renderList(ps);renderBoard(ps);
 }
-function info(label,val,link){if(!val)return'';let body=esc(val);if(link)body=`<a href="${esc(link)}" target="_blank">${body} ↗</a>`;return `<div class="kv"><label>${label}</label><div>${body}</div></div>`}
+function info(label,val,link){if(!val)return'';let body=esc(val);if(link)body=`<a href="${esc(link)}" target="_blank">${body} ?</a>`;return `<div class="kv"><label>${label}</label><div>${body}</div></div>`}
 window.openDrawer=function(id){
  selected=data.prospects.find(p=>p.id===id);if(!selected)return;const p=selected, as=data.assets.filter(a=>a.prospect_id===id), acts=data.activities.filter(a=>a.prospect_id===id).sort((a,b)=>new Date(b.occurred_at)-new Date(a.occurred_at));
  $('#dEyebrow').textContent=p.category||'Prospect';$('#dCompany').textContent=p.company;$('#dTags').innerHTML=(p.tags||[]).map(x=>`<span class="pill">${esc(x)}</span>`).join('');
  $('#dInfo').innerHTML=info('Segment',p.segment)+info('Location',p.location)+info('Website',p.website,p.website)+info('Contact',p.contact_name)+info('Email',p.contact_email,p.contact_email?'mailto:'+p.contact_email:null)+info('Phone',p.phone)+info('Source',(p.source_groups||[]).join(', '))+info('Caution',p.caution);
  $('#dCategory').innerHTML=categoryOptions(false)||'<option>General</option>';if(p.category&&!categoryNames().includes(p.category))$('#dCategory').insertAdjacentHTML('beforeend',`<option value="${esc(p.category)}">${esc(p.category)}</option>`);$('#dCategory').value=p.category||'General';
  $('#dStage').innerHTML=STAGES.map(x=>`<option>${x}</option>`).join('');$('#dStage').value=STAGES.includes(p.stage)?p.stage:'Research';$('#dOwner').value=p.owner_assigned||'';$('#dPriority').value=p.priority||'';$('#dNextAction').value=p.next_action||'';$('#dNextDate').value=p.next_action_date||'';
- $('#dAssets').innerHTML=as.length?as.map(a=>`<div class="asset"><div><b>${esc(a.title)}</b><div class="sub">${esc(a.asset_type)} · ${esc(a.status)}</div></div>${a.url?`<a href="${esc(a.url)}" target="_blank">Open ↗</a>`:''}</div>`).join(''):'<div class="hint">Nothing linked yet.</div>';
+ $('#dAssets').innerHTML=as.length?as.map(a=>`<div class="asset"><div><b>${esc(a.title)}</b><div class="sub">${esc(a.asset_type)} � ${esc(a.status)}</div></div>${a.url?`<a href="${esc(a.url)}" target="_blank">Open ?</a>`:''}</div>`).join(''):'<div class="hint">Nothing linked yet.</div>';
  $('#templateSelect').innerHTML='<option value="">Start blank</option>'+data.templates.map(t=>`<option value="${t.id}">${esc(t.name)}</option>`).join('');
  $('#cRecipient').value=p.contact_email||'';$('#cSender').value=p.sender_name||'Robert Gibbons';$('#cSenderEmail').value=p.sender_email||'robert@morpheuspd.io';$('#cSubject').value='';$('#cBody').value='';$('#cFollowDate').value=addDays(4);
  $('#noteStage').innerHTML='<option value="">Keep current stage</option>'+STAGES.map(x=>`<option>${x}</option>`).join('');
- $('#dTimeline').innerHTML=acts.length?acts.map(a=>`<div class="event ${(a.activity_type||'').toLowerCase()}"><b>${esc(a.activity_type)}${a.channel?' · '+esc(a.channel):''}</b><small>${new Date(a.occurred_at).toLocaleString()}${a.actor_name?' · '+esc(a.actor_name):''}${a.recipient?' → '+esc(a.recipient):''}</small>${a.subject?`<p><strong>${esc(a.subject)}</strong></p>`:''}${a.message?`<p>${esc(a.message)}</p>`:''}${a.outcome?`<span class="pill">${esc(a.outcome)}</span>`:''}</div>`).join(''):'<div class="hint">No activity logged yet.</div>';
+ $('#dTimeline').innerHTML=acts.length?acts.map(a=>`<div class="event ${(a.activity_type||'').toLowerCase()}"><b>${esc(a.activity_type)}${a.channel?' � '+esc(a.channel):''}</b><small>${new Date(a.occurred_at).toLocaleString()}${a.actor_name?' � '+esc(a.actor_name):''}${a.recipient?'  '+esc(a.recipient):''}</small>${a.subject?`<p><strong>${esc(a.subject)}</strong></p>`:''}${a.message?`<p>${esc(a.message)}</p>`:''}${a.outcome?`<span class="pill">${esc(a.outcome)}</span>`:''}</div>`).join(''):'<div class="hint">No activity logged yet.</div>';
  $('#drawer').classList.remove('hidden');
 }
 function closeDrawer(){$('#drawer').classList.add('hidden');selected=null}
 function applyTemplate(){
  const t=data.templates.find(x=>x.id===$('#templateSelect').value);if(!t||!selected)return;const as=data.assets.filter(a=>a.prospect_id===selected.id),asset=as.find(a=>a.url)||as[0];
- const first=(selected.contact_name||selected.company||'').split(/[\/,–—-]/)[0].trim();
+ const first=(selected.contact_name||selected.company||'').split(/[\/,---]/)[0].trim();
  const repl=s=>String(s||'').replaceAll('{{company}}',selected.company||'').replaceAll('{{first_name_or_company}}',first||selected.company||'').replaceAll('{{asset_url}}',asset?.url||'').replaceAll('{{original_subject}}',$('#cSubject').value||'Our note');
  $('#cSender').value=t.sender_name||$('#cSender').value;$('#cSenderEmail').value=t.sender_email||$('#cSenderEmail').value;$('#cSubject').value=repl(t.subject_template);$('#cBody').value=repl(t.body_template);
 }
@@ -472,7 +474,7 @@ async function runCsvImport(){
  if(!importRows.length)return;
  const defaults={category:$('#importCategory').value,owner_assigned:$('#importOwner').value||'Yazeed',sender_name:$('#importSender').value,sender_email:$('#importSenderEmail').value,stage:'Research',status:'Not started'};
  const result=await rpc('sales_os_bulk_import',{p_token:token,p_rows:importRows,p_mode:$('#importMode').value,p_defaults:defaults});
- toast(`Imported: ${result.inserted||0} new · ${result.updated||0} merged · ${result.skipped||0} skipped`);
+ toast(`Imported: ${result.inserted||0} new � ${result.updated||0} merged � ${result.skipped||0} skipped`);
  $('#importModal').classList.add('hidden');$('#csvPaste').value='';$('#csvFile').value='';importRows=[];await load();
 }
 function downloadCsvTemplate(){
@@ -481,7 +483,7 @@ function downloadCsvTemplate(){
 async function copyImportPrompt(){updateImportPrompt();await navigator.clipboard.writeText($('#importPrompt').value);toast('ChatGPT import prompt copied')}
 function renderCategories(){
  const counts={};data.prospects.forEach(p=>counts[p.category]=(counts[p.category]||0)+1);
- $('#categoryList').innerHTML=(data.categories||[]).map(c=>`<div class="category-row"><div><b>${esc(c.name)}</b><small>${esc(c.description||'')}${counts[c.name]?' · '+counts[c.name]+' prospects':''}</small></div><button class="btn small copyCatPrompt" data-category="${esc(c.name)}">Copy research prompt</button></div>`).join('')||'<div class="hint">No categories yet.</div>';
+ $('#categoryList').innerHTML=(data.categories||[]).map(c=>`<div class="category-row"><div><b>${esc(c.name)}</b><small>${esc(c.description||'')}${counts[c.name]?' � '+counts[c.name]+' prospects':''}</small></div><button class="btn small copyCatPrompt" data-category="${esc(c.name)}">Copy research prompt</button></div>`).join('')||'<div class="hint">No categories yet.</div>';
  document.querySelectorAll('.copyCatPrompt').forEach(b=>b.onclick=async()=>{$('#importCategory').value=b.dataset.category;updateImportPrompt();await navigator.clipboard.writeText($('#importPrompt').value);toast('Category-specific ChatGPT prompt copied')});
 }
 function openCategoryManager(){renderCategories();$('#categoryModal').classList.remove('hidden')}
@@ -514,3 +516,4 @@ const saved=localStorage.getItem('morpheusSalesToken');if(saved){$('#accessCode'
 </script>
 </body>
 </html>
+
