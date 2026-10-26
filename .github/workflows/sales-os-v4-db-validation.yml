@@ -8,6 +8,8 @@ on:
       - ".github/workflows/sales-os-v4-db-validation.yml"
       - "sales-os-v4/qa/db/**"
       - "supabase/migrations/20261026013754_sales_os_consolidated_sync.sql"
+      - "supabase/migrations/20261026090819_rotate_sales_os_shared_auth.sql"
+      - "supabase/functions/sales-os-mcp/index.ts"
   workflow_dispatch:
 
 permissions:
@@ -57,6 +59,18 @@ jobs:
           test -z "${DATABASE_URL:-}"
           echo "Isolation guard passed: synthetic runner-local PostgreSQL only."
 
+      - name: Verify Sales OS MCP source is sanitized
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import pathlib,re
+          source=pathlib.Path('supabase/functions/sales-os-mcp/index.ts').read_text(encoding='utf-8')
+          assert len(re.findall(r'p_token\s*:\s*"[^"\r\n]+"',source)) == 0
+          assert len(re.findall(r'p_token\s*:\s*null',source)) == 3
+          print('Sanitization guard passed: zero embedded RPC tokens and three service-role callsites.')
+          PY
+
       - name: Ensure PostgreSQL client is available
         shell: bash
         run: |
@@ -80,6 +94,12 @@ jobs:
         shell: bash
         run: bash sales-os-v4/qa/db/concurrency.sh
 
+      - name: Apply scoped Sales OS authentication rotation
+        run: psql --set=ON_ERROR_STOP=1 --file supabase/migrations/20261026090819_rotate_sales_os_shared_auth.sql
+
+      - name: Validate managed secret, revocation, grants, and recovery
+        run: psql --set=ON_ERROR_STOP=1 --file sales-os-v4/qa/db/auth-rotation-assertions.sql
+
       - name: Drop disposable database
         if: always()
         shell: bash
@@ -91,3 +111,4 @@ jobs:
           remaining="$(psql --dbname postgres --tuples-only --no-align --command "select count(*) from pg_database where datname='sales_os_test';")"
           test "$remaining" = "0"
           echo "Cleanup verified: disposable database removed; service container is runner-scoped."
+

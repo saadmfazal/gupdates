@@ -1,4 +1,6 @@
+// deno-lint-ignore-file no-explicit-any no-unversioned-import no-empty prefer-const
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { sanitizeProviderText } from "../_shared/sales-mail-sync-core.js";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -196,7 +198,7 @@ const tools = [
   },
   {
     name: "sync_email_message",
-    description: "Write one Gmail message into Sales OS, classify it, and optionally create a recommended next action. Use after reading a real Gmail message.",
+    description: "Record one member-reviewed Gmail message only when its envelope exactly matches one verified prospect contact. This records email engagement without moving the commercial pipeline.",
     inputSchema:{
       type:"object",
       required:["prospect_id","provider_message_id","direction"],
@@ -497,19 +499,29 @@ async function callTool(name: string, args: any, member: any) {
   }
 
   if (name === "sync_email_message") {
+    const envelopeEmails=[args.from_email,...(args.to_emails||[]),...(args.cc_emails||[])]
+      .map((value:any)=>String(value||"").trim().toLowerCase()).filter(Boolean);
+    const verifiedContacts=await rest("sales_os_prospect_contacts?select=email&prospect_id=eq."+encodeURIComponent(args.prospect_id)+"&active=eq.true&verified_at=not.is.null",{method:"GET"});
+    const matched=[...new Set((verifiedContacts||[]).map((item:any)=>String(item.email||"").toLowerCase()).filter((email:string)=>envelopeEmails.includes(email)))];
+    if(matched.length!==1)throw new Error("Manual Gmail import requires one exact verified prospect contact match");
+    const mailboxAccountId="legacy:chatgpt-gmail:"+String(member.email||"unknown").toLowerCase();
+    const classification=String(args.classification||"").toLowerCase();
+    const engagementStatus=args.direction==="outbound"?"sent":classification==="delivery_problem"?"bounced":classification==="opt_out"?"opted_out":classification==="declined"?"declined":"replied";
     const payload={
       ...args,
       provider:"gmail",
+      mailbox_account_id:mailboxAccountId,
+      contact_email:matched[0],
+      match_method:"member_reviewed_mcp_import",
+      delivery_state:args.direction==="outbound"?"sent":null,
+      requires_action:args.direction==="inbound"?true:!!args.requires_action,
+      subject:sanitizeProviderText(args.subject,500),
+      snippet:sanitizeProviderText(args.snippet,1000),
+      body:sanitizeProviderText(args.body,20000),
       created_by:member.display_name||member.email
     };
-    const result=await rest("rpc/sales_os_upsert_email_message",{method:"POST",body:JSON.stringify({p_token:"MORPHEUS-2B6SWXS23ACB",p_payload:payload})});
-    if(args.direction==="inbound"){
-      const changes:any={};
-      if(args.classification && ["interested","pricing_request","moq_question","meeting_request"].includes(args.classification)) changes.stage="Replied";
-      if(args.requires_action && args.recommendation_action) changes.next_action=args.recommendation_action;
-      if(args.recommendation_due_at) changes.next_action_date=String(args.recommendation_due_at).slice(0,10);
-      if(Object.keys(changes).length) await rest("sales_os_prospects?id=eq."+encodeURIComponent(args.prospect_id),{method:"PATCH",body:JSON.stringify(changes)});
-    }
+    const result=await rest("rpc/sales_os_upsert_email_message",{method:"POST",body:JSON.stringify({p_token:null,p_payload:payload})});
+    await rest("rpc/sales_os_apply_contact_state",{method:"POST",body:JSON.stringify({p_prospect_id:args.prospect_id,p_contact_email:matched[0],p_engagement_status:engagementStatus,p_source_provider:"gmail",p_source_mailbox_account_id:mailboxAccountId,p_source_provider_message_id:args.provider_message_id,p_effective_at:args.sent_at||new Date().toISOString(),p_suppression_reason:["bounced","declined","opted_out"].includes(engagementStatus)?classification:null,p_metadata:{source:"member_reviewed_mcp_import",content_untrusted:true}})});
     return {ok:true,message_id:args.provider_message_id,result};
   }
 
@@ -523,12 +535,12 @@ async function callTool(name: string, args: any, member: any) {
 
   if (name === "save_ai_action") {
     const payload={...args,created_by:member.display_name||member.email};
-    return await rest("rpc/sales_os_save_recommendation",{method:"POST",body:JSON.stringify({p_token:"MORPHEUS-2B6SWXS23ACB",p_payload:payload})});
+    return await rest("rpc/sales_os_save_recommendation",{method:"POST",body:JSON.stringify({p_token:null,p_payload:payload})});
   }
 
   if (name === "set_opportunity") {
     const payload={...args,updated_by:member.display_name||member.email};
-    return await rest("rpc/sales_os_save_opportunity",{method:"POST",body:JSON.stringify({p_token:"MORPHEUS-2B6SWXS23ACB",p_payload:payload})});
+    return await rest("rpc/sales_os_save_opportunity",{method:"POST",body:JSON.stringify({p_token:null,p_payload:payload})});
   }
 
   if (name === "get_autopilot_brief") {
@@ -540,7 +552,7 @@ async function callTool(name: string, args: any, member: any) {
       rest("sales_os_opportunities?select=*&limit=1000",{method:"GET"})
     ]);
     const owner=String(args?.owner||"");
-    const pmap=new Map(prospects.map((p:any)=>[p.id,p]));
+    const pmap=new Map<string,any>(prospects.map((p:any)=>[String(p.id),p]));
     const owned=(p:any)=>!owner||p?.owner_assigned===owner;
     const today=new Date().toISOString().slice(0,10);
     const dueFollowups=prospects.filter((p:any)=>owned(p)&&p.next_action_date&&p.next_action_date<=today&&![ "Won","Lost","Hold"].includes(p.stage));
@@ -1012,6 +1024,7 @@ Deno.serve(async (req: Request) => {
     }
     return rpcError(id,-32601,"Method not found");
   }catch(e){
-    return rpcResult(id,{content:[{type:"text",text:"Sales OS error: "+String(e?.message||e)}],isError:true});
+    return rpcResult(id,{content:[{type:"text",text:"Sales OS error: "+String((e as Error)?.message||e)}],isError:true});
   }
 });
+
