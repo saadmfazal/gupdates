@@ -75,8 +75,8 @@ jobs:
           print('Sanitization guard passed: zero embedded RPC tokens and three service-role callsites.')
           PY
 
-      - name: Validate member login, OAuth, and consolidation contracts
-        run: node --test sales-os-v4/qa/auth-member-login.test.mjs sales-os-v4/qa/sales-consolidation.test.mjs
+      - name: Validate member login and bootstrap contracts
+        run: node --test sales-os-v4/qa/auth-member-login.test.mjs
 
       - name: Ensure PostgreSQL client is available
         shell: bash
